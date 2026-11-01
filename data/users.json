@@ -17,7 +17,7 @@
     "password": "pbkdf2$100000$iczAclauIPqBm782vE0BCw$NgEHRYU9KfElbTdUSjOBRWE6VuExmHJHj0ow_QULEjI",
     "level": "",
     "zone": "",
-    "role": "user",
+    "role": "admin",
     "created": "2026-11-01T23:50:42.382Z",
     "membershipActive": false
   }
