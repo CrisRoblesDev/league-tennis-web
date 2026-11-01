@@ -8,6 +8,7 @@ let players = [];
 let products = [];
 let matchResults = [];
 let leagueChallenges = [];
+let tournaments = [];
 
 // ============ API HELPER ============
 async function api(endpoint, options = {}) {
@@ -86,7 +87,7 @@ async function register(e) {
     const data = await api("/api/auth/register", {
       method: "POST",
       body: JSON.stringify({
-        name: form.name.value,
+        name: form.elements.namedItem("name").value,
         email: form.email.value,
         password: form.password.value,
         level: form.level.value,
@@ -129,6 +130,21 @@ async function loadProducts() {
 function renderProducts() {
   const container = document.getElementById("productsList");
   if (!container) return;
+  const membershipPlan = document.getElementById("membershipPlan");
+  const membership = products.find(product => product.type === "subscription");
+  if (membershipPlan) {
+    membershipPlan.innerHTML = membership ? `
+      <h3>${escapeHtml(membership.name)}</h3>
+      <div class="price-big">$${(membership.price / 100).toFixed(2)}<span class="price-period">/${membership.interval === "year" ? "año" : "mes"}</span></div>
+      <p class="muted">${escapeHtml(membership.description || "Cancela cuando quieras.")}</p>
+      <button class="btn btn-primary btn-full" onclick="checkout('${escapeHtml(membership.id)}')">Suscribirse ahora</button>
+      <p class="muted small">Pago seguro procesado por Stripe.</p>` :
+      '<h3>Planes de membresía</h3><p class="muted">No hay una suscripción disponible en este momento.</p>';
+  }
+  if (!products.length) {
+    container.innerHTML = '<p class="muted">No hay productos disponibles en este momento.</p>';
+    return;
+  }
   container.innerHTML = products.map(p => {
     if (p.type === "subscription") {
       return `<article class="card book-card membership-card">
@@ -239,6 +255,8 @@ function openResultModal() {
   document.querySelectorAll("#resultForm select").forEach(select => {
     select.innerHTML = `<option value="">Seleccionar</option>${options}`;
   });
+  document.getElementById("resultForm").date.value = new Date().toISOString().slice(0, 10);
+  showNotice("resultNotice", "", false);
   openModal("resultModal");
 }
 
@@ -387,7 +405,7 @@ async function createPlayer(e) {
     await api("/api/players", {
       method: "POST",
       body: JSON.stringify({
-        name: form.name.value,
+        name: form.elements.namedItem("name").value,
         level: form.level.value,
         zone: form.zone.value
       })
@@ -408,9 +426,72 @@ async function joinTournament() {
     const data = await api("/api/tournament", { method: "POST" });
     showToast(data.message || "Inscrito al torneo!");
     await loadPlayers();
+    await loadTournaments();
   } catch (error) {
     showToast(error.message);
   }
+}
+
+// ============ PUBLIC TOURNAMENTS ============
+async function loadTournaments() {
+  try {
+    const data = await api("/api/tournament");
+    tournaments = data.tournaments || [];
+    renderTournaments();
+    const featured = tournaments.find(item => item.month === new Date().toISOString().slice(0, 7)) ||
+      tournaments.find(item => ["registration", "scheduled", "in_progress"].includes(item.status)) ||
+      tournaments[0];
+    if (featured) {
+      document.getElementById("heroTournamentTitle").textContent = featured.title || `Campeonato · ${featured.month}`;
+      document.getElementById("heroTournamentDate").textContent =
+        featured.startDate ? new Date(`${featured.startDate}T00:00:00`).toLocaleDateString() : featured.month;
+      document.getElementById("heroTournamentSummary").textContent =
+        featured.description || `${(featured.entries || []).length} inscritos · ${featured.format || "Formato por anunciar"}`;
+    }
+  } catch (error) {
+    showToast(`No se pudieron cargar los torneos: ${error.message}`);
+  }
+}
+
+function renderTournaments() {
+  const container = document.getElementById("tournamentsList");
+  if (!container) return;
+  if (!tournaments.length) {
+    container.innerHTML = '<article class="card"><span class="tag">Próximamente</span><h3>Calendario de torneos</h3><p class="muted">Los próximos torneos se publicarán aquí.</p></article>';
+    return;
+  }
+  const statusLabels = {
+    registration: "Inscripciones abiertas",
+    scheduled: "Programado",
+    in_progress: "En curso",
+    completed: "Finalizado",
+    cancelled: "Cancelado"
+  };
+  container.innerHTML = tournaments.map(tournament => {
+    const entries = tournament.entries || [];
+    const matches = tournament.matches || [];
+    const status = statusLabels[tournament.status] || "Estado por confirmar";
+    const dates = [tournament.startDate, tournament.endDate].filter(Boolean).join(" – ");
+    const month = tournament.month || "";
+    const canJoin = tournament.status === "registration" &&
+      month === new Date().toISOString().slice(0, 7);
+    return `<article class="card tournament-card">
+      <span class="tag ${tournament.status === "registration" ? "tag-blue" : ""}">${escapeHtml(status)}</span>
+      <h3>${escapeHtml(tournament.title || `Campeonato · ${month}`)}</h3>
+      <p class="muted">${escapeHtml(tournament.description || "")}</p>
+      <p><b>${escapeHtml(month)}</b>${dates ? ` · ${escapeHtml(dates)}` : ""}</p>
+      ${tournament.venue ? `<p class="muted">Cancha: ${escapeHtml(tournament.venue)}</p>` : ""}
+      <p class="muted">${escapeHtml(tournament.format || "Formato por anunciar")}</p>
+      <p><b>${entries.length}</b> inscritos${tournament.levels?.length ? ` · Niveles ${escapeHtml(tournament.levels.join(", "))}` : ""}</p>
+      ${entries.length ? `<details><summary>Ver jugadores inscritos</summary><ul class="tournament-entries">${entries.map(entry =>
+        `<li>${escapeHtml(entry.name)} <span class="muted">${escapeHtml(entry.level)}</span></li>`
+      ).join("")}</ul></details>` : ""}
+      ${matches.length ? `<div class="tournament-matches"><b>Partidos</b>${matches.map(match =>
+        `<p><span>${escapeHtml(match.round || "Ronda")}</span><br>${escapeHtml(match.playerAName)} vs ${escapeHtml(match.playerBName)}${match.score ? ` · ${escapeHtml(match.score)}` : ""}${match.date ? ` · ${escapeHtml(match.date)}` : ""}${match.status === "cancelled" ? " · Cancelado" : ""}</p>`
+      ).join("")}</div>` : ""}
+      ${canJoin ? '<button class="btn btn-dark" onclick="joinTournament()">Inscribirse</button>' : ""}
+    </article>`;
+  }).join("");
 }
 
 // ============ ADMIN PANEL ============
@@ -419,11 +500,17 @@ async function showAdminPanel() {
   let stats;
   let orders;
   let users;
+  let allProducts;
+  let allTournaments;
+  let results;
   try {
-    [stats, orders, users] = await Promise.all([
+    [stats, orders, users, allProducts, allTournaments, results] = await Promise.all([
       api("/api/admin/stats"),
       api("/api/admin/orders"),
-      api("/api/admin/users")
+      api("/api/admin/users"),
+      api("/api/admin/products"),
+      api("/api/admin/tournaments"),
+      api("/api/results")
     ]);
   } catch (error) {
     showToast(`No se pudo abrir administración: ${error.message}`);
@@ -432,6 +519,10 @@ async function showAdminPanel() {
 
   const content = document.getElementById("adminContent");
   if (!content) return;
+  products = allProducts;
+  tournaments = allTournaments;
+  matchResults = results;
+  const levels = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0"];
 
   content.innerHTML = `
     <div class="admin-stats">
@@ -459,16 +550,57 @@ async function showAdminPanel() {
       </table>
     </div>
 
-    <h3>Productos</h3>
-    <div class="grid grid-3" style="margin-bottom:20px">
-      ${products.map(p => `<article class="card">
-        <h4>${escapeHtml(p.name)}</h4>
-        <p class="muted">$${(p.price / 100).toFixed(2)} ${p.type === "subscription" ? "/mes" : ""}</p>
-        <span class="tag ${p.active ? "" : "tag-red"}">${p.active ? "Activo" : "Inactivo"}</span>
-        <button class="btn btn-sm btn-dark" onclick="editProduct('${p.id}')">Editar</button>
-      </article>`).join("")}
+    <h3>Torneos</h3>
+    <form id="adminTournamentForm" class="admin-form">
+      <input type="hidden" name="id">
+      <label>Nombre<input name="title" maxlength="120" required></label>
+      <label>Mes<input name="month" type="month" required></label>
+      <label>Niveles<select name="levels" multiple required>${levels.map(level => `<option value="${level}">${level}</option>`).join("")}</select></label>
+      <label>Estado<select name="status"><option value="registration">Inscripciones</option><option value="scheduled">Programado</option><option value="in_progress">En curso</option><option value="completed">Finalizado</option><option value="cancelled">Cancelado</option></select></label>
+      <label>Fecha de inicio<input name="startDate" type="date"></label>
+      <label>Fecha de término<input name="endDate" type="date"></label>
+      <label>Cancha / sede<input name="venue" maxlength="120"></label>
+      <label>Formato<input name="format" maxlength="120" value="Eliminación directa · Best of 3"></label>
+      <label class="full">Descripción<textarea name="description" rows="2" maxlength="500"></textarea></label>
+      <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar torneo</button><button class="btn btn-secondary" type="button" onclick="resetTournamentForm()">Limpiar</button></div>
+    </form>
+    <div class="grid grid-2 admin-records">
+      ${allTournaments.map(tournament => renderAdminTournament(tournament)).join("") || '<p class="muted">Aún no hay torneos. Usa el formulario para crear el primero.</p>'}
     </div>
-    <button class="btn btn-primary" onclick="showAddProduct()">+ Agregar producto</button>
+
+    <h3>Productos y suscripciones</h3>
+    <form id="adminProductForm" class="admin-form">
+      <input type="hidden" name="id">
+      <label>Nombre<input name="name" maxlength="120" required></label>
+      <label>Precio (USD)<input name="price" type="number" min="0.01" step="0.01" required></label>
+      <label>Tipo<select name="type"><option value="digital">Producto digital</option><option value="subscription">Suscripción</option></select></label>
+      <label>Frecuencia<select name="interval"><option value="month">Mensual</option><option value="year">Anual</option></select></label>
+      <label class="full">Descripción<textarea name="description" rows="2" maxlength="500"></textarea></label>
+      <label class="full"><span><input name="active" type="checkbox" checked> Disponible en la tienda</span></label>
+      <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar producto</button><button class="btn btn-secondary" type="button" onclick="resetProductForm()">Limpiar</button></div>
+    </form>
+    <div class="grid grid-3 admin-records">
+      ${allProducts.map(product => `<article class="card admin-record">
+        <h4>${escapeHtml(product.name)}</h4>
+        <p class="muted">$${(product.price / 100).toFixed(2)}${product.type === "subscription" ? ` /${product.interval === "year" ? "año" : "mes"}` : ""}</p>
+        <span class="tag ${product.active ? "" : "tag-red"}">${product.active ? "Activo" : "Inactivo"}</span>
+        <p class="muted">${escapeHtml(product.description || "")}</p>
+        <button class="btn btn-sm btn-dark" onclick="editProduct('${escapeHtml(product.id)}')">Editar</button>
+      </article>`).join("") || '<p class="muted">No hay productos configurados.</p>'}
+    </div>
+
+    <h3>Resultados por moderar</h3>
+    <div class="grid grid-2 admin-records">
+      ${results.filter(result => ["pending", "disputed"].includes(result.status)).map(result => `<article class="card admin-record">
+        <span class="tag ${result.status === "disputed" ? "tag-red" : ""}">${result.status === "disputed" ? "En disputa" : "Pendiente"}</span>
+        <h4>${escapeHtml(result.winnerName)} vs ${escapeHtml(result.loserName)}</h4>
+        <p class="muted">${escapeHtml(result.score)} · ${escapeHtml(result.playedAt || "")}</p>
+        <div class="admin-form-actions">
+          <button class="btn btn-primary" onclick="moderateResult('${escapeHtml(result.id)}','confirm')">Confirmar</button>
+          <button class="btn btn-secondary" onclick="moderateResult('${escapeHtml(result.id)}','reject')">Rechazar</button>
+        </div>
+      </article>`).join("") || '<p class="muted">No hay resultados pendientes.</p>'}
+    </div>
 
     <h3 style="margin-top:20px">Usuarios</h3>
     <div class="table-wrap">
@@ -487,50 +619,226 @@ async function showAdminPanel() {
       </table>
     </div>
   `;
+  document.getElementById("adminTournamentForm").addEventListener("submit", saveTournament);
+  document.getElementById("adminProductForm").addEventListener("submit", saveProduct);
+  resetTournamentForm();
+  resetProductForm();
   openModal("adminModal");
 }
 
-function showAddProduct() {
-  const name = prompt("Nombre del producto:");
-  if (!name) return;
-  const priceStr = prompt("Precio en centavos (ej: 1500 = $15.00):");
-  if (!priceStr) return;
-  const price = parseInt(priceStr);
-  const type = prompt("Tipo (digital/subscription):") || "digital";
-  api("/api/products", {
-    method: "POST",
-    body: JSON.stringify({ name, price, type, active: true })
-  }).then(() => {
-    loadProducts();
-    showAdminPanel();
-    showToast("Producto creado");
-  }).catch(error => {
-    showToast(`No se pudo crear el producto: ${error.message}`);
-  });
+function renderAdminTournament(tournament) {
+  const entrants = tournament.entries || [];
+  return `<article class="card admin-record">
+    <div class="admin-record-head"><div><span class="tag">${escapeHtml(tournament.status)}</span><h4>${escapeHtml(tournament.title || tournament.month)}</h4></div>
+      <div class="admin-form-actions"><button class="btn btn-sm btn-dark" onclick="editTournament('${escapeHtml(tournament.id)}')">Editar</button>
+      <button class="btn btn-sm btn-secondary" onclick="deleteTournament('${escapeHtml(tournament.id)}')">Eliminar</button></div>
+    </div>
+    <p class="muted">${escapeHtml(tournament.month)} · ${entrants.length} inscritos · ${escapeHtml(tournament.venue || "Sede por definir")}</p>
+    <p>${entrants.map(entry => escapeHtml(entry.name)).join(", ") || "Sin inscritos"}</p>
+    ${entrants.length >= 2 ? `<form id="admin-match-form-${escapeHtml(tournament.id)}" class="admin-match-form" onsubmit="saveTournamentMatch(event,'${escapeHtml(tournament.id)}')">
+      <input type="hidden" name="matchId">
+      <b class="full">Programar partido</b>
+      <label>Jugador A<select name="playerAId" required>${entrants.map(entry => `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`).join("")}</select></label>
+      <label>Jugador B<select name="playerBId" required>${entrants.map(entry => `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`).join("")}</select></label>
+      <label>Ronda<input name="round" required placeholder="Final"></label>
+      <label>Fecha<input name="date" type="date"></label>
+      <label>Estado<select name="status"><option value="scheduled">Programado</option><option value="completed">Finalizado</option><option value="cancelled">Cancelado</option></select></label>
+      <label>Ganador<select name="winnerId"><option value="">Elegir al cerrar</option>${entrants.map(entry =>
+        `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`
+      ).join("")}</select></label>
+      <label>Marcador desde Jugador A<input name="score" placeholder="6-4, 4-6, 10-7"></label>
+      <label>Cancha<input name="court" maxlength="120"></label>
+      <button class="btn btn-primary full">Guardar partido</button>
+    </form>` : ""}
+    ${(tournament.matches || []).map(match => `<div class="admin-match-row">
+      <p class="muted">${escapeHtml(match.round)}: ${escapeHtml(match.playerAName || match.playerAId)} vs ${escapeHtml(match.playerBName || match.playerBId)}${match.score ? ` · ${escapeHtml(match.score)}` : ""}</p>
+      <button class="btn btn-sm btn-dark" onclick="editTournamentMatch('${escapeHtml(tournament.id)}','${escapeHtml(match.id)}')">Editar partido</button>
+    </div>`).join("")}
+  </article>`;
 }
 
-async function editProduct(productId) {
-  const product = products.find(item => item.id === productId);
-  if (!product) return;
-  const name = prompt("Nombre del producto:", product.name);
-  if (name === null) return;
-  const priceValue = prompt("Precio en centavos:", String(product.price));
-  if (priceValue === null) return;
-  const price = Number(priceValue);
-  if (!Number.isSafeInteger(price) || price < 1) {
-    showToast("El precio debe ser un entero positivo en centavos.");
+function editTournament(tournamentId) {
+  const tournament = tournaments.find(item => item.id === tournamentId);
+  if (!tournament) return;
+  const form = document.getElementById("adminTournamentForm");
+  form.elements.namedItem("id").value = tournament.id;
+  form.elements.namedItem("title").value = tournament.title || "";
+  form.elements.namedItem("month").value = tournament.month || "";
+  form.elements.namedItem("status").value = tournament.status || "registration";
+  form.elements.namedItem("startDate").value = tournament.startDate || "";
+  form.elements.namedItem("endDate").value = tournament.endDate || "";
+  form.elements.namedItem("venue").value = tournament.venue || "";
+  form.elements.namedItem("format").value = tournament.format || "";
+  form.elements.namedItem("description").value = tournament.description || "";
+  Array.from(form.elements.namedItem("levels").options).forEach(option => {
+    option.selected = (tournament.levels || []).includes(option.value);
+  });
+  form.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function editTournamentMatch(tournamentId, matchId) {
+  const tournament = tournaments.find(item => item.id === tournamentId);
+  const match = tournament?.matches?.find(item => item.id === matchId);
+  const form = document.getElementById(`admin-match-form-${tournamentId}`);
+  if (!match || !form) return;
+  form.elements.namedItem("matchId").value = match.id;
+  form.elements.namedItem("playerAId").value = match.playerAId;
+  form.elements.namedItem("playerBId").value = match.playerBId;
+  form.elements.namedItem("round").value = match.round;
+  form.elements.namedItem("date").value = match.date || "";
+  form.elements.namedItem("court").value = match.court || "";
+  form.elements.namedItem("status").value = match.status || "scheduled";
+  form.elements.namedItem("winnerId").value = match.winnerId || "";
+  form.elements.namedItem("score").value = match.score || "";
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function resetTournamentForm() {
+  const form = document.getElementById("adminTournamentForm");
+  form.reset();
+  form.elements.namedItem("id").value = "";
+  form.elements.namedItem("month").value = new Date().toISOString().slice(0, 7);
+  form.elements.namedItem("format").value = "Eliminación directa · Best of 3";
+}
+
+async function saveTournament(event) {
+  event.preventDefault();
+  const form = event.target;
+  const body = {
+    title: form.elements.namedItem("title").value,
+    month: form.elements.namedItem("month").value,
+    levels: Array.from(form.elements.namedItem("levels").selectedOptions, option => option.value),
+    status: form.elements.namedItem("status").value,
+    startDate: form.elements.namedItem("startDate").value,
+    endDate: form.elements.namedItem("endDate").value,
+    venue: form.elements.namedItem("venue").value,
+    format: form.elements.namedItem("format").value,
+    description: form.elements.namedItem("description").value
+  };
+  try {
+    const id = form.elements.namedItem("id").value;
+    await api(id ? `/api/admin/tournaments/${encodeURIComponent(id)}` : "/api/admin/tournaments", {
+      method: id ? "PUT" : "POST",
+      body: JSON.stringify(body)
+    });
+    await loadTournaments();
+    await showAdminPanel();
+    showToast(id ? "Torneo actualizado" : "Torneo creado");
+  } catch (error) {
+    showToast(`No se pudo guardar el torneo: ${error.message}`);
+  }
+}
+
+async function deleteTournament(tournamentId) {
+  if (!window.confirm("¿Eliminar este torneo y su cuadro?")) return;
+  try {
+    await api(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}`, { method: "DELETE" });
+    await loadTournaments();
+    await showAdminPanel();
+    showToast("Torneo eliminado");
+  } catch (error) {
+    showToast(`No se pudo eliminar: ${error.message}`);
+  }
+}
+
+async function saveTournamentMatch(event, tournamentId) {
+  event.preventDefault();
+  const form = event.target;
+  const playerAId = form.elements.namedItem("playerAId").value;
+  const playerBId = form.elements.namedItem("playerBId").value;
+  if (playerAId === playerBId) {
+    showToast("Elige dos jugadores distintos.");
     return;
   }
   try {
-    await api(`/api/products/${encodeURIComponent(product.id)}`, {
+    await api(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}`, {
       method: "PUT",
-      body: JSON.stringify({ name, price })
+      body: JSON.stringify({
+        match: {
+          ...(form.elements.namedItem("matchId").value ?
+            { id: form.elements.namedItem("matchId").value } : {}),
+          playerAId,
+          playerBId,
+          round: form.elements.namedItem("round").value,
+          date: form.elements.namedItem("date").value,
+          court: form.elements.namedItem("court").value,
+          status: form.elements.namedItem("status").value,
+          winnerId: form.elements.namedItem("winnerId").value,
+          score: form.elements.namedItem("score").value
+        }
+      })
+    });
+    await loadTournaments();
+    await showAdminPanel();
+    showToast("Partido programado");
+  } catch (error) {
+    showToast(`No se pudo programar: ${error.message}`);
+  }
+}
+
+function editProduct(productId) {
+  const product = products.find(item => item.id === productId);
+  if (!product) return;
+  const form = document.getElementById("adminProductForm");
+  form.elements.namedItem("id").value = product.id;
+  form.elements.namedItem("name").value = product.name;
+  form.elements.namedItem("price").value = (product.price / 100).toFixed(2);
+  form.elements.namedItem("type").value = product.type || "digital";
+  form.elements.namedItem("interval").value = product.interval || "month";
+  form.elements.namedItem("description").value = product.description || "";
+  form.elements.namedItem("active").checked = product.active !== false;
+  form.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function resetProductForm() {
+  const form = document.getElementById("adminProductForm");
+  form.reset();
+  form.elements.namedItem("id").value = "";
+  form.elements.namedItem("active").checked = true;
+}
+
+async function saveProduct(event) {
+  event.preventDefault();
+  const form = event.target;
+  const amount = Number(form.elements.namedItem("price").value);
+  const price = Math.round(amount * 100);
+  if (!Number.isFinite(amount) || amount <= 0 || !Number.isSafeInteger(price)) {
+    showToast("Ingresa un precio válido en dólares.");
+    return;
+  }
+  const body = {
+    name: form.elements.namedItem("name").value,
+    price,
+    type: form.elements.namedItem("type").value,
+    interval: form.elements.namedItem("interval").value,
+    description: form.elements.namedItem("description").value,
+    active: form.elements.namedItem("active").checked
+  };
+  const id = form.elements.namedItem("id").value;
+  try {
+    await api(id ? `/api/products/${encodeURIComponent(id)}` : "/api/products", {
+      method: id ? "PUT" : "POST",
+      body: JSON.stringify(body)
     });
     await loadProducts();
     await showAdminPanel();
-    showToast("Producto actualizado");
+    showToast(id ? "Producto actualizado" : "Producto creado");
   } catch (error) {
-    showToast(`No se pudo actualizar: ${error.message}`);
+    showToast(`No se pudo guardar el producto: ${error.message}`);
+  }
+}
+
+async function moderateResult(resultId, action) {
+  try {
+    await api("/api/admin/results", {
+      method: "PATCH",
+      body: JSON.stringify({ resultId, action })
+    });
+    await Promise.all([loadPlayers(), loadResults()]);
+    await showAdminPanel();
+    showToast(action === "confirm" ? "Resultado confirmado y ranking actualizado." : "Resultado rechazado.");
+  } catch (error) {
+    showToast(`No se pudo moderar el resultado: ${error.message}`);
   }
 }
 
@@ -590,6 +898,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await checkAuth();
   await loadProducts();
   await loadPlayers();
+  await loadTournaments();
 
   // Check for payment success
   const params = new URLSearchParams(window.location.search);

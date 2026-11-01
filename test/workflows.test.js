@@ -4,6 +4,10 @@ import { onRequestPost as register } from "../functions/api/auth/register.js";
 import { onRequestPost as login } from "../functions/api/auth/login.js";
 import { onRequestPost as checkout } from "../functions/api/stripe/checkout.js";
 import { onRequestGet as verifyCheckout } from "../functions/api/stripe/session/[session_id].js";
+import { onRequestPost as createTournament, onRequestGet as listAdminTournaments } from "../functions/api/admin/tournaments.js";
+import { onRequestPut as updateTournament } from "../functions/api/admin/tournaments/[id].js";
+import { onRequestPatch as moderateResult } from "../functions/api/admin/results.js";
+import { onRequestGet as listPublicTournaments } from "../functions/api/tournament/index.js";
 
 function createGitHubMock() {
   const files = new Map();
@@ -97,6 +101,13 @@ test("registration, login, Stripe checkout, and payment reconciliation use the c
     const checkoutResponse = await checkout({ request: checkoutRequest, env });
     assert.equal(checkoutResponse.status, 200);
 
+    const invalidKeyResponse = await checkout({
+      request: checkoutRequest,
+      env: { ...env, STRIPE_SECRET_KEY: "pk_test_not_a_secret" }
+    });
+    assert.equal(invalidKeyResponse.status, 503);
+    assert.match((await invalidKeyResponse.json()).error, /clave secreta sk_test_/);
+
     globalThis.fetch = async (input, options = {}) => {
       const url = new URL(input);
       if (url.hostname === "api.stripe.com" && url.pathname.endsWith("/checkout/sessions/cs_test_session")) {
@@ -140,6 +151,128 @@ test("registration, login, Stripe checkout, and payment reconciliation use the c
     assert.equal(orders.length, 1);
     assert.equal(subscriptions.length, 1);
     assert.equal(users[0].membershipActive, true);
+
+    const adminRequest = (url, method, body) => new Request(url, {
+      method,
+      headers: { "Content-Type": "application/json", Cookie: sessionCookie },
+      ...(body ? { body: JSON.stringify(body) } : {})
+    });
+    const invalidTournamentResponse = await createTournament({
+      request: adminRequest("https://league.example/api/admin/tournaments", "POST", {
+        title: "Bad date",
+        month: "2026-13",
+        levels: ["3.5"],
+        status: "registration"
+      }),
+      env
+    });
+    assert.equal(invalidTournamentResponse.status, 400);
+    const tournamentResponse = await createTournament({
+      request: adminRequest("https://league.example/api/admin/tournaments", "POST", {
+        title: "Test Cup",
+        month: new Date().toISOString().slice(0, 7),
+        levels: ["3.5"],
+        status: "registration",
+        startDate: "",
+        endDate: "",
+        venue: "Aventura",
+        format: "Best of 3"
+      }),
+      env
+    });
+    assert.equal(tournamentResponse.status, 201);
+    const { tournament } = await tournamentResponse.json();
+    github.files.set("players.json", JSON.stringify([
+      { id: "player-a", name: "Player A", level: "3.5" },
+      { id: "player-b", name: "Player B", level: "3.5" }
+    ]));
+    const storedTournaments = JSON.parse(github.files.get("tournaments.json"));
+    storedTournaments[0].entries = [{ playerId: "player-a" }, { playerId: "player-b" }];
+    github.files.set("tournaments.json", JSON.stringify(storedTournaments));
+    const scheduleResponse = await updateTournament({
+      request: adminRequest(`https://league.example/api/admin/tournaments/${tournament.id}`, "PUT", {
+        match: {
+          playerAId: "player-a",
+          playerBId: "player-b",
+          round: "Final",
+          date: "2026-07-12",
+          court: "Court 1",
+          status: "scheduled"
+        }
+      }),
+      env,
+      params: { id: tournament.id }
+    });
+    assert.equal(scheduleResponse.status, 200);
+    const savedMatch = (await scheduleResponse.json()).tournament.matches[0];
+    const invalidMatchUpdate = await updateTournament({
+      request: adminRequest(`https://league.example/api/admin/tournaments/${tournament.id}`, "PUT", {
+        match: {
+          id: savedMatch.id,
+          playerAId: "player-a",
+          playerBId: "player-b",
+          round: "Final",
+          date: "2026-07-12",
+          court: "Court 1",
+          status: "completed",
+          winnerId: "player-b",
+          score: "6-4, 4-6, 10-7"
+        }
+      }),
+      env,
+      params: { id: tournament.id }
+    });
+    assert.equal(invalidMatchUpdate.status, 400);
+    const completedMatchResponse = await updateTournament({
+      request: adminRequest(`https://league.example/api/admin/tournaments/${tournament.id}`, "PUT", {
+        match: {
+          id: savedMatch.id,
+          playerAId: "player-a",
+          playerBId: "player-b",
+          round: "Final",
+          date: "2026-07-12",
+          court: "Court 1",
+          status: "completed",
+          winnerId: "player-b",
+          score: "4-6, 6-4, 7-10"
+        }
+      }),
+      env,
+      params: { id: tournament.id }
+    });
+    assert.equal(completedMatchResponse.status, 200);
+    assert.equal((await completedMatchResponse.json()).tournament.matches.length, 1);
+    const publicTournamentResponse = await listPublicTournaments({ env });
+    const publicData = await publicTournamentResponse.json();
+    assert.equal(publicData.tournaments[0].entries.length, 2);
+    assert.equal(publicData.tournaments[0].matches[0].playerAName, "Player A");
+    const adminTournamentResponse = await listAdminTournaments({
+      request: adminRequest("https://league.example/api/admin/tournaments", "GET"),
+      env
+    });
+    assert.equal(adminTournamentResponse.status, 200);
+
+    github.files.set("results.json", JSON.stringify([{
+      id: "result-test",
+      winnerId: "player-a",
+      loserId: "player-b",
+      status: "disputed"
+    }]));
+    const moderationResponse = await moderateResult({
+      request: adminRequest("https://league.example/api/admin/results", "PATCH", {
+        resultId: "result-test",
+        action: "confirm"
+      }),
+      env
+    });
+    assert.equal(moderationResponse.status, 200);
+    assert.equal(JSON.parse(github.files.get("results.json"))[0].status, "confirmed");
+
+    const unauthorizedResponse = await createTournament({
+      request: new Request("https://league.example/api/admin/tournaments", { method: "POST" }),
+      env
+    });
+    assert.equal(unauthorizedResponse.status, 401);
   } finally {
     globalThis.fetch = originalFetch;
   }

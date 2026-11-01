@@ -4,7 +4,11 @@ export async function onRequestPost(context) {
   const { request, env } = context;
   const userId = await requireAuth(request, env);
   if (!userId) return jsonResponse({ error: "Inicia sesión para continuar" }, 401);
-  if (!env.STRIPE_SECRET_KEY) return jsonResponse({ error: "Falta configurar STRIPE_SECRET_KEY en Cloudflare" }, 503);
+  if (!env.STRIPE_SECRET_KEY || !/^sk_(test|live)_/.test(env.STRIPE_SECRET_KEY)) {
+    return jsonResponse({
+      error: "STRIPE_SECRET_KEY no es válida: usa la clave secreta sk_test_... o sk_live_... de Stripe; una clave pk_ es publicable y no sirve en el servidor."
+    }, 503);
+  }
 
   let body;
   try {

@@ -1,4 +1,4 @@
-import { gRead, gWrite, requireAuth, jsonResponse } from "../_helpers.js";
+import { gRead, gWrite, requireAuth, validateMatchScore, jsonResponse } from "../_helpers.js";
 
 export async function onRequestGet(context) {
   const { env } = context;
@@ -33,10 +33,11 @@ export async function onRequestPost(context) {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     return jsonResponse({ error: "Resultado inválido" }, 400);
   }
+  const score = typeof body.score === "string" ? body.score.trim() : "";
+  const scoreResult = validateMatchScore(score);
   if (typeof body.winnerId !== "string" || typeof body.loserId !== "string" ||
-      body.winnerId === body.loserId || typeof body.score !== "string" ||
-      !/^\d{1,2}-\d{1,2}(,\s*\d{1,2}-\d{1,2}){1,2}$/.test(body.score.trim())) {
-    return jsonResponse({ error: "Selecciona dos jugadores distintos e ingresa el marcador" }, 400);
+      body.winnerId === body.loserId || !scoreResult) {
+    return jsonResponse({ error: "Ingresa un marcador válido al mejor de 3 sets (por ejemplo 6-4, 4-6, 10-7)." }, 400);
   }
 
   const [players, results] = await Promise.all([
@@ -46,6 +47,9 @@ export async function onRequestPost(context) {
   const winner = players.find(player => player.id === body.winnerId);
   const loser = players.find(player => player.id === body.loserId);
   if (!winner || !loser) return jsonResponse({ error: "Jugador no encontrado" }, 404);
+  if (scoreResult.winnerIndex !== 0) {
+    return jsonResponse({ error: "El ganador seleccionado debe coincidir con el marcador ingresado." }, 400);
+  }
   if (![winner.userId, loser.userId].includes(userId)) {
     return jsonResponse({ error: "Solo los participantes pueden registrar este resultado" }, 403);
   }
@@ -61,7 +65,7 @@ export async function onRequestPost(context) {
     id: `result-${crypto.randomUUID()}`,
     winnerId: winner.id,
     loserId: loser.id,
-    score: body.score.trim(),
+    score,
     playedAt: typeof body.playedAt === "string" ? body.playedAt : new Date().toISOString(),
     reportedBy: userId,
     status: "pending",

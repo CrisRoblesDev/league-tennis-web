@@ -33,6 +33,14 @@ export async function onRequestPut(context) {
     if (typeof updates.description !== "string") return jsonResponse({ error: "Descripción inválida" }, 400);
     products[idx].description = updates.description.trim();
   }
+  if (updates.type !== undefined) {
+    if (!["digital", "subscription"].includes(updates.type)) return jsonResponse({ error: "Tipo inválido" }, 400);
+    products[idx].type = updates.type;
+  }
+  if (updates.interval !== undefined) {
+    if (!["month", "year"].includes(updates.interval)) return jsonResponse({ error: "Intervalo inválido" }, 400);
+    products[idx].interval = updates.interval;
+  }
   if (updates.active !== undefined) {
     if (typeof updates.active !== "boolean") return jsonResponse({ error: "Estado inválido" }, 400);
     products[idx].active = updates.active;

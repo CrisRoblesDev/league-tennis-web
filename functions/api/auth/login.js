@@ -21,8 +21,16 @@ export async function onRequestPost(context) {
     return jsonResponse({ error: "Credenciales incorrectas" }, 401);
   }
 
+  let shouldPersist = false;
   if (!user.password.startsWith("pbkdf2$")) {
     user.password = await hashPw(password);
+    shouldPersist = true;
+  }
+  if (env.ADMIN_EMAIL && user.email.toLowerCase() === env.ADMIN_EMAIL.trim().toLowerCase() && user.role !== "admin") {
+    user.role = "admin";
+    shouldPersist = true;
+  }
+  if (shouldPersist) {
     await gWrite(env, "users", users);
   }
 

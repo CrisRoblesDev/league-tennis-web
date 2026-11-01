@@ -69,7 +69,9 @@ async function updateSubscription(env, stripeSubscription) {
 }
 
 export async function onRequestPost({ request, env }) {
-  if (!env.STRIPE_WEBHOOK_SECRET) return jsonResponse({ error: "Falta configurar STRIPE_WEBHOOK_SECRET" }, 503);
+  if (!env.STRIPE_WEBHOOK_SECRET || !env.STRIPE_WEBHOOK_SECRET.startsWith("whsec_")) {
+    return jsonResponse({ error: "STRIPE_WEBHOOK_SECRET debe ser el secreto whsec_... del endpoint de Stripe." }, 503);
+  }
   const signature = request.headers.get("Stripe-Signature");
   if (!signature) return jsonResponse({ error: "Firma Stripe requerida" }, 400);
   const payload = await request.text();

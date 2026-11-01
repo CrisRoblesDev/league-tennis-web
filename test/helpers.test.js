@@ -1,6 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { getSession, hashPw, rankPlayers, requireAuth, setSessionResp, verifyPw } from "../functions/_helpers.js";
+import {
+  getSession,
+  hashPw,
+  rankPlayers,
+  requireAuth,
+  setSessionResp,
+  validateMatchScore,
+  verifyPw
+} from "../functions/_helpers.js";
 
 const env = { SESSION_SECRET: "test-session-secret-with-more-than-32-characters" };
 
@@ -26,7 +34,7 @@ test("session cookie is signed, expires, and cannot be tampered with", async () 
   assert.equal((await getSession(signedRequest, env)).userId, "user-1");
 
   const [payload, signature] = cookie.slice("session=".length).split(".");
-  const tampered = `${payload}.${signature.slice(0, -1)}${signature.endsWith("a") ? "b" : "a"}`;
+  const tampered = `${payload}.${signature[0] === "a" ? "b" : "a"}${signature.slice(1)}`;
   const tamperedRequest = new Request(request.url, {
     headers: { Cookie: `session=${tampered}` }
   });
@@ -48,4 +56,16 @@ test("ranking awards points only for confirmed results", () => {
     ["p2", 0, 1]
   ]);
   assert.deepEqual(players.map(player => player.points), [0, 0]);
+});
+
+test("match scores must be complete and the selected winner must win two sets", () => {
+  assert.deepEqual(validateMatchScore("6-4, 4-6, 10-7"), {
+    setWinners: [0, 1, 0],
+    winnerIndex: 0
+  });
+  assert.equal(validateMatchScore("7-5, 7-6")?.winnerIndex, 0);
+  assert.equal(validateMatchScore("6-4, 6-2")?.winnerIndex, 0);
+  assert.equal(validateMatchScore("6-4, 6-2, 10-7"), null);
+  assert.equal(validateMatchScore("6-4, 4-6, 10-9"), null);
+  assert.equal(validateMatchScore("8-6, 3-6, 10-7"), null);
 });

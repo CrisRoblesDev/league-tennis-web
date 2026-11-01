@@ -44,9 +44,9 @@
   </div>
   <div class="hero-card">
     <span class="tag">TEMPORADA ACTIVA</span>
-    <h3>Campeonato mensual</h3>
-    <div class="hero-date">Cada mes</div>
-    <p>Inscripción por nivel · Eliminación directa · Cuadro y resultados publicados en la plataforma.</p>
+    <h3 id="heroTournamentTitle">Campeonato mensual</h3>
+    <div class="hero-date" id="heroTournamentDate">Cada mes</div>
+    <p id="heroTournamentSummary">Inscripción por nivel · Eliminación directa · Cuadro y resultados publicados en la plataforma.</p>
     <button class="btn btn-primary" onclick="joinTournament()">Inscribirse al torneo</button>
   </div>
 </section>
@@ -56,10 +56,11 @@
     <div class="section-head">
       <div>
         <h2>Campeonato mensual</h2>
-        <p class="section-sub">Inscripciones por nivel · Cuadro de eliminación directa · Seguimiento de resultados.</p>
+        <p class="section-sub">Consulta torneos, jugadores inscritos, rondas y marcadores publicados.</p>
       </div>
-      <span class="tag">4 campeonatos principales al año + torneo mensual</span>
+      <span class="tag">Calendario oficial</span>
     </div>
+    <div id="tournamentsList" class="grid grid-3"></div>
     <div class="grid grid-3">
       <article class="card">
         <span class="tag">Inscripciones</span>
@@ -188,12 +189,9 @@
           <li>Soporte prioritario</li>
         </ul>
       </article>
-      <article class="card membership-card">
-        <h3>Plan mensual</h3>
-        <div class="price-big">$9.99<span class="price-period">/mes</span></div>
-        <p class="muted">Cancela cuando quieras. Sin compromisos.</p>
-        <button class="btn btn-primary btn-full" onclick="checkout('member-1')">Suscribirse ahora</button>
-        <p class="muted small">Pago seguro con Stripe (claves de prueba).</p>
+      <article class="card membership-card" id="membershipPlan">
+        <h3>Planes de membresía</h3>
+        <p class="muted">Cargando planes disponibles...</p>
       </article>
     </div>
   </section>
@@ -201,7 +199,7 @@
 
 <footer class="footer">
   <div><b>LEAGUE TENNIS AVENTURA</b><br>Miami, Florida · Official league platform</div>
-  <div>Prototipo de presentación · Las cuentas y los pagos reales requieren implementación.</div>
+  <div>Resultados sujetos a confirmación · Pagos seguros procesados por Stripe.</div>
 </footer>
 
 <!-- LOGIN MODAL -->
@@ -258,7 +256,10 @@
     <form id="resultForm">
       <label>Jugador ganador<select name="winnerId" required><option value="">Seleccionar</option></select></label>
       <label>Rival<select name="loserId" required><option value="">Seleccionar</option></select></label>
-      <label>Marcador<input name="score" required placeholder="6-4, 3-6, 10-7"></label>
+      <label class="full">Marcador desde el punto de vista del ganador
+        <input name="score" required placeholder="6-4, 4-6, 10-7" aria-describedby="scoreHelp">
+        <small id="scoreHelp" class="muted">Mejor de 3 sets; separa cada set con coma. Ejemplo: 6-4, 4-6, 10-7.</small>
+      </label>
       <label>Fecha<input name="date" type="date" required></label>
       <button class="btn btn-primary full">Guardar resultado</button>
     </form>
