@@ -1,3 +1,6 @@
 name = "league-tennis-web"
 pages_build_output_dir = "public"
 compatibility_date = "2026-11-01"
+
+[assets]
+directory = "./public"
