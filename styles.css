@@ -144,6 +144,20 @@ form .full { grid-column: 1 / -1; }
 .card-element { border: 1px solid #d8dee4; border-radius: 8px; padding: 12px; background: var(--white); grid-column: 1 / -1; }
 #stripeStatus { margin-top: 12px; text-align: center; }
 
+/* AUTH & ADMIN */
+.user-name { color: #e8edf2; font-size: 13px; font-weight: 700; }
+.btn-admin { background: var(--red); color: var(--white); }
+.btn-admin:hover { background: #b84a40; }
+
+.notice-bar { display: none; padding: 12px; border-radius: 8px; font-size: 13px; }
+.notice-bar.show { display: block; }
+
+/* ADMIN STATS */
+.admin-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: var(--white); border: 1px solid var(--line); border-radius: 8px; padding: 16px; text-align: center; }
+.stat-number { font-size: 24px; font-weight: 900; color: var(--navy); }
+.stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
 /* FOOTER */
 .footer { background: var(--navy); color: #dbe4eb; padding: 32px 5%; font-size: 12px; display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-top: 60px; }
 

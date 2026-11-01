@@ -21,5 +21,12 @@ Thumbs.db
 *.log
 npm-debug.log*
 
-# Local data
+# Local data (generated at runtime)
 data/transactions.json
+data/orders.json
+data/users.json
+data/players.json
+data/subscriptions.json
+data/results.json
+data/products.json
+data/site.json

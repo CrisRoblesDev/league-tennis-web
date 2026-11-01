@@ -20,11 +20,13 @@
     <a href="#ranking">RANKING</a>
     <a href="#desafios">DESAFÍOS</a>
     <a href="#tienda">TIENDA</a>
-    <a href="#libros">LIBROS</a>
     <a href="#membresia">MEMBRESÍA</a>
   </nav>
   <div class="header-actions">
-    <button class="btn btn-sm" onclick="openModal('loginModal')">Mi cuenta</button>
+    <div id="authButtons">
+      <button class="btn btn-sm" onclick="openModal('loginModal')">Iniciar sesión</button>
+      <button class="btn btn-sm btn-primary" onclick="openModal('registerModal')">Registrarse</button>
+    </div>
     <button class="hamburger" id="hamburger" aria-label="Menu" onclick="toggleMenu()">
       <span></span><span></span><span></span>
     </button>
@@ -46,7 +48,7 @@
     <h3>Campeonato mensual</h3>
     <div class="hero-date">Cada mes</div>
     <p>Inscripción por nivel · Eliminación directa · Cuadro y resultados publicados en la plataforma.</p>
-    <button class="btn btn-primary" onclick="openModal('tournamentModal')">Solicitar inscripción</button>
+    <button class="btn btn-primary" onclick="joinTournament()">Inscribirse al torneo</button>
   </div>
 </section>
 
@@ -66,7 +68,7 @@
         <p class="muted">Elige tu nivel y confirma tu participación. El administrador publicará el cuadro y las fechas de cada ronda.</p>
         <div class="big-number">6 niveles</div>
         <p class="muted">2.5 · 3.0 · 3.5 · 4.0 · 4.5 · 5.0</p>
-        <button class="btn btn-dark" onclick="openModal('tournamentModal')">Solicitar inscripción</button>
+        <button class="btn btn-dark" onclick="joinTournament()">Inscribirse</button>
       </article>
       <article class="card">
         <span class="tag tag-blue">Formato</span>
@@ -99,21 +101,18 @@
       <button class="btn btn-dark" onclick="openModal('resultModal')">+ Registrar resultado</button>
     </div>
     <div class="filters">
-      <select id="levelFilter" onchange="renderPlayers()">
+      <select id="levelFilter">
         <option value="">Todos los niveles</option>
         <option>2.5</option><option>3.0</option><option>3.5</option><option>4.0</option><option>4.5</option><option>5.0</option>
       </select>
-      <select id="zoneFilter" onchange="renderPlayers()">
+      <select id="zoneFilter">
         <option value="">Todas las zonas</option>
         <option>Aventura / Sunny Isles</option>
         <option>North Miami / Miami Gardens</option>
         <option>Downtown / Brickell</option>
         <option>Kendall / Doral</option>
       </select>
-      <input id="searchPlayer" placeholder="Buscar jugador..." oninput="renderPlayers()">
-    </div>
-    <div class="notice-bar">
-      <b>Vista previa del ranking.</b> Los datos de ejemplo se reemplazarán por los puntos oficiales cuando se conecte la base de datos.
+      <input id="searchPlayer" placeholder="Buscar jugador...">
     </div>
     <div class="table-wrap">
       <table>
@@ -146,7 +145,7 @@
       <article class="card">
         <span class="tag">Resultado confirmado</span>
         <h3>Validación de resultados</h3>
-        <p class="muted">El jugador registra el marcador y su rival lo confirma. Si hay desacuerdo, el administrador revisa el resultado.</p>
+        <p class="muted">El jugador registra el marcador y su rival lo confirma. Si hay desacuerdo, el administrador revisa.</p>
         <button class="btn btn-dark" onclick="openModal('resultModal')">Registrar marcador</button>
       </article>
     </div>
@@ -154,10 +153,7 @@
 
   <section class="section">
     <div class="section-head">
-      <div>
-        <h2>Cómo funciona</h2>
-        <p class="section-sub">Una sola plataforma para gestionar tu perfil, ranking, campeonatos y desafíos.</p>
-      </div>
+      <div><h2>Cómo funciona</h2><p class="section-sub">Una sola plataforma para gestionar tu perfil, ranking, campeonatos y desafíos.</p></div>
     </div>
     <div class="step-list">
       <div class="step"><strong>01 · Crea tu perfil</strong><span class="muted">Agrega foto, nivel de juego y zona de Miami.</span></div>
@@ -168,67 +164,11 @@
 
   <section class="section" id="tienda">
     <div class="section-head">
-      <div>
-        <h2>Tienda y accesorios</h2>
-        <p class="section-sub">Equipamiento seleccionado para jugadores de League Tennis Aventura.</p>
-      </div>
+      <div><h2>Tienda y accesorios</h2><p class="section-sub">Equipamiento seleccionado para jugadores de League Tennis Aventura.</p></div>
       <span class="tag tag-blue">Tienda de tenis</span>
     </div>
-    <div class="grid grid-3">
-      <article class="card store-card">
-        <div class="store-cover" style="background:linear-gradient(145deg,#142c43,#536e82)">RAQUETAS DE TENIS</div>
-        <h3>Raquetas</h3><p class="muted">Raquetas para entrenamiento y competencia.</p>
-        <div class="price">Ver catálogo</div><button class="btn btn-dark" onclick="showStoreNotice()">Ver productos</button>
-      </article>
-      <article class="card store-card">
-        <div class="store-cover" style="background:linear-gradient(145deg,#34542c,#91aa67)">BOLSOS Y MOCHILAS</div>
-        <h3>Bolsos y mochilas</h3><p class="muted">Bolsos para raquetas y accesorios.</p>
-        <div class="price">Ver catálogo</div><button class="btn btn-dark" onclick="showStoreNotice()">Ver productos</button>
-      </article>
-      <article class="card store-card">
-        <div class="store-cover" style="background:linear-gradient(145deg,#34485b,#9aa7b0)">GRIPS Y OVERGRIPS</div>
-        <h3>Grips y overgrips</h3><p class="muted">Accesorios para mejorar el agarre.</p>
-        <div class="price">Ver catálogo</div><button class="btn btn-dark" onclick="showStoreNotice()">Ver productos</button>
-      </article>
-      <article class="card store-card">
-        <div class="store-cover" style="background:linear-gradient(145deg,#7b4d25,#c99a58)">PELOTAS DE TENIS</div>
-        <h3>Pelotas y entrenamiento</h3><p class="muted">Pelotas y materiales para practicar.</p>
-        <div class="price">Ver catálogo</div><button class="btn btn-dark" onclick="showStoreNotice()">Ver productos</button>
-      </article>
-      <article class="card store-card">
-        <div class="store-cover" style="background:linear-gradient(145deg,#1b3147,#7c8c9b)">ROPA DE TENIS</div>
-        <h3>Ropa deportiva</h3><p class="muted">Poleras, shorts, gorras y ropa para la cancha.</p>
-        <div class="price">Ver catálogo</div><button class="btn btn-dark" onclick="showStoreNotice()">Ver productos</button>
-      </article>
-      <article class="card store-card">
-        <div class="store-cover" style="background:linear-gradient(145deg,#2d4c3d,#91b3a0)">ACCESORIOS DEPORTIVOS</div>
-        <h3>Accesorios</h3><p class="muted">Muñequeras, antivibradores, botellas y más.</p>
-        <div class="price">Ver catálogo</div><button class="btn btn-dark" onclick="showStoreNotice()">Ver productos</button>
-      </article>
-    </div>
-  </section>
-
-  <section class="section" id="libros">
-    <div class="section-head">
-      <div><h2>Biblioteca digital</h2><p class="section-sub">Libros y guías digitales que el administrador podrá publicar para venta.</p></div>
-      <span class="tag tag-blue">Tienda digital</span>
-    </div>
-    <div class="grid grid-3">
-      <article class="card book-card">
-        <div class="book-cover">TENNIS STRATEGY</div>
-        <h3>Estrategia para competir</h3><p class="muted">Guía digital</p>
-        <div class="price">$15</div><button class="btn btn-dark" onclick="buyBook('Estrategia para competir', 1500)">Comprar</button>
-      </article>
-      <article class="card book-card">
-        <div class="book-cover" style="background:linear-gradient(145deg,#35552c,#8aa35c)">PRACTICE SMARTER</div>
-        <h3>Entrenamiento inteligente</h3><p class="muted">Guía digital</p>
-        <div class="price">$10</div><button class="btn btn-dark" onclick="buyBook('Entrenamiento inteligente', 1000)">Comprar</button>
-      </article>
-      <article class="card book-card membership-card">
-        <span class="tag">Membresía</span>
-        <h3>League Member</h3><p class="muted">Acceso premium a la liga · Suscripción mensual</p>
-        <div class="price">$9.99<span class="price-period">/mes</span></div><button class="btn btn-primary" onclick="subscribeMembership()">Suscribirse</button>
-      </article>
+    <div class="grid grid-3" id="productsList">
+      <!-- Products loaded from API -->
     </div>
   </section>
 
@@ -247,11 +187,11 @@
           <li>Soporte prioritario</li>
         </ul>
       </article>
-      <article class="card">
+      <article class="card membership-card">
         <h3>Plan mensual</h3>
         <div class="price-big">$9.99<span class="price-period">/mes</span></div>
         <p class="muted">Cancela cuando quieras. Sin compromisos.</p>
-        <button class="btn btn-primary btn-full" onclick="subscribeMembership()">Suscribirse ahora</button>
+        <button class="btn btn-primary btn-full" onclick="checkout('member-1')">Suscribirse ahora</button>
         <p class="muted small">Pago seguro con Stripe (claves de prueba).</p>
       </article>
     </div>
@@ -263,54 +203,60 @@
   <div>Prototipo de presentación · Las cuentas y los pagos reales requieren implementación.</div>
 </footer>
 
-<!-- MODALS -->
+<!-- LOGIN MODAL -->
 <div class="modal" id="loginModal">
   <div class="modal-box">
-    <div class="modal-head"><h2>Mi cuenta</h2><button class="close" onclick="closeModal('loginModal')">×</button></div>
-    <p>El acceso con contraseña estará disponible al conectar el sistema de usuarios.</p>
-    <button class="btn btn-dark" onclick="closeModal('loginModal');openModal('registerModal')">Crear cuenta</button>
+    <div class="modal-head"><h2>Iniciar sesión</h2><button class="close" onclick="closeModal('loginModal')">×</button></div>
+    <form id="loginForm">
+      <label class="full">Email<input name="email" type="email" required placeholder="tu@email.com"></label>
+      <label class="full">Contraseña<input name="password" type="password" required placeholder="Tu contraseña"></label>
+      <button class="btn btn-primary full" type="submit">Iniciar sesión</button>
+    </form>
+    <div id="loginNotice" class="notice-bar" style="margin-top:12px"></div>
+    <p class="muted" style="margin-top:12px">No tienes cuenta? <a href="#" onclick="closeModal('loginModal');openModal('registerModal')">Regístrate</a></p>
   </div>
 </div>
 
+<!-- REGISTER MODAL -->
 <div class="modal" id="registerModal">
   <div class="modal-box">
     <div class="modal-head">
       <div><span class="eyebrow">League Tennis Aventura</span><h2>Crear cuenta</h2></div>
       <button class="close" onclick="closeModal('registerModal')">×</button>
     </div>
-    <div id="notice"></div>
+    <div id="registerNotice" class="notice-bar"></div>
     <form id="registerForm">
       <label>Nombre completo<input name="name" required placeholder="Tu nombre"></label>
       <label>Email<input name="email" type="email" required placeholder="tu@email.com"></label>
-      <label>Nivel de tenis<select name="level" required><option value="">Seleccionar</option><option>2.5</option><option>3.0</option><option>3.5</option><option>4.0</option><option>4.5</option><option>5.0</option></select></label>
-      <label>Zona de Miami<select name="zone" required><option value="">Seleccionar</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
-      <label class="full">Foto de perfil<input type="file" id="profilePhoto" accept="image/*"></label>
-      <label class="full"><span><input type="checkbox" required style="min-width:0"> Acepto las reglas de la liga.</span></label>
+      <label>Contraseña<input name="password" type="password" required placeholder="Mínimo 6 caracteres"></label>
+      <label>Nivel de tenis<select name="level"><option value="">Opcional</option><option>2.5</option><option>3.0</option><option>3.5</option><option>4.0</option><option>4.5</option><option>5.0</option></select></label>
+      <label>Zona de Miami<select name="zone"><option value="">Opcional</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
+      <label class="full"><span><input type="checkbox" required> Acepto las reglas de la liga.</span></label>
+      <button class="btn btn-primary full" type="submit">Crear cuenta</button>
+    </form>
+  </div>
+</div>
+
+<!-- CREATE PLAYER MODAL -->
+<div class="modal" id="createPlayerModal">
+  <div class="modal-box">
+    <div class="modal-head"><h2>Crear perfil de jugador</h2><button class="close" onclick="closeModal('createPlayerModal')">×</button></div>
+    <form id="playerForm">
+      <label class="full">Nombre<input name="name" required placeholder="Nombre para mostrar"></label>
+      <label>Nivel<select name="level" required><option value="">Seleccionar</option><option>2.5</option><option>3.0</option><option>3.5</option><option>4.0</option><option>4.5</option><option>5.0</option></select></label>
+      <label>Zona<select name="zone" required><option value="">Seleccionar</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
       <button class="btn btn-primary full" type="submit">Crear perfil</button>
     </form>
   </div>
 </div>
 
-<div class="modal" id="tournamentModal">
-  <div class="modal-box">
-    <div class="modal-head"><h2>Inscripción al torneo mensual</h2><button class="close" onclick="closeModal('tournamentModal')">×</button></div>
-    <p>Elige tu nivel. La inscripción quedará como solicitud de demostración.</p>
-    <form id="tournamentForm">
-      <label>Nombre<input name="name" required></label>
-      <label>Nivel<select name="level" required><option value="">Seleccionar</option><option>2.5</option><option>3.0</option><option>3.5</option><option>4.0</option><option>4.5</option><option>5.0</option></select></label>
-      <label class="full">Email<input name="email" type="email" required></label>
-      <button class="btn btn-primary full">Enviar solicitud</button>
-    </form>
-    <div id="tournamentNotice" class="muted"></div>
-  </div>
-</div>
-
+<!-- RESULT MODAL -->
 <div class="modal" id="resultModal">
   <div class="modal-box">
     <div class="modal-head"><h2>Registrar resultado</h2><button class="close" onclick="closeModal('resultModal')">×</button></div>
     <form id="resultForm">
-      <label>Jugador ganador<input name="winner" required></label>
-      <label>Rival<input name="opponent" required></label>
+      <label>Jugador ganador<input name="winner" required placeholder="Nombre"></label>
+      <label>Rival<input name="opponent" required placeholder="Nombre"></label>
       <label>Marcador<input name="score" required placeholder="6-4, 3-6, 10-7"></label>
       <label>Fecha<input name="date" type="date" required></label>
       <button class="btn btn-primary full">Guardar resultado</button>
@@ -319,6 +265,7 @@
   </div>
 </div>
 
+<!-- CHALLENGE MODAL -->
 <div class="modal" id="challengeModal">
   <div class="modal-box">
     <div class="modal-head"><h2>Crear desafío semanal</h2><button class="close" onclick="closeModal('challengeModal')">×</button></div>
@@ -333,17 +280,11 @@
   </div>
 </div>
 
-<div class="modal" id="stripeModal">
-  <div class="modal-box">
-    <div class="modal-head"><h2>Pago seguro con Stripe</h2><button class="close" onclick="closeModal('stripeModal')">×</button></div>
-    <div id="stripeProductInfo" class="muted"></div>
-    <form id="stripeCheckoutForm">
-      <label>Email<input id="stripeEmail" type="email" required placeholder="tu@email.com"></label>
-      <label class="full">Nombre<input id="stripeName" required placeholder="Tu nombre"></label>
-      <div id="cardElement" class="card-element"></div>
-      <button class="btn btn-primary full" type="submit" id="stripePayBtn">Pagar</button>
-    </form>
-    <div id="stripeStatus" class="muted"></div>
+<!-- ADMIN MODAL -->
+<div class="modal" id="adminModal">
+  <div class="modal-box modal-wide">
+    <div class="modal-head"><h2>Panel de administración</h2><button class="close" onclick="closeModal('adminModal')">×</button></div>
+    <div id="adminContent"></div>
   </div>
 </div>
 
