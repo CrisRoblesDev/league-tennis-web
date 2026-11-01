@@ -8,6 +8,7 @@ import { onRequestPost as createTournament, onRequestGet as listAdminTournaments
 import { onRequestPut as updateTournament } from "../functions/api/admin/tournaments/[id].js";
 import { onRequestPatch as moderateResult } from "../functions/api/admin/results.js";
 import { onRequestGet as listPublicTournaments } from "../functions/api/tournament/index.js";
+import { onRequestPost as updateAdminUser } from "../functions/api/admin/users.js";
 
 function createGitHubMock() {
   const files = new Map();
@@ -106,7 +107,16 @@ test("registration, login, Stripe checkout, and payment reconciliation use the c
       env: { ...env, STRIPE_SECRET_KEY: "pk_test_not_a_secret" }
     });
     assert.equal(invalidKeyResponse.status, 503);
-    assert.match((await invalidKeyResponse.json()).error, /clave secreta sk_test_/);
+    assert.match((await invalidKeyResponse.json()).error, /clave secreta sandbox sk_test_/);
+    const restrictedSandboxResponse = await checkout({
+      request: new Request(checkoutRequest.url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: sessionCookie },
+        body: JSON.stringify({ productId: "member-1" })
+      }),
+      env: { ...env, STRIPE_SECRET_KEY: "rk_test_restricted_dummy" }
+    });
+    assert.equal(restrictedSandboxResponse.status, 200);
 
     globalThis.fetch = async (input, options = {}) => {
       const url = new URL(input);
@@ -157,6 +167,28 @@ test("registration, login, Stripe checkout, and payment reconciliation use the c
       headers: { "Content-Type": "application/json", Cookie: sessionCookie },
       ...(body ? { body: JSON.stringify(body) } : {})
     });
+    const adminUserUpdate = await updateAdminUser({
+      request: adminRequest("https://league.example/api/admin/users", "POST", {
+        userId: createdUser.user.id,
+        updates: {
+          role: "admin",
+          level: "4.0",
+          zone: "Downtown / Brickell",
+          membershipActive: true
+        }
+      }),
+      env
+    });
+    assert.equal(adminUserUpdate.status, 200);
+    const selfDemotion = await updateAdminUser({
+      request: adminRequest("https://league.example/api/admin/users", "POST", {
+        userId: createdUser.user.id,
+        updates: { role: "user" }
+      }),
+      env
+    });
+    assert.equal(selfDemotion.status, 409);
+
     const invalidTournamentResponse = await createTournament({
       request: adminRequest("https://league.example/api/admin/tournaments", "POST", {
         title: "Bad date",

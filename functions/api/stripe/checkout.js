@@ -4,9 +4,10 @@ export async function onRequestPost(context) {
   const { request, env } = context;
   const userId = await requireAuth(request, env);
   if (!userId) return jsonResponse({ error: "Inicia sesión para continuar" }, 401);
-  if (!env.STRIPE_SECRET_KEY || !/^sk_(test|live)_/.test(env.STRIPE_SECRET_KEY)) {
+  const stripeSecretKey = typeof env.STRIPE_SECRET_KEY === "string" ? env.STRIPE_SECRET_KEY : "";
+  if (!/^(sk|rk)_(test|live)_/.test(stripeSecretKey)) {
     return jsonResponse({
-      error: "STRIPE_SECRET_KEY no es válida: usa la clave secreta sk_test_... o sk_live_... de Stripe; una clave pk_ es publicable y no sirve en el servidor."
+      error: "STRIPE_SECRET_KEY no es válida. Para probar usa la clave secreta sandbox sk_test_... (o la restringida rk_test_...); no uses la clave publicable pk_test_.... Configúrala como secreto de runtime en Cloudflare Pages y vuelve a desplegar."
     }, 503);
   }
 

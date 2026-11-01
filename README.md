@@ -21,7 +21,7 @@ Cloudflare Pages Functions lee `.dev.vars` durante el desarrollo local; no carga
 | `GITHUB_BRANCH` | Rama de datos (por defecto `main`) | Variable |
 | `SESSION_SECRET` | Firma de cookies de sesión; usar al menos 32 caracteres aleatorios | Secreto |
 | `ADMIN_EMAIL` | Email que recibe rol de administración al registrarse o iniciar sesión | Variable |
-| `STRIPE_SECRET_KEY` | Stripe Checkout del servidor (usar `sk_test_...` para pruebas; nunca `pk_...`) | Secreto |
+| `STRIPE_SECRET_KEY` | Stripe Checkout del servidor (sandbox/pruebas: `sk_test_...` o restringida `rk_test_...`; nunca `pk_...`) | Secreto |
 | `STRIPE_WEBHOOK_SECRET` | Secreto de firma del endpoint webhook (`whsec_...`) | Secreto |
 
 El token de GitHub debe tener permisos de lectura y escritura de contenido únicamente en `CrisRoblesDev/league-tennis-web`. Ese repositorio debe permitir crear/actualizar archivos dentro de `data/`; los archivos JSON se inicializan cuando se usan por primera vez, y el catálogo tiene productos de demostración si `data/products.json` todavía no existe. Cada escritura genera un commit en la rama `master`; para evitar que los cambios de datos disparen despliegues, configura el filtro de rutas de Cloudflare Pages para ignorar `data/**` o migra los datos a D1.
@@ -42,7 +42,7 @@ No pegues claves secretas en el chat ni en archivos versionados. Las claves de p
 - Registro con email y contraseña; contraseñas nuevas usan PBKDF2-HMAC-SHA-256 con 100.000 iteraciones, el máximo admitido por el runtime de Cloudflare Workers. Las cuentas con hashes anteriores compatibles se actualizan al iniciar sesión.
 - Sesiones firmadas, con caducidad y cookie HttpOnly.
 - Compra de productos y suscripciones mediante Stripe Checkout; el servidor verifica la sesión de Stripe y el webhook mantiene los estados de suscripción.
-- El panel de administración gestiona torneos, niveles, fechas, inscripciones, partidos, productos/suscripciones, pedidos y usuarios. Los resultados pendientes o disputados se pueden confirmar o rechazar.
+- El panel de administración tiene accesos rápidos por sección y gestiona torneos, niveles, fechas, inscripciones, partidos, productos/suscripciones, historial de pedidos y usuarios (rol, nivel, zona y membresía). Protege contra quitar el último administrador. Los resultados pendientes o disputados se pueden confirmar o rechazar.
 - La página principal publica el calendario, inscritos y partidos desde los datos guardados; los planes y productos también se cargan del catálogo administrable.
 - Inscripción mensual, publicación/aceptación de desafíos y registro/confirmación de resultados. Los marcadores se validan como partidos al mejor de tres sets (incluye super tie-break) y el ranking suma puntos cuando el rival o un administrador confirma el resultado.
 

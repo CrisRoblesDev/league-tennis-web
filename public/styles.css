@@ -161,6 +161,12 @@ form .full { grid-column: 1 / -1; }
 .admin-form-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .admin-records { margin-bottom: 22px; }
 .admin-record { min-width: 0; }
+.admin-nav { display: flex; gap: 8px; overflow-x: auto; position: sticky; top: 0; z-index: 3; background: var(--white); padding: 10px 0; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+.admin-nav button { flex: 0 0 auto; border: 1px solid var(--line); border-radius: 20px; padding: 8px 12px; background: #f5f7f8; color: var(--navy); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.admin-nav button:hover { background: var(--green); color: var(--white); }
+.admin-section { scroll-margin-top: 60px; margin: 20px 0 28px; }
+.admin-search { max-width: 460px; margin: 12px 0; }
+.admin-search input { width: 100%; }
 .admin-record-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .admin-match-form { border-top: 1px solid var(--line); padding-top: 12px; }
 .admin-match-form .full { grid-column: 1 / -1; }

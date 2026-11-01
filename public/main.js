@@ -9,6 +9,7 @@ let products = [];
 let matchResults = [];
 let leagueChallenges = [];
 let tournaments = [];
+let adminUsers = [];
 
 // ============ API HELPER ============
 async function api(endpoint, options = {}) {
@@ -179,6 +180,61 @@ async function checkout(productId) {
     window.location.href = data.url;
   } catch (error) {
     showToast(`No se pudo iniciar el pago: ${error.message}`);
+  }
+}
+
+function filterAdminUsers() {
+  const query = document.getElementById("adminUserSearch").value.trim().toLowerCase();
+  document.querySelectorAll("#adminUsersBody tr").forEach(row => {
+    row.hidden = !row.textContent.toLowerCase().includes(query);
+  });
+}
+
+function editAdminUser(userId) {
+  const user = adminUsers.find(item => item.id === userId);
+  if (!user) return;
+  const form = document.getElementById("adminUserForm");
+  form.elements.namedItem("userId").value = user.id;
+  form.elements.namedItem("identity").value = `${user.name} · ${user.email}`;
+  form.elements.namedItem("role").value = user.role || "user";
+  form.elements.namedItem("level").value = user.level || "";
+  form.elements.namedItem("zone").value = user.zone || "";
+  form.elements.namedItem("membershipActive").checked = user.membershipActive === true;
+  document.getElementById("adminUserSelection").textContent = `Editando: ${user.name}`;
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function resetAdminUserForm() {
+  const form = document.getElementById("adminUserForm");
+  form.reset();
+  form.elements.namedItem("userId").value = "";
+  form.elements.namedItem("identity").value = "";
+  document.getElementById("adminUserSelection").textContent = "Selecciona un usuario en la tabla para editarlo.";
+}
+
+async function saveAdminUser(event) {
+  event.preventDefault();
+  const form = event.target;
+  const userId = form.elements.namedItem("userId").value;
+  if (!userId) {
+    showToast("Selecciona un usuario de la tabla antes de guardar.");
+    return;
+  }
+  const updates = {
+    role: form.elements.namedItem("role").value,
+    level: form.elements.namedItem("level").value,
+    zone: form.elements.namedItem("zone").value,
+    membershipActive: form.elements.namedItem("membershipActive").checked
+  };
+  try {
+    await api("/api/admin/users", {
+      method: "POST",
+      body: JSON.stringify({ userId, updates })
+    });
+    await showAdminPanel();
+    showToast("Usuario actualizado.");
+  } catch (error) {
+    showToast(`No se pudo actualizar el usuario: ${error.message}`);
   }
 }
 
@@ -522,6 +578,7 @@ async function showAdminPanel() {
   products = allProducts;
   tournaments = allTournaments;
   matchResults = results;
+  adminUsers = users;
   const levels = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0"];
 
   content.innerHTML = `
@@ -533,24 +590,33 @@ async function showAdminPanel() {
       <div class="stat-card"><div class="stat-number">${stats.activeSubscriptions}</div><div class="stat-label">Suscripciones</div></div>
     </div>
 
-    <h3>Pedidos recientes</h3>
+    <nav class="admin-nav" aria-label="Secciones de administración">
+      <button type="button" onclick="scrollAdminTo('admin-orders')">Pedidos</button>
+      <button type="button" onclick="scrollAdminTo('admin-tournaments')">Torneos y partidos</button>
+      <button type="button" onclick="scrollAdminTo('admin-products')">Productos</button>
+      <button type="button" onclick="scrollAdminTo('admin-results')">Resultados</button>
+      <button type="button" onclick="scrollAdminTo('admin-users')">Usuarios</button>
+    </nav>
+
+    <section class="admin-section" id="admin-orders"><h3>Pedidos recientes</h3>
     <div class="table-wrap" style="margin-bottom:20px">
       <table>
         <thead><tr><th>ID</th><th>Usuario</th><th>Producto</th><th>Monto</th><th>Estado</th><th>Fecha</th></tr></thead>
         <tbody>
-          ${orders.slice(0, 10).map(o => `<tr>
-            <td>${o.id.slice(0, 8)}</td>
+          ${orders.map(o => `<tr>
+            <td title="${escapeHtml(o.id)}">${escapeHtml(o.id.slice(0, 8))}</td>
             <td>${escapeHtml(o.userName)}</td>
             <td>${escapeHtml(o.productName)}</td>
             <td>$${(o.amount / 100).toFixed(2)}</td>
-            <td><span class="tag">${o.status}</span></td>
-            <td>${new Date(o.created).toLocaleDateString()}</td>
+            <td><span class="tag">${escapeHtml(o.status)}</span></td>
+            <td>${o.created ? new Date(o.created).toLocaleDateString() : "-"}</td>
           </tr>`).join("") || '<tr><td colspan="6" class="muted">No hay pedidos</td></tr>'}
         </tbody>
       </table>
     </div>
+    </section>
 
-    <h3>Torneos</h3>
+    <section class="admin-section" id="admin-tournaments"><h3>Torneos y cuadros</h3>
     <form id="adminTournamentForm" class="admin-form">
       <input type="hidden" name="id">
       <label>Nombre<input name="title" maxlength="120" required></label>
@@ -567,8 +633,9 @@ async function showAdminPanel() {
     <div class="grid grid-2 admin-records">
       ${allTournaments.map(tournament => renderAdminTournament(tournament)).join("") || '<p class="muted">Aún no hay torneos. Usa el formulario para crear el primero.</p>'}
     </div>
+    </section>
 
-    <h3>Productos y suscripciones</h3>
+    <section class="admin-section" id="admin-products"><h3>Productos y suscripciones</h3>
     <form id="adminProductForm" class="admin-form">
       <input type="hidden" name="id">
       <label>Nombre<input name="name" maxlength="120" required></label>
@@ -586,10 +653,13 @@ async function showAdminPanel() {
         <span class="tag ${product.active ? "" : "tag-red"}">${product.active ? "Activo" : "Inactivo"}</span>
         <p class="muted">${escapeHtml(product.description || "")}</p>
         <button class="btn btn-sm btn-dark" onclick="editProduct('${escapeHtml(product.id)}')">Editar</button>
+        <button class="btn btn-sm btn-secondary" onclick="toggleProduct('${escapeHtml(product.id)}')">${product.active ? "Desactivar" : "Activar"}</button>
+        <button class="btn btn-sm btn-secondary" onclick="deleteProduct('${escapeHtml(product.id)}')">Eliminar</button>
       </article>`).join("") || '<p class="muted">No hay productos configurados.</p>'}
     </div>
+    </section>
 
-    <h3>Resultados por moderar</h3>
+    <section class="admin-section" id="admin-results"><h3>Resultados por moderar</h3>
     <div class="grid grid-2 admin-records">
       ${results.filter(result => ["pending", "disputed"].includes(result.status)).map(result => `<article class="card admin-record">
         <span class="tag ${result.status === "disputed" ? "tag-red" : ""}">${result.status === "disputed" ? "En disputa" : "Pendiente"}</span>
@@ -601,12 +671,27 @@ async function showAdminPanel() {
         </div>
       </article>`).join("") || '<p class="muted">No hay resultados pendientes.</p>'}
     </div>
+    </section>
 
-    <h3 style="margin-top:20px">Usuarios</h3>
+    <section class="admin-section" id="admin-users"><h3>Usuarios</h3>
+    <p class="muted">Actualiza roles, nivel, zona y estado de membresía. La contraseña nunca se muestra.</p>
+    <label class="admin-search">Buscar usuario
+      <input id="adminUserSearch" type="search" placeholder="Nombre o email">
+    </label>
+    <form id="adminUserForm" class="admin-form">
+      <input type="hidden" name="userId">
+      <p class="full muted" id="adminUserSelection">Selecciona un usuario en la tabla para editarlo.</p>
+      <label>Usuario<input name="identity" readonly></label>
+      <label>Rol<select name="role"><option value="user">Usuario</option><option value="admin">Administrador</option></select></label>
+      <label>Nivel<select name="level"><option value="">Sin nivel</option>${levels.map(level => `<option value="${level}">${level}</option>`).join("")}</select></label>
+      <label>Zona<select name="zone"><option value="">Sin zona</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
+      <label class="full"><span><input name="membershipActive" type="checkbox"> Membresía activa</span></label>
+      <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar usuario</button><button class="btn btn-secondary" type="button" onclick="resetAdminUserForm()">Cancelar</button></div>
+    </form>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Nivel</th><th>Zona</th><th>Membresía</th></tr></thead>
-        <tbody>
+        <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Nivel</th><th>Zona</th><th>Membresía</th><th>Acciones</th></tr></thead>
+        <tbody id="adminUsersBody">
           ${users.map(u => `<tr>
             <td>${escapeHtml(u.name)}</td>
             <td>${escapeHtml(u.email)}</td>
@@ -614,13 +699,18 @@ async function showAdminPanel() {
             <td>${escapeHtml(u.level || "-")}</td>
             <td>${escapeHtml(u.zone || "-")}</td>
             <td>${u.membershipActive ? "Activa" : "-"}</td>
+            <td><button class="btn btn-sm btn-dark" onclick="editAdminUser('${escapeHtml(u.id)}')">Editar</button></td>
           </tr>`).join("")}
         </tbody>
       </table>
     </div>
+    </section>
   `;
   document.getElementById("adminTournamentForm").addEventListener("submit", saveTournament);
   document.getElementById("adminProductForm").addEventListener("submit", saveProduct);
+  document.getElementById("adminUserForm").addEventListener("submit", saveAdminUser);
+  document.getElementById("adminUserSearch").addEventListener("input", filterAdminUsers);
+  resetAdminUserForm();
   resetTournamentForm();
   resetProductForm();
   openModal("adminModal");
@@ -828,6 +918,35 @@ async function saveProduct(event) {
   }
 }
 
+async function toggleProduct(productId) {
+  const product = products.find(item => item.id === productId);
+  if (!product) return;
+  try {
+    await api(`/api/products/${encodeURIComponent(product.id)}`, {
+      method: "PUT",
+      body: JSON.stringify({ active: !product.active })
+    });
+    await loadProducts();
+    await showAdminPanel();
+    showToast(product.active ? "Producto desactivado; se conserva el historial de ventas." : "Producto activado.");
+  } catch (error) {
+    showToast(`No se pudo cambiar el estado: ${error.message}`);
+  }
+}
+
+async function deleteProduct(productId) {
+  const product = products.find(item => item.id === productId);
+  if (!product || !window.confirm(`¿Eliminar "${product.name}" permanentemente? Para conservar registros de compra, es mejor desactivarlo.`)) return;
+  try {
+    await api(`/api/products/${encodeURIComponent(product.id)}`, { method: "DELETE" });
+    await loadProducts();
+    await showAdminPanel();
+    showToast("Producto eliminado.");
+  } catch (error) {
+    showToast(`No se pudo eliminar: ${error.message}`);
+  }
+}
+
 async function moderateResult(resultId, action) {
   try {
     await api("/api/admin/results", {
@@ -864,6 +983,10 @@ function toggleMenu() { document.getElementById("nav").classList.toggle("open");
 function scrollTo(sel) {
   const el = document.querySelector(sel);
   if (el) el.scrollIntoView({ behavior: "smooth" });
+}
+
+function scrollAdminTo(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function showNotice(id, text, isError) {
