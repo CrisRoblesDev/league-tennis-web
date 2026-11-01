@@ -6,6 +6,7 @@
 <title>League Tennis Aventura | Liga de tenis en Miami</title>
 <link rel="icon" type="image/png" href="/league-tennis-logo.png">
 <link rel="stylesheet" href="styles.css">
+<script src="i18n.js" defer></script>
 <script src="main.js" defer></script>
 </head>
 <body>
@@ -26,6 +27,13 @@
     <a href="#membresia">MEMBRESÍA</a>
   </nav>
   <div class="header-actions">
+    <label class="language-picker-wrap">
+      <span class="sr-only">Idioma</span>
+      <select class="language-picker" aria-label="Idioma">
+        <option value="es">Español</option><option value="en">English</option>
+        <option value="ru">Русский</option><option value="he">עברית</option>
+      </select>
+    </label>
     <div id="authButtons">
       <button class="btn btn-sm" onclick="openModal('loginModal')">Iniciar sesión</button>
       <button class="btn btn-sm btn-primary" onclick="openModal('registerModal')">Registrarse</button>
@@ -35,6 +43,7 @@
     </button>
   </div>
 </header>
+<div id="paymentReturnNotice" class="payment-return-notice" hidden aria-live="polite"></div>
 
 <section class="hero">
   <div class="hero-content">

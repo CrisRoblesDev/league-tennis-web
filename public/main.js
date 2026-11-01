@@ -12,6 +12,7 @@ let leagueChallenges = [];
 let tournaments = [];
 let adminUsers = [];
 let adminOrdersChecked = false;
+let paymentNoticeState = null;
 
 // ============ API HELPER ============
 async function api(endpoint, options = {}) {
@@ -82,6 +83,9 @@ async function login(e) {
     updateAuthUI();
     await loadPlayers();
     showToast("Bienvenido, " + data.user.name);
+    if (paymentNoticeState?.sessionId) {
+      await verifyPaymentReturn(paymentNoticeState.sessionId);
+    }
   } catch (error) {
     showNotice("loginNotice", error.message, true);
   } finally {
@@ -359,7 +363,7 @@ function renderResults() {
       result.reportedBy !== currentUser.id;
     return `<article class="card result-card">
       <p><b>${escapeHtml(result.winnerName)}</b> vs <b>${escapeHtml(result.loserName)}</b></p>
-      <p class="muted">${escapeHtml(result.score)} · ${new Date(result.playedAt).toLocaleDateString()}</p>
+      <p class="muted">${escapeHtml(result.score)} · ${formatLocalDate(result.playedAt)}</p>
       ${canRespond ? `<button class="btn btn-primary" onclick="respondToResult('${escapeHtml(result.id)}','confirm')">Confirmar</button>
         <button class="btn btn-secondary" onclick="respondToResult('${escapeHtml(result.id)}','dispute')">Desacuerdo</button>` : '<span class="tag">Pendiente de confirmación</span>'}
     </article>`;
@@ -688,7 +692,7 @@ async function loadTournaments() {
       if (title) title.textContent = featured.title || `Campeonato · ${featured.month}`;
       if (date) {
         date.textContent = featured.startDate ?
-          new Date(`${featured.startDate}T00:00:00`).toLocaleDateString() : featured.month;
+          formatLocalDate(new Date(`${featured.startDate}T00:00:00`)) : featured.month;
       }
       if (summary) {
         summary.textContent = featured.description ||
@@ -859,7 +863,7 @@ async function showAdminPanel() {
             <td>${escapeHtml(o.productName)}</td>
             <td>$${(o.amount / 100).toFixed(2)}</td>
             <td><span class="tag">${escapeHtml(orderStatusLabel(o.status))}</span></td>
-            <td>${o.created ? new Date(o.created).toLocaleDateString() : "-"}</td>
+            <td>${o.created ? formatLocalDate(o.created) : "-"}</td>
           </tr>`).join("") || '<tr><td colspan="6" class="muted">No hay pedidos</td></tr>'}
         </tbody>
       </table>
@@ -899,7 +903,7 @@ async function showAdminPanel() {
         <h4>${escapeHtml(challenge.playerName)}</h4>
         <p>${escapeHtml(challenge.availability || "")}</p>
         ${challenge.acceptedPlayerName ? `<p class="muted">Aceptado por ${escapeHtml(challenge.acceptedPlayerName)}</p>` : ""}
-        <p class="muted">${challenge.created ? new Date(challenge.created).toLocaleDateString() : ""}</p>
+        <p class="muted">${challenge.created ? formatLocalDate(challenge.created) : ""}</p>
         <div class="admin-form-actions">
           ${challenge.status !== "closed" ? `<button class="btn btn-sm btn-dark" onclick="setChallengeStatus('${escapeHtml(challenge.id)}','closed')">Cerrar</button>` : ""}
           ${challenge.status === "closed" ? `<button class="btn btn-sm btn-secondary" onclick="setChallengeStatus('${escapeHtml(challenge.id)}','open')">Reabrir</button>` : ""}
@@ -953,7 +957,7 @@ async function showAdminPanel() {
       <summary>Historial de resultados (${results.length})</summary>
       <div class="table-wrap">
         <table><thead><tr><th>Partido</th><th>Marcador</th><th>Estado</th><th>Fecha</th><th></th></tr></thead><tbody>
-          ${results.map(result => `<tr><td>${escapeHtml(result.winnerName)} vs ${escapeHtml(result.loserName)}</td><td>${escapeHtml(result.score)}</td><td>${escapeHtml(resultStatusLabel(result.status))}</td><td>${result.playedAt ? new Date(result.playedAt).toLocaleDateString() : "-"}</td><td><button class="btn btn-sm btn-dark" onclick="editAdminResult('${escapeHtml(result.id)}')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminResult('${escapeHtml(result.id)}')">Eliminar</button></td></tr>`).join("") || '<tr><td colspan="5">Sin resultados</td></tr>'}
+          ${results.map(result => `<tr><td>${escapeHtml(result.winnerName)} vs ${escapeHtml(result.loserName)}</td><td>${escapeHtml(result.score)}</td><td>${escapeHtml(resultStatusLabel(result.status))}</td><td>${result.playedAt ? formatLocalDate(result.playedAt) : "-"}</td><td><button class="btn btn-sm btn-dark" onclick="editAdminResult('${escapeHtml(result.id)}')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminResult('${escapeHtml(result.id)}')">Eliminar</button></td></tr>`).join("") || '<tr><td colspan="5">Sin resultados</td></tr>'}
         </tbody></table>
       </div>
     </details>
@@ -1498,8 +1502,115 @@ function showToast(msg) {
   setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity 0.3s"; setTimeout(() => t.remove(), 300); }, 3000);
 }
 
+function formatLocalDate(value) {
+  return new Date(value).toLocaleDateString(window.leagueI18n?.locale || "es");
+}
+
+function renderPaymentReturnNotice() {
+  const notice = document.getElementById("paymentReturnNotice");
+  if (!notice || !paymentNoticeState) return;
+  notice.hidden = false;
+  notice.className = `payment-return-notice is-${paymentNoticeState.type || "pending"}`;
+  notice.replaceChildren();
+  const message = document.createElement("p");
+  message.textContent = window.leagueI18n?.translate(paymentNoticeState.message) || paymentNoticeState.message;
+  notice.append(message);
+  if (paymentNoticeState.detail) {
+    const detail = document.createElement("small");
+    detail.textContent = paymentNoticeState.detail;
+    notice.append(detail);
+  }
+  if (paymentNoticeState.action) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn btn-sm btn-dark";
+    button.textContent = window.leagueI18n?.translate(paymentNoticeState.action.label) || paymentNoticeState.action.label;
+    button.addEventListener("click", paymentNoticeState.action.run);
+    notice.append(button);
+  }
+}
+
+function clearPaymentReturnParams() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("payment");
+  url.searchParams.delete("session_id");
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+async function verifyPaymentReturn(sessionId) {
+  paymentNoticeState = { message: "Procesando pago...", type: "pending", sessionId };
+  renderPaymentReturnNotice();
+  try {
+    const data = await api(`/api/stripe/session/${encodeURIComponent(sessionId)}`);
+    if (data.status === "paid") {
+      paymentNoticeState = { message: "Pago confirmado. ¡Gracias por tu compra!", type: "success" };
+      clearPaymentReturnParams();
+    } else {
+      paymentNoticeState = {
+        message: "Tu pago está pendiente de confirmación.",
+        type: "pending",
+        sessionId,
+        action: { label: "Volver a verificar", run: () => verifyPaymentReturn(sessionId) }
+      };
+    }
+  } catch (error) {
+    const requiresLogin = /inicia sesión|no autenticado/i.test(error.message);
+    paymentNoticeState = {
+      message: "No pudimos verificar el pago.",
+      type: "error",
+      detail: error.message,
+      sessionId,
+      action: requiresLogin
+        ? { label: "Iniciar sesión para verificar", run: () => openModal("loginModal") }
+        : { label: "Volver a verificar", run: () => verifyPaymentReturn(sessionId) }
+    };
+  }
+  renderPaymentReturnNotice();
+}
+
+function handlePaymentReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const paymentStatus = params.get("payment");
+  if (paymentStatus === "success") {
+    const sessionId = params.get("session_id");
+    if (!sessionId) {
+      paymentNoticeState = { message: "No pudimos verificar el pago.", type: "error" };
+      renderPaymentReturnNotice();
+      return;
+    }
+    verifyPaymentReturn(sessionId);
+  } else if (paymentStatus === "canceled") {
+    paymentNoticeState = { message: "Pago cancelado. No se realizó ningún cargo.", type: "info" };
+    renderPaymentReturnNotice();
+    clearPaymentReturnParams();
+  }
+}
+
+document.addEventListener("languagechange", () => {
+  renderPaymentReturnNotice();
+  if (isAdminPage) {
+    if (currentUser?.role === "admin") showAdminPanel();
+    return;
+  }
+  renderProducts();
+  renderRanking();
+  renderResults();
+  renderChallenges();
+  renderTournaments();
+});
+
 // ============ INIT ============
 document.addEventListener("DOMContentLoaded", async () => {
+  document.getElementById("loginForm")?.addEventListener("submit", login);
+  document.getElementById("registerForm")?.addEventListener("submit", register);
+  document.getElementById("resultForm")?.addEventListener("submit", submitResult);
+  document.getElementById("challengeForm")?.addEventListener("submit", submitChallenge);
+  document.getElementById("playerForm")?.addEventListener("submit", createPlayer);
+  document.getElementById("levelFilter")?.addEventListener("change", filterPlayers);
+  document.getElementById("zoneFilter")?.addEventListener("change", filterPlayers);
+  document.getElementById("searchPlayer")?.addEventListener("input", filterPlayers);
+
+  if (!isAdminPage) handlePaymentReturn();
   await checkAuth();
   if (isAdminPage) {
     if (!currentUser) {
@@ -1513,44 +1624,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await showAdminPanel();
     return;
   }
-  await loadProducts();
-  await loadPlayers();
-  await loadTournaments();
-
-  // Check for payment success
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("payment") === "success" && params.get("session_id")) {
-    showToast("Procesando pago...");
-    try {
-      const data = await api(`/api/stripe/session/${encodeURIComponent(params.get("session_id"))}`);
-      if (data.status === "paid") {
-        showToast("Pago confirmado. ¡Gracias por tu compra!");
-      } else {
-        showToast(`El pago aún figura como ${data.status || "pendiente"}.`);
-      }
-    } catch (error) {
-      showToast(`No se pudo verificar el pago: ${error.message}`);
-    } finally {
-      window.history.replaceState({}, "", window.location.pathname);
-    }
-  } else if (params.get("payment") === "canceled") {
-    showToast("Pago cancelado. No se realizó ningún cargo.");
-    window.history.replaceState({}, "", window.location.pathname);
-  }
-
-  // Login form
-  document.getElementById("loginForm")?.addEventListener("submit", login);
-  // Register form
-  document.getElementById("registerForm")?.addEventListener("submit", register);
-  document.getElementById("resultForm")?.addEventListener("submit", submitResult);
-  document.getElementById("challengeForm")?.addEventListener("submit", submitChallenge);
-  // Create player form
-  document.getElementById("playerForm")?.addEventListener("submit", createPlayer);
-
-  // Ranking filters
-  document.getElementById("levelFilter")?.addEventListener("change", filterPlayers);
-  document.getElementById("zoneFilter")?.addEventListener("change", filterPlayers);
-  document.getElementById("searchPlayer")?.addEventListener("input", filterPlayers);
+  await Promise.all([loadProducts(), loadPlayers(), loadTournaments()]);
   if (new URLSearchParams(window.location.search).get("admin") === "login") {
     openModal("loginModal");
   }

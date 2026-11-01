@@ -1,0 +1,659 @@
+(() => {
+  const translations = {
+    en: {
+      "CAMPEONATOS": "TOURNAMENTS", "CLASIFICACIÓN": "RANKINGS", "DESAFÍOS": "CHALLENGES",
+      "TIENDA": "SHOP", "MEMBRESÍA": "MEMBERSHIP", "Iniciar sesión": "Sign in",
+      "Registrarse": "Create account", "Miami, Florida · Liga de tenis": "Miami, Florida · Tennis league",
+      "Tu próximo partido": "Your next match", "empieza aquí.": "starts here.",
+      "Compite en Miami. Encuentra torneos por nivel, sigue tu posición en la clasificación y juega con una comunidad que ama el tenis.": "Compete in Miami. Find tournaments by level, track your ranking, and play with a community that loves tennis.",
+      "Únete a la liga": "Join the league", "Explorar campeonatos": "Explore tournaments",
+      "Compite": "Compete", "Sube en el ranking": "Climb the rankings", "Encuentra tu comunidad": "Find your community",
+      "PRÓXIMO EN LA LIGA": "UP NEXT IN THE LEAGUE", "Campeonato mensual": "Monthly tournament",
+      "Cada mes": "Every month", "Inscripción por nivel · Eliminación directa · Cuadro y resultados publicados en la plataforma.": "Level-based registration · Single elimination · Brackets and results published on the platform.",
+      "Ver campeonato": "View tournament", "Explorar la liga": "Explore the league",
+      "Calendario y cuadros": "Calendar and brackets", "Jugadores y puntos": "Players and points",
+      "Productos y membresía": "Products and membership", "JUEGA POR ALGO": "PLAY FOR SOMETHING",
+      "Campeonatos": "Tournaments", "Consulta torneos, jugadores inscritos, rondas y marcadores publicados.": "Browse tournaments, registered players, rounds, and published scores.",
+      "¿Sin torneo? Encuentra un desafío": "No tournament? Find a challenge", "SUBE EN LA ESCALERILLA": "CLIMB THE LADDER",
+      "Clasificación": "Rankings", "Cada partido confirmado cuenta. Encuentra tu posición y el próximo objetivo.": "Every confirmed match counts. Find your position and your next goal.",
+      "+ Registrar resultado": "+ Submit a result", "Todos los niveles": "All levels", "Todas las zonas": "All areas",
+      "Buscar jugador...": "Search players...", "Pos.": "Rank", "Jugador": "Player", "Nivel": "Level",
+      "Zona": "Area", "Partidos": "Matches", "Puntos": "Points", "UN RIVAL TE ESPERA": "YOUR NEXT OPPONENT AWAITS",
+      "Zona de desafíos": "Challenge zone", "Encuentra un rival de tu nivel y coordina el próximo partido.": "Find an opponent at your level and arrange your next match.",
+      "Cargando desafíos...": "Loading challenges...", "+ Publicar desafío": "+ Post a challenge",
+      "Publica tu disponibilidad": "Post your availability", "Indica qué días y horarios puedes jugar.": "Share which days and times you can play.",
+      "Encuentra un rival": "Find an opponent", "Los jugadores pueden aceptar tu propuesta.": "Players can accept your proposal.",
+      "Jueguen y suban el resultado": "Play and submit the result", "Un partido confirmado suma puntos al ranking.": "A confirmed match adds ranking points.",
+      "Cómo funciona": "How it works", "Una sola plataforma para gestionar tu perfil, ranking, campeonatos y desafíos.": "One place to manage your profile, ranking, tournaments, and challenges.",
+      "01 · Crea tu perfil": "01 · Create your profile", "Agrega foto, nivel de juego y zona de Miami.": "Add a photo, playing level, and Miami area.",
+      "02 · Juega y registra": "02 · Play and record", "Coordina partidos y registra resultados para sumar puntos.": "Arrange matches and record results to earn points.",
+      "03 · Compite cada mes": "03 · Compete every month", "Inscríbete al campeonato mensual y sigue jugando en Zona de desafíos.": "Enter the monthly tournament and keep playing in the Challenge Zone.",
+      "EQUÍPATE PARA EL PARTIDO": "GEAR UP FOR THE MATCH", "La tienda": "Shop",
+      "Productos seleccionados para los jugadores de la liga.": "Selected products for league players.",
+      "Conoce League Member": "Discover League Member", "JUEGA COMO MIEMBRO": "PLAY AS A MEMBER",
+      "Más tenis.": "More tennis.", "Más ventajas.": "More benefits.",
+      "Una membresía para quienes quieren vivir la liga al máximo.": "A membership for those who want to get the most out of the league.",
+      "Acceso prioritario a inscripciones": "Priority registration access", "Beneficios exclusivos para miembros": "Exclusive member benefits",
+      "Una comunidad hecha para competir": "A community built to compete", "Planes de membresía": "Membership plans",
+      "Cargando planes disponibles...": "Loading available plans...", "Miami, Florida · Tu liga, tu juego.": "Miami, Florida · Your league, your game.",
+      "Cerrar": "Close", "Tu próximo partido te espera.": "Your next match is waiting.",
+      "Entra para ver tus desafíos, seguir tu ranking y jugar con la comunidad.": "Sign in to see your challenges, track your ranking, and play with the community.",
+      "QUÉ BUENO VERTE": "GOOD TO SEE YOU", "Usa el email y la contraseña de tu cuenta.": "Use your account email and password.",
+      "Contraseña": "Password", "Tu contraseña": "Your password", "Entrar a mi cuenta": "Sign in to my account",
+      "¿Aún no tienes cuenta?": "Don't have an account yet?", "Crea una gratis": "Create one for free",
+      "Tu cuenta está protegida.": "Your account is protected.", "Crear cuenta": "Create account",
+      "Nombre completo": "Full name", "Tu nombre": "Your name", "Mínimo 8 caracteres": "At least 8 characters",
+      "Nivel de tenis": "Tennis level", "Opcional": "Optional", "Zona de Miami": "Miami area",
+      "Acepto las reglas de la liga.": "I agree to the league rules.", "Crear perfil de jugador": "Create player profile",
+      "Nombre para mostrar": "Display name", "Seleccionar": "Select", "Registrar resultado": "Submit match result",
+      "Jugador ganador": "Winning player", "Rival": "Opponent", "Marcador desde el punto de vista del ganador": "Score from the winner's perspective",
+      "Mejor de 3 sets; separa cada set con coma. Ejemplo: 6-4, 4-6, 10-7.": "Best of 3 sets; separate each set with a comma. Example: 6-4, 4-6, 10-7.",
+      "Guardar resultado": "Save result", "Crear desafío semanal": "Create weekly challenge",
+      "Disponibilidad": "Availability", "Ej. tardes entre semana": "e.g. weekday evenings", "Publicar desafío": "Post challenge",
+      "Cancelar": "Cancel", "Inicia sesión para comprar": "Sign in to make a purchase",
+      "No se pudo iniciar el pago:": "Could not start checkout:", "Pago confirmado. ¡Gracias por tu compra!": "Payment confirmed. Thank you for your purchase!",
+      "Procesando pago...": "Verifying your payment...", "Pago cancelado. No se realizó ningún cargo.": "Payment canceled. You were not charged.",
+      "El pago aún figura como": "Payment status is still", "No se pudo verificar el pago:": "Could not verify payment:",
+      "El pago fue confirmado. ¡Gracias por tu compra!": "Payment confirmed. Thank you for your purchase!",
+      "Tu pago está pendiente de confirmación.": "Your payment is awaiting confirmation.",
+      "No pudimos verificar el pago.": "We couldn't verify your payment.",
+      "Volver a verificar": "Check again", "Iniciar sesión para verificar": "Sign in to verify",
+      "Sin pago confirmado": "Payment not confirmed", "Busca rival": "Looking for an opponent",
+      "Partido coordinado": "Match arranged", "Cerrado": "Closed", "Desafío": "Challenge",
+      "Inscripciones abiertas": "Registration open", "Programado": "Scheduled", "En curso": "In progress",
+      "Finalizado": "Completed", "Cancelado": "Canceled", "Sin estado": "No status",
+      "Pendiente": "Pending", "En revisión": "Under review", "Confirmado": "Confirmed",
+      "Rechazado": "Rejected", "Pagado": "Paid", "Fallido": "Failed", "Reembolsado": "Refunded",
+      "No hay resultados pendientes de confirmación.": "There are no results awaiting confirmation.",
+      "Resultados por confirmar": "Results awaiting confirmation", "Confirmar": "Confirm",
+      "Desacuerdo": "Dispute", "Pendiente de confirmación": "Awaiting confirmation",
+      "Resultado confirmado; se actualizó el ranking.": "Result confirmed; rankings updated.",
+      "Resultado marcado para revisión.": "Result flagged for review.",
+      "Desafío aceptado. Coordina fecha y cancha con el rival.": "Challenge accepted. Arrange a date and court with your opponent.",
+      "Desafío publicado.": "Challenge posted.", "No hay jugadores todavía. Sé el primero!": "No players yet. Be the first!",
+      "No hay jugadores con esos filtros.": "No players match those filters.", "No hay productos disponibles en este momento.": "No products are available right now.",
+      "Suscribirse ahora": "Subscribe now", "Suscribirse": "Subscribe", "Comprar": "Buy",
+      "Pago seguro procesado por Stripe.": "Secure payment processed by Stripe.", "Membresía": "Membership",
+      "¡Gracias por tu compra!": "Thank you for your purchase.", "Cancelar cuando quieras.": "Cancel anytime.",
+      "Ver página pública": "View public page", "CENTRO DE ADMINISTRACIÓN": "ADMINISTRATION CENTER",
+      "GESTIÓN DE LA LIGA": "LEAGUE MANAGEMENT", "Administración": "Administration",
+      "Organiza la liga desde un solo lugar. Elige una tarea y sigue las indicaciones en pantalla.": "Manage the league in one place. Choose a task and follow the on-screen instructions.",
+      "Actualizar información": "Refresh information", "Cargando el centro de administración...": "Loading administration center...",
+      "CENTRO DE CONTROL": "CONTROL CENTER", "¿Qué quieres hacer hoy?": "What would you like to do today?",
+      "Elige una tarea para empezar. Los cambios se guardan al pulsar el botón de guardar.": "Choose a task to get started. Changes are saved when you click Save.",
+      "Organizar un torneo": "Organize a tournament", "Fechas, niveles y partidos": "Dates, levels, and matches",
+      "Revisar resultados": "Review results", "por revisar": "to review", "Gestionar jugadores": "Manage players",
+      "Perfiles y clasificación": "Profiles and rankings", "Editar la tienda": "Edit the shop",
+      "Productos y membresías": "Products and memberships", "Cuentas registradas": "Registered accounts",
+      "Perfiles de jugador": "Player profiles", "Compras realizadas": "Purchases",
+      "Ingresos totales": "Total revenue", "Membresías activas": "Active memberships",
+      "Resultados por revisar": "Results to review", "Torneos": "Tournaments", "Jugadores": "Players",
+      "Resultados": "Results", "Desafíos": "Challenges", "Tienda": "Shop", "Compras": "Purchases", "Cuentas": "Accounts",
+      "Compras recientes": "Recent purchases", "Consulta las compras y pagos realizados en la tienda.": "Review purchases and payments made in the shop.",
+      "Sincronizar pagos con Stripe": "Sync payments with Stripe", "ID": "ID", "Usuario": "User",
+      "Producto": "Product", "Monto": "Amount", "Estado": "Status", "Fecha": "Date", "No hay pedidos": "No orders",
+      "Torneos y partidos": "Tournaments and matches", "Crea el torneo y define sus niveles. Después podrás inscribir jugadores y organizar partidos.": "Create a tournament and set its levels. Then register players and schedule matches.",
+      "Datos del torneo": "Tournament details", "Nombre del torneo": "Tournament name", "Mes del torneo": "Tournament month",
+      "Niveles participantes": "Participating levels", "Selecciona uno o más niveles de juego.": "Select one or more playing levels.",
+      "Estado del torneo": "Tournament status", "Fecha de inicio": "Start date", "Fecha de término": "End date",
+      "Sede o cancha": "Venue or court", "Formato del torneo": "Tournament format", "Descripción": "Description",
+      "Guardar torneo": "Save tournament", "Limpiar formulario": "Clear form", "Aún no hay torneos": "No tournaments yet",
+      "Completa el formulario de arriba para publicar el primero.": "Complete the form above to publish the first one.",
+      "Desafíos publicados": "Published challenges", "Revisa la actividad de la comunidad, cierra publicaciones resueltas o elimina contenido inválido.": "Review community activity, close resolved posts, or remove invalid content.",
+      "No hay desafíos publicados.": "There are no published challenges.", "Cerrar": "Close", "Reabrir": "Reopen",
+      "Tienda y membresías": "Shop and memberships", "Lo que esté marcado como disponible se mostrará en la página principal.": "Items marked as available will appear on the home page.",
+      "Nombre": "Name", "Precio (USD)": "Price (USD)", "Tipo": "Type", "Producto digital": "Digital product",
+      "Suscripción": "Subscription", "Frecuencia": "Frequency", "Mensual": "Monthly", "Anual": "Yearly",
+      "Disponible en la tienda": "Available in the shop", "Guardar producto": "Save product", "Limpiar": "Clear",
+      "No hay productos.": "There are no products.", "Editar": "Edit", "Eliminar": "Delete",
+      "Sincronizado con Stripe": "Synced with Stripe", "Perfil de jugador": "Player profile",
+      "No hay usuarios registrados.": "There are no registered users.", "Buscar por nombre o email": "Search by name or email",
+      "Rol": "Role", "Nivel de juego": "Playing level", "Guardar cambios": "Save changes",
+      "Selecciona un usuario en la tabla para editarlo.": "Select a user in the table to edit.",
+      "Editar partido": "Edit match", "Eliminar partido": "Delete match", "Programar partido": "Schedule match",
+      "Jugador A": "Player A", "Jugador B": "Player B", "Ronda": "Round", "Ganador": "Winner",
+      "Cancha": "Court", "Guardar partido": "Save match", "Agregar jugador inscrito": "Add registered player",
+      "Agregar participante": "Add participant", "Retirar": "Remove", "Sin inscritos": "No registered players",
+      "Sin partidos programados.": "No matches scheduled.", "Editar resultado": "Edit result",
+      "No disponible": "Unavailable", "Reintentar": "Try again", "No se pudo sincronizar con Stripe:": "Couldn't sync with Stripe:",
+      "Se recuperaron": "Recovered", "compra(s) faltante(s) desde Stripe.": "missing purchase(s) from Stripe.",
+      "Idioma": "Language", "MIAMI · LIGA DE TENIS": "MIAMI · TENNIS LEAGUE",
+      "League Tennis Aventura | Liga de tenis en Miami": "League Tennis Aventura | Miami tennis league",
+      "Administración | League Tennis Aventura": "Administration | League Tennis Aventura",
+      "NIVEL": "LEVEL", "ZONA": "AREA", "DISPONIBILIDAD": "AVAILABILITY",
+      "PROPUESTA DE": "POSTED BY", "JUGADOR/A DE EJEMPLO": "EXAMPLE PLAYER",
+      "Tenista de la liga": "League tennis player", "Muestra · no publicado": "Sample · not published",
+      "EJEMPLOS VISUALES": "DESIGN PREVIEW", "Así se verá la zona cuando haya propuestas": "This is how the area will look when challenges are posted",
+      "Estas tarjetas son solo una muestra del diseño; no son jugadores ni desafíos publicados.": "These cards are design samples only; they are not real players or published challenges.",
+      "Tardes entre semana": "Weekday afternoons", "Sábado por la mañana": "Saturday morning",
+      "Flexible · coordinar horario": "Flexible · arrange a time", "Aventura / Sunny Isles": "Aventura / Sunny Isles",
+      "Downtown / Brickell": "Downtown / Brickell", "North Miami / Miami Gardens": "North Miami / Miami Gardens",
+      "Kendall / Doral": "Kendall / Doral", "No se pudo cargar el ranking:": "Could not load rankings:",
+      "No se pudieron cargar los resultados:": "Could not load results:",
+      "No se pudieron cargar los desafíos:": "Could not load challenges:",
+      "No se pudieron cargar las propuestas:": "Could not load challenges:",
+      "Intentar de nuevo": "Try again", "Ver jugadores inscritos": "View registered players",
+      "Inscribirse": "Register", "Partidos": "Matches", "Sin partidos programados.": "No matches scheduled.",
+      "Se recuperaron": "Recovered", "faltante(s) desde Stripe.": "missing purchase(s) from Stripe.",
+      "Cómo funcionan los desafíos": "How challenges work", "Volver a League Tennis": "Back to League Tennis",
+      "Página pública": "Public page", "Salir": "Sign out", "Crear perfil": "Create profile",
+      "Hola,": "Hello,", "Bienvenido,": "Welcome,", "año": "year", "mes": "month",
+      "Crea tu perfil": "Create your profile", "No hay una suscripción disponible en este momento.": "No subscription is available right now.",
+      "No hay jugadores todavía. Sé el primero!": "No players yet. Be the first!",
+      "No hay resultados pendientes.": "There are no pending results.", "Sin resultados": "No results",
+      "Buscar usuario": "Search users", "Nombre o email": "Name or email", "Cuenta vinculada": "Linked account",
+      "Selecciona una cuenta sin perfil": "Select an account without a profile", "Nombre público": "Public name",
+      "Membresía activa": "Active membership", "Guardar perfil": "Save profile", "Guardar usuario": "Save user",
+      "Administrador": "Administrator", "Jugador": "Player", "Activa": "Active", "Activo": "Active",
+      "Inactivo": "Inactive", "Desactivar": "Deactivate", "Activar": "Activate",
+      "Ej. Copa de noviembre": "e.g. November Cup", "Ej. Aventura Tennis Center": "e.g. Aventura Tennis Center",
+      "Resultados de partidos": "Match results",
+      "Confirma, rechaza o elimina un reporte. Los resultados confirmados impactan el ranking.": "Confirm, reject, or delete a report. Confirmed results affect the rankings.",
+      "En disputa": "Disputed", "Rechazar": "Reject", "Historial de resultados": "Results history",
+      "Partido": "Match", "Marcador": "Score", "Editar resultado reportado": "Edit reported result",
+      "Al guardar, volverá a estado pendiente para que el rival confirme el cambio.": "After saving, it will return to pending so the opponent can confirm the change.",
+      "Marcador desde el ganador": "Score from the winner", "Guardar y solicitar confirmación": "Save and request confirmation",
+      "Jugadores de la liga": "League players",
+      "Administra el nombre, nivel y zona que aparecen en la clasificación. Los perfiles con historial deportivo no se pueden borrar.": "Manage the name, level, and area shown in the rankings. Profiles with match history cannot be deleted.",
+      "Buscar usuario": "Search users", "Cuenta": "Account", "Acciones": "Actions",
+      "Gestiona permisos y membresías. Por seguridad, las contraseñas nunca se muestran.": "Manage permissions and memberships. Passwords are never shown for security.",
+      "Sin nivel": "No level", "Sin zona": "No area", "No hay perfiles de jugador.": "There are no player profiles.",
+      "No hay productos configurados.": "No products configured.", "Sede por definir": "Venue to be announced",
+      "Editar perfil": "Edit profile", "Usuario actualizado.": "User updated.",
+      "Cuenta creada. Bienvenido!": "Account created. Welcome!",
+      "Bienvenido!": "Welcome!", "Crear perfil": "Create profile",
+      "Inicia sesión para registrar un resultado.": "Sign in to submit a result.",
+      "Inicia sesión para publicar un desafío.": "Sign in to post a challenge.",
+      "Crea tu perfil de jugador primero.": "Create your player profile first.",
+      "Resultado enviado; el rival debe confirmarlo para actualizar el ranking.": "Result submitted; your opponent must confirm it to update the rankings.",
+      "Perfil de jugador creado!": "Player profile created!",
+      "Selecciona un usuario de la tabla antes de guardar.": "Select a user from the table before saving.",
+      "Selecciona una cuenta para crearle un perfil.": "Select an account to create a profile for.",
+      "Perfil de jugador actualizado.": "Player profile updated.", "Perfil de jugador eliminado.": "Player profile deleted.",
+      "Selecciona al menos un nivel para el torneo.": "Select at least one level for the tournament.",
+      "Torneo actualizado": "Tournament updated", "Torneo creado": "Tournament created", "Torneo eliminado": "Tournament deleted",
+      "Participante agregado al torneo.": "Participant added to the tournament.",
+      "Inscripción retirada.": "Registration removed.", "Elige dos jugadores distintos.": "Choose two different players.",
+      "Partido programado": "Match scheduled", "Partido eliminado del cuadro.": "Match removed from the draw.",
+      "Ingresa un precio válido en dólares.": "Enter a valid price in dollars.",
+      "Producto actualizado": "Product updated", "Producto creado": "Product created",
+      "Producto desactivado; se conserva el historial de ventas.": "Product deactivated; sales history is preserved.",
+      "Producto activado.": "Product activated.", "Producto eliminado.": "Product deleted.",
+      "Resultado confirmado y ranking actualizado.": "Result confirmed and rankings updated.",
+      "Resultado rechazado.": "Result rejected.", "El ganador y el rival deben ser distintos.": "The winner and opponent must be different.",
+      "Resultado corregido; falta confirmación del rival.": "Result corrected; opponent confirmation is still required.",
+      "Resultado eliminado.": "Result deleted.", "Desafío cerrado.": "Challenge closed.",
+      "Desafío reabierto.": "Challenge reopened.", "Desafío eliminado.": "Challenge deleted.",
+      "Sincronizado con Stripe": "Synced with Stripe", "Stripe está sincronizado; no hay compras faltantes.": "Stripe is synced; no missing purchases.",
+      "No hay compras faltantes.": "There are no missing purchases.",
+    },
+    ruExtra: {
+      "Idioma": "Язык", "MIAMI · LIGA DE TENIS": "МАЙАМИ · ТЕННИСНАЯ ЛИГА",
+      "League Tennis Aventura | Liga de tenis en Miami": "League Tennis Aventura | Теннисная лига Майами",
+      "Administración | League Tennis Aventura": "Управление | League Tennis Aventura",
+      "NIVEL": "УРОВЕНЬ", "ZONA": "РАЙОН", "DISPONIBILIDAD": "ДОСТУПНОСТЬ",
+      "PROPUESTA DE": "ПРЕДЛОЖЕНИЕ ОТ", "JUGADOR/A DE EJEMPLO": "ПРИМЕР ИГРОКА",
+      "Tenista de la liga": "Игрок лиги", "Muestra · no publicado": "Пример · не опубликовано",
+      "EJEMPLOS VISUALES": "ПРИМЕР ДИЗАЙНА", "Así se verá la zona cuando haya propuestas": "Так будет выглядеть раздел с предложениями",
+      "Estas tarjetas son solo una muestra del diseño; no son jugadores ni desafíos publicados.": "Эти карточки — только пример дизайна, это не реальные игроки или опубликованные вызовы.",
+      "Tardes entre semana": "Будние вечера", "Sábado por la mañana": "Суббота утром",
+      "Flexible · coordinar horario": "Гибкое время · договориться", "Aventura / Sunny Isles": "Авентура / Санни-Айлс",
+      "Downtown / Brickell": "Даунтаун / Брикелл", "North Miami / Miami Gardens": "Северный Майами / Майами-Гарденс",
+      "Kendall / Doral": "Кендалл / Дорал", "No se pudo cargar el ranking:": "Не удалось загрузить рейтинг:",
+      "No se pudieron cargar los resultados:": "Не удалось загрузить результаты:",
+      "No se pudieron cargar los desafíos:": "Не удалось загрузить вызовы:",
+      "No se pudieron cargar las propuestas:": "Не удалось загрузить предложения:",
+      "Intentar de nuevo": "Повторить попытку", "Ver jugadores inscritos": "Список участников",
+      "Inscribirse": "Зарегистрироваться", "Sin partidos programados.": "Матчи не запланированы.",
+      "Cómo funcionan los desafíos": "Как работают вызовы", "Volver a League Tennis": "Вернуться в League Tennis",
+      "Página pública": "Публичная страница", "Salir": "Выйти", "Crear perfil": "Создать профиль",
+      "Hola,": "Привет,", "Bienvenido,": "Добро пожаловать,", "año": "год", "mes": "месяц",
+      "Crea tu perfil": "Создай профиль", "No hay una suscripción disponible en este momento.": "Сейчас нет доступных подписок.",
+      "No hay resultados pendientes.": "Нет ожидающих результатов.", "Sin resultados": "Нет результатов",
+      "Buscar usuario": "Поиск пользователя", "Nombre o email": "Имя или почта", "Cuenta vinculada": "Связанный аккаунт",
+      "Selecciona una cuenta sin perfil": "Выбери аккаунт без профиля", "Nombre público": "Публичное имя",
+      "Membresía activa": "Активный абонемент", "Guardar perfil": "Сохранить профиль", "Guardar usuario": "Сохранить пользователя",
+      "Administrador": "Администратор", "Jugador": "Игрок", "Activa": "Активна", "Activo": "Активен",
+      "Inactivo": "Неактивен", "Desactivar": "Деактивировать", "Activar": "Активировать",
+      "Ej. Copa de noviembre": "например, ноябрьский кубок", "Ej. Aventura Tennis Center": "например, Aventura Tennis Center",
+      "Resultados de partidos": "Результаты матчей",
+      "Confirma, rechaza o elimina un reporte. Los resultados confirmados impactan el ranking.": "Подтверждай, отклоняй или удаляй отчёты. Подтверждённые результаты влияют на рейтинг.",
+      "En disputa": "Оспаривается", "Rechazar": "Отклонить", "Historial de resultados": "История результатов",
+      "Partido": "Матч", "Marcador": "Счёт", "Editar resultado reportado": "Изменить отправленный результат",
+      "Al guardar, volverá a estado pendiente para que el rival confirme el cambio.": "После сохранения результат станет ожидающим подтверждения соперником.",
+      "Marcador desde el ganador": "Счёт со стороны победителя", "Guardar y solicitar confirmación": "Сохранить и запросить подтверждение",
+      "Jugadores de la liga": "Игроки лиги",
+      "Administra el nombre, nivel y zona que aparecen en la clasificación. Los perfiles con historial deportivo no se pueden borrar.": "Управляй именем, уровнем и районом в рейтинге. Профили с историей матчей нельзя удалить.",
+      "Acciones": "Действия", "Gestiona permisos y membresías. Por seguridad, las contraseñas nunca se muestran.": "Управляй правами и абонементами. Пароли не отображаются из соображений безопасности.",
+      "Sin nivel": "Без уровня", "Sin zona": "Без района", "No hay perfiles de jugador.": "Профилей игроков нет.",
+      "No hay productos configurados.": "Товары не настроены.", "Sede por definir": "Место уточняется",
+      "Usuario actualizado.": "Данные пользователя обновлены.", "Cuenta creada. Bienvenido!": "Аккаунт создан. Добро пожаловать!",
+      "Bienvenido!": "Добро пожаловать!", "Inicia sesión para registrar un resultado.": "Войди, чтобы добавить результат.",
+      "Inicia sesión para publicar un desafío.": "Войди, чтобы создать вызов.",
+      "Crea tu perfil de jugador primero.": "Сначала создай профиль игрока.",
+      "Resultado enviado; el rival debe confirmarlo para actualizar el ranking.": "Результат отправлен; соперник должен подтвердить его для обновления рейтинга.",
+      "Perfil de jugador creado!": "Профиль игрока создан!",
+      "Selecciona un usuario de la tabla antes de guardar.": "Выбери пользователя из таблицы перед сохранением.",
+      "Selecciona una cuenta para crearle un perfil.": "Выбери аккаунт, для которого нужно создать профиль.",
+      "Perfil de jugador actualizado.": "Профиль игрока обновлён.", "Perfil de jugador eliminado.": "Профиль игрока удалён.",
+      "Selecciona al menos un nivel para el torneo.": "Выбери хотя бы один уровень для турнира.",
+      "Torneo actualizado": "Турнир обновлён", "Torneo creado": "Турнир создан", "Torneo eliminado": "Турнир удалён",
+      "Participante agregado al torneo.": "Участник добавлен в турнир.", "Inscripción retirada.": "Регистрация отменена.",
+      "Elige dos jugadores distintos.": "Выбери двух разных игроков.", "Partido programado": "Матч запланирован",
+      "Partido eliminado del cuadro.": "Матч удалён из сетки.", "Ingresa un precio válido en dólares.": "Введи корректную цену в долларах.",
+      "Producto actualizado": "Товар обновлён", "Producto creado": "Товар создан",
+      "Producto desactivado; se conserva el historial de ventas.": "Товар отключён; история продаж сохранена.",
+      "Producto activado.": "Товар включён.", "Producto eliminado.": "Товар удалён.",
+      "Resultado confirmado y ranking actualizado.": "Результат подтверждён, рейтинг обновлён.",
+      "Resultado rechazado.": "Результат отклонён.", "El ganador y el rival deben ser distintos.": "Победитель и соперник должны быть разными игроками.",
+      "Resultado corregido; falta confirmación del rival.": "Результат исправлен; требуется подтверждение соперника.",
+      "Resultado eliminado.": "Результат удалён.", "Desafío cerrado.": "Вызов закрыт.",
+      "Desafío reabierto.": "Вызов открыт снова.", "Desafío eliminado.": "Вызов удалён.",
+      "Stripe está sincronizado; no hay compras faltantes.": "Stripe синхронизирован, пропущенных покупок нет."
+    },
+    heExtra: {
+      "Idioma": "שפה", "MIAMI · LIGA DE TENIS": "מיאמי · ליגת טניס",
+      "League Tennis Aventura | Liga de tenis en Miami": "League Tennis Aventura | ליגת הטניס של מיאמי",
+      "Administración | League Tennis Aventura": "ניהול | League Tennis Aventura",
+      "NIVEL": "רמה", "ZONA": "אזור", "DISPONIBILIDAD": "זמינות",
+      "PROPUESTA DE": "הצעה מאת", "JUGADOR/A DE EJEMPLO": "דוגמה לשחקן",
+      "Tenista de la liga": "שחקן ליגה", "Muestra · no publicado": "דוגמה · לא פורסם",
+      "EJEMPLOS VISUALES": "תצוגה מקדימה", "Así se verá la zona cuando haya propuestas": "כך ייראה האזור כשיפורסמו הצעות",
+      "Estas tarjetas son solo una muestra del diseño; no son jugadores ni desafíos publicados.": "הכרטיסים האלה הם דוגמאות לעיצוב בלבד, לא שחקנים או אתגרים שפורסמו.",
+      "Tardes entre semana": "אחר הצהריים באמצע השבוע", "Sábado por la mañana": "שבת בבוקר",
+      "Flexible · coordinar horario": "גמיש · לתיאום שעה", "Aventura / Sunny Isles": "אוונטורה / סאני איילס",
+      "Downtown / Brickell": "מרכז העיר / בריקל", "North Miami / Miami Gardens": "צפון מיאמי / מיאמי גארדנס",
+      "Kendall / Doral": "קנדל / דוראל", "No se pudo cargar el ranking:": "לא ניתן לטעון את הדירוג:",
+      "No se pudieron cargar los resultados:": "לא ניתן לטעון את התוצאות:",
+      "No se pudieron cargar los desafíos:": "לא ניתן לטעון את האתגרים:",
+      "No se pudieron cargar las propuestas:": "לא ניתן לטעון את ההצעות:",
+      "Intentar de nuevo": "ניסיון נוסף", "Ver jugadores inscritos": "הצגת שחקנים רשומים",
+      "Inscribirse": "הרשמה", "Sin partidos programados.": "אין משחקים מתוכננים.",
+      "Cómo funcionan los desafíos": "איך האתגרים עובדים", "Volver a League Tennis": "חזרה ל-League Tennis",
+      "Página pública": "האתר הציבורי", "Salir": "התנתקות", "Crear perfil": "יצירת פרופיל",
+      "Hola,": "שלום,", "Bienvenido,": "ברוך הבא,", "año": "שנה", "mes": "חודש",
+      "Crea tu perfil": "יצירת הפרופיל שלך", "No hay una suscripción disponible en este momento.": "אין כרגע מנוי זמין.",
+      "No hay resultados pendientes.": "אין תוצאות ממתינות.", "Sin resultados": "אין תוצאות",
+      "Buscar usuario": "חיפוש משתמשים", "Nombre o email": "שם או דוא״ל", "Cuenta vinculada": "חשבון מקושר",
+      "Selecciona una cuenta sin perfil": "בחר חשבון ללא פרופיל", "Nombre público": "שם ציבורי",
+      "Membresía activa": "מנוי פעיל", "Guardar perfil": "שמירת פרופיל", "Guardar usuario": "שמירת משתמש",
+      "Administrador": "מנהל", "Jugador": "שחקן", "Activa": "פעיל", "Activo": "פעיל",
+      "Inactivo": "לא פעיל", "Desactivar": "השבתה", "Activar": "הפעלה",
+      "Ej. Copa de noviembre": "לדוגמה, גביע נובמבר", "Ej. Aventura Tennis Center": "לדוגמה, Aventura Tennis Center",
+      "Resultados de partidos": "תוצאות משחקים",
+      "Confirma, rechaza o elimina un reporte. Los resultados confirmados impactan el ranking.": "אשר, דחה או מחק דיווח. תוצאות מאושרות משפיעות על הדירוג.",
+      "En disputa": "במחלוקת", "Rechazar": "דחייה", "Historial de resultados": "היסטוריית תוצאות",
+      "Partido": "משחק", "Marcador": "תוצאה", "Editar resultado reportado": "עריכת תוצאה שדווחה",
+      "Al guardar, volverá a estado pendiente para que el rival confirme el cambio.": "לאחר השמירה, התוצאה תמתין לאישור היריב.",
+      "Marcador desde el ganador": "תוצאה מנקודת מבטו של המנצח", "Guardar y solicitar confirmación": "שמירה ובקשת אישור",
+      "Jugadores de la liga": "שחקני הליגה",
+      "Administra el nombre, nivel y zona que aparecen en la clasificación. Los perfiles con historial deportivo no se pueden borrar.": "נהל את השם, הרמה והאזור שמופיעים בדירוג. לא ניתן למחוק פרופילים עם היסטוריית משחקים.",
+      "Acciones": "פעולות", "Gestiona permisos y membresías. Por seguridad, las contraseñas nunca se muestran.": "נהל הרשאות ומנויים. מטעמי אבטחה, סיסמאות אינן מוצגות.",
+      "Sin nivel": "ללא רמה", "Sin zona": "ללא אזור", "No hay perfiles de jugador.": "אין פרופילי שחקנים.",
+      "No hay productos configurados.": "לא הוגדרו מוצרים.", "Sede por definir": "המקום ייקבע בהמשך",
+      "Usuario actualizado.": "המשתמש עודכן.", "Cuenta creada. Bienvenido!": "החשבון נוצר. ברוך הבא!",
+      "Bienvenido!": "ברוך הבא!", "Inicia sesión para registrar un resultado.": "התחבר כדי לדווח על תוצאה.",
+      "Inicia sesión para publicar un desafío.": "התחבר כדי לפרסם אתגר.",
+      "Crea tu perfil de jugador primero.": "צור תחילה פרופיל שחקן.",
+      "Resultado enviado; el rival debe confirmarlo para actualizar el ranking.": "התוצאה נשלחה; על היריב לאשר אותה כדי לעדכן את הדירוג.",
+      "Perfil de jugador creado!": "פרופיל השחקן נוצר!",
+      "Selecciona un usuario de la tabla antes de guardar.": "בחר משתמש מהטבלה לפני השמירה.",
+      "Selecciona una cuenta para crearle un perfil.": "בחר חשבון שעבורו ייווצר פרופיל.",
+      "Perfil de jugador actualizado.": "פרופיל השחקן עודכן.", "Perfil de jugador eliminado.": "פרופיל השחקן נמחק.",
+      "Selecciona al menos un nivel para el torneo.": "בחר לפחות רמה אחת לטורניר.",
+      "Torneo actualizado": "הטורניר עודכן", "Torneo creado": "הטורניר נוצר", "Torneo eliminado": "הטורניר נמחק",
+      "Participante agregado al torneo.": "המשתתף נוסף לטורניר.", "Inscripción retirada.": "ההרשמה הוסרה.",
+      "Elige dos jugadores distintos.": "בחר שני שחקנים שונים.", "Partido programado": "המשחק תוזמן",
+      "Partido eliminado del cuadro.": "המשחק הוסר מההגרלה.", "Ingresa un precio válido en dólares.": "הזן מחיר תקין בדולרים.",
+      "Producto actualizado": "המוצר עודכן", "Producto creado": "המוצר נוצר",
+      "Producto desactivado; se conserva el historial de ventas.": "המוצר הושבת; היסטוריית המכירות נשמרה.",
+      "Producto activado.": "המוצר הופעל.", "Producto eliminado.": "המוצר נמחק.",
+      "Resultado confirmado y ranking actualizado.": "התוצאה אושרה והדירוג עודכן.",
+      "Resultado rechazado.": "התוצאה נדחתה.", "El ganador y el rival deben ser distintos.": "המנצח והיריב חייבים להיות שחקנים שונים.",
+      "Resultado corregido; falta confirmación del rival.": "התוצאה תוקנה; נדרש אישור מהיריב.",
+      "Resultado eliminado.": "התוצאה נמחקה.", "Desafío cerrado.": "האתגר נסגר.",
+      "Desafío reabierto.": "האתגר נפתח מחדש.", "Desafío eliminado.": "האתגר נמחק.",
+      "Stripe está sincronizado; no hay compras faltantes.": "Stripe מסונכרן; אין רכישות חסרות."
+    },
+    ru: {
+      "CAMPEONATOS": "ТУРНИРЫ", "CLASIFICACIÓN": "РЕЙТИНГ", "DESAFÍOS": "ВЫЗОВЫ",
+      "TIENDA": "МАГАЗИН", "MEMBRESÍA": "АБОНЕМЕНТ", "Iniciar sesión": "Войти",
+      "Registrarse": "Регистрация", "Miami, Florida · Liga de tenis": "Майами, Флорида · Теннисная лига",
+      "Tu próximo partido": "Твой следующий матч", "empieza aquí.": "начинается здесь.",
+      "Compite en Miami. Encuentra torneos por nivel, sigue tu posición en la clasificación y juega con una comunidad que ama el tenis.": "Соревнуйся в Майами. Находи турниры своего уровня, следи за рейтингом и играй в сообществе любителей тенниса.",
+      "Únete a la liga": "Вступить в лигу", "Explorar campeonatos": "Смотреть турниры",
+      "Compite": "Соревнуйся", "Sube en el ranking": "Поднимайся в рейтинге", "Encuentra tu comunidad": "Найди своё сообщество",
+      "PRÓXIMO EN LA LIGA": "СКОРО В ЛИГЕ", "Campeonato mensual": "Ежемесячный турнир",
+      "Cada mes": "Каждый месяц", "Inscripción por nivel · Eliminación directa · Cuadro y resultados publicados en la plataforma.": "Регистрация по уровню · Олимпийская система · Сетка и результаты на платформе.",
+      "Ver campeonato": "Смотреть турнир", "Explorar la liga": "Обзор лиги",
+      "Calendario y cuadros": "Календарь и сетки", "Jugadores y puntos": "Игроки и очки",
+      "Productos y membresía": "Товары и абонемент", "JUEGA POR ALGO": "ИГРАЙ РАДИ ЦЕЛИ",
+      "Campeonatos": "Турниры", "Consulta torneos, jugadores inscritos, rondas y marcadores publicados.": "Смотрите турниры, участников, раунды и опубликованные результаты.",
+      "¿Sin torneo? Encuentra un desafío": "Нет турнира? Найди соперника", "SUBE EN LA ESCALERILLA": "ПОДНИМАЙСЯ В РЕЙТИНГЕ",
+      "Clasificación": "Рейтинг", "Cada partido confirmado cuenta. Encuentra tu posición y el próximo objetivo.": "Каждый подтверждённый матч важен. Узнай своё место и следующую цель.",
+      "+ Registrar resultado": "+ Добавить результат", "Todos los niveles": "Все уровни", "Todas las zonas": "Все районы",
+      "Buscar jugador...": "Поиск игрока...", "Pos.": "Место", "Jugador": "Игрок", "Nivel": "Уровень",
+      "Zona": "Район", "Partidos": "Матчи", "Puntos": "Очки", "UN RIVAL TE ESPERA": "СОПЕРНИК ЖДЁТ ТЕБЯ",
+      "Zona de desafíos": "Зона вызовов", "Encuentra un rival de tu nivel y coordina el próximo partido.": "Найди соперника своего уровня и договорись о матче.",
+      "Cargando desafíos...": "Загрузка вызовов...", "+ Publicar desafío": "+ Создать вызов",
+      "Publica tu disponibilidad": "Укажи свободное время", "Indica qué días y horarios puedes jugar.": "Укажи дни и время, когда можешь играть.",
+      "Encuentra un rival": "Найди соперника", "Los jugadores pueden aceptar tu propuesta.": "Другие игроки могут принять твоё предложение.",
+      "Jueguen y suban el resultado": "Сыграйте и внесите результат", "Un partido confirmado suma puntos al ranking.": "Подтверждённый матч добавляет очки в рейтинг.",
+      "Cómo funciona": "Как это работает", "Una sola plataforma para gestionar tu perfil, ranking, campeonatos y desafíos.": "Одна платформа для управления профилем, рейтингом, турнирами и вызовами.",
+      "01 · Crea tu perfil": "01 · Создай профиль", "Agrega foto, nivel de juego y zona de Miami.": "Добавь фото, игровой уровень и район Майами.",
+      "02 · Juega y registra": "02 · Играй и записывай", "Coordina partidos y registra resultados para sumar puntos.": "Договаривайся о матчах и записывай результаты, чтобы получать очки.",
+      "03 · Compite cada mes": "03 · Соревнуйся каждый месяц", "Inscríbete al campeonato mensual y sigue jugando en Zona de desafíos.": "Участвуй в ежемесячном турнире и продолжай играть в зоне вызовов.",
+      "EQUÍPATE PARA EL PARTIDO": "ПОДГОТОВЬСЯ К МАТЧУ", "La tienda": "Магазин",
+      "Productos seleccionados para los jugadores de la liga.": "Подборка товаров для игроков лиги.",
+      "Conoce League Member": "О League Member", "JUEGA COMO MIEMBRO": "ИГРАЙ КАК УЧАСТНИК ЛИГИ",
+      "Más tenis.": "Больше тенниса.", "Más ventajas.": "Больше преимуществ.",
+      "Una membresía para quienes quieren vivir la liga al máximo.": "Абонемент для тех, кто хочет получить максимум от лиги.",
+      "Acceso prioritario a inscripciones": "Приоритетная регистрация", "Beneficios exclusivos para miembros": "Особые преимущества для участников",
+      "Una comunidad hecha para competir": "Сообщество для соревнований", "Planes de membresía": "Планы абонемента",
+      "Cargando planes disponibles...": "Загрузка доступных планов...", "Miami, Florida · Tu liga, tu juego.": "Майами, Флорида · Твоя лига, твоя игра.",
+      "Cerrar": "Закрыть", "Tu próximo partido te espera.": "Твой следующий матч уже ждёт.",
+      "Entra para ver tus desafíos, seguir tu ranking y jugar con la comunidad.": "Войди, чтобы видеть вызовы, следить за рейтингом и играть с сообществом.",
+      "QUÉ BUENO VERTE": "РАДЫ ТЕБЯ ВИДЕТЬ", "Usa el email y la contraseña de tu cuenta.": "Введи адрес электронной почты и пароль.",
+      "Contraseña": "Пароль", "Tu contraseña": "Твой пароль", "Entrar a mi cuenta": "Войти в аккаунт",
+      "¿Aún no tienes cuenta?": "Ещё нет аккаунта?", "Crea una gratis": "Создай бесплатно",
+      "Tu cuenta está protegida.": "Твой аккаунт защищён.", "Crear cuenta": "Создать аккаунт",
+      "Nombre completo": "Полное имя", "Tu nombre": "Твоё имя", "Mínimo 8 caracteres": "Не менее 8 символов",
+      "Nivel de tenis": "Уровень игры", "Opcional": "Необязательно", "Zona de Miami": "Район Майами",
+      "Acepto las reglas de la liga.": "Я принимаю правила лиги.", "Crear perfil de jugador": "Создать профиль игрока",
+      "Nombre para mostrar": "Отображаемое имя", "Seleccionar": "Выбрать", "Registrar resultado": "Добавить результат",
+      "Jugador ganador": "Победитель", "Rival": "Соперник", "Marcador desde el punto de vista del ganador": "Счёт со стороны победителя",
+      "Mejor de 3 sets; separa cada set con coma. Ejemplo: 6-4, 4-6, 10-7.": "До двух выигранных сетов; разделяй сеты запятыми. Пример: 6-4, 4-6, 10-7.",
+      "Guardar resultado": "Сохранить результат", "Crear desafío semanal": "Создать вызов на неделю",
+      "Disponibilidad": "Доступное время", "Ej. tardes entre semana": "например, будние вечера", "Publicar desafío": "Опубликовать вызов",
+      "Inicia sesión para comprar": "Войди, чтобы совершить покупку", "Pago confirmado. ¡Gracias por tu compra!": "Оплата подтверждена. Спасибо за покупку!",
+      "Procesando pago...": "Проверяем оплату...", "Pago cancelado. No se realizó ningún cargo.": "Оплата отменена. Списание не выполнено.",
+      "Tu pago está pendiente de confirmación.": "Ожидается подтверждение оплаты.",
+      "No pudimos verificar el pago.": "Не удалось проверить оплату.",
+      "Volver a verificar": "Проверить ещё раз", "Iniciar sesión para verificar": "Войти для проверки",
+      "Busca rival": "Ищет соперника", "Partido coordinado": "Матч согласован", "Cerrado": "Закрыт",
+      "Desafío": "Вызов", "Inscripciones abiertas": "Регистрация открыта", "Programado": "Запланирован",
+      "En curso": "В процессе", "Finalizado": "Завершён", "Cancelado": "Отменён", "Sin estado": "Нет статуса",
+      "Pendiente": "Ожидает", "En revisión": "На проверке", "Confirmado": "Подтверждён",
+      "Rechazado": "Отклонён", "Pagado": "Оплачен", "Fallido": "Ошибка", "Reembolsado": "Возвращён",
+      "No hay resultados pendientes de confirmación.": "Нет результатов, ожидающих подтверждения.",
+      "Resultados por confirmar": "Результаты для подтверждения", "Confirmar": "Подтвердить",
+      "Desacuerdo": "Оспорить", "Pendiente de confirmación": "Ожидает подтверждения",
+      "Resultado confirmado; se actualizó el ranking.": "Результат подтверждён; рейтинг обновлён.",
+      "Resultado marcado para revisión.": "Результат отправлен на проверку.",
+      "Desafío aceptado. Coordina fecha y cancha con el rival.": "Вызов принят. Согласуй дату и корт с соперником.",
+      "Desafío publicado.": "Вызов опубликован.", "No hay jugadores todavía. Sé el primero!": "Пока нет игроков. Стань первым!",
+      "No hay jugadores con esos filtros.": "Игроков с такими фильтрами нет.", "No hay productos disponibles en este momento.": "Сейчас нет доступных товаров.",
+      "Suscribirse ahora": "Оформить абонемент", "Suscribirse": "Подписаться", "Comprar": "Купить",
+      "Pago seguro procesado por Stripe.": "Безопасная оплата через Stripe.", "Membresía": "Абонемент",
+      "Cancelar cuando quieras.": "Отмена в любое время.",
+      "Ver página pública": "Открыть публичную страницу", "CENTRO DE ADMINISTRACIÓN": "ЦЕНТР АДМИНИСТРИРОВАНИЯ",
+      "GESTIÓN DE LA LIGA": "УПРАВЛЕНИЕ ЛИГОЙ", "Administración": "Администрирование",
+      "Organiza la liga desde un solo lugar. Elige una tarea y sigue las indicaciones en pantalla.": "Управляй лигой в одном месте. Выбери задачу и следуй инструкциям на экране.",
+      "Actualizar información": "Обновить данные", "Cargando el centro de administración...": "Загрузка центра администрирования...",
+      "CENTRO DE CONTROL": "ПАНЕЛЬ УПРАВЛЕНИЯ", "¿Qué quieres hacer hoy?": "Что будем делать сегодня?",
+      "Elige una tarea para empezar. Los cambios se guardan al pulsar el botón de guardar.": "Выбери задачу. Изменения сохраняются после нажатия кнопки сохранения.",
+      "Organizar un torneo": "Организовать турнир", "Fechas, niveles y partidos": "Даты, уровни и матчи",
+      "Revisar resultados": "Проверить результаты", "por revisar": "на проверке", "Gestionar jugadores": "Управлять игроками",
+      "Perfiles y clasificación": "Профили и рейтинг", "Editar la tienda": "Изменить магазин",
+      "Productos y membresías": "Товары и абонементы", "Cuentas registradas": "Зарегистрированные аккаунты",
+      "Perfiles de jugador": "Профили игроков", "Compras realizadas": "Покупки",
+      "Ingresos totales": "Общий доход", "Membresías activas": "Активные абонементы",
+      "Resultados por revisar": "Результаты для проверки", "Torneos": "Турниры", "Jugadores": "Игроки",
+      "Resultados": "Результаты", "Desafíos": "Вызовы", "Tienda": "Магазин", "Compras": "Покупки", "Cuentas": "Аккаунты",
+      "Compras recientes": "Последние покупки", "Consulta las compras y pagos realizados en la tienda.": "Просмотр покупок и платежей в магазине.",
+      "Sincronizar pagos con Stripe": "Синхронизировать платежи со Stripe", "Usuario": "Пользователь",
+      "Producto": "Товар", "Monto": "Сумма", "Estado": "Статус", "Fecha": "Дата", "No hay pedidos": "Заказов нет",
+      "Torneos y partidos": "Турниры и матчи", "Datos del torneo": "Данные турнира",
+      "Nombre del torneo": "Название турнира", "Mes del torneo": "Месяц турнира",
+      "Niveles participantes": "Уровни участников", "Selecciona uno o más niveles de juego.": "Выбери один или несколько игровых уровней.",
+      "Estado del torneo": "Статус турнира", "Fecha de inicio": "Дата начала", "Fecha de término": "Дата окончания",
+      "Sede o cancha": "Место или корт", "Formato del torneo": "Формат турнира", "Descripción": "Описание",
+      "Guardar torneo": "Сохранить турнир", "Limpiar formulario": "Очистить форму", "Aún no hay torneos": "Турниров пока нет",
+      "Desafíos publicados": "Опубликованные вызовы", "Tienda y membresías": "Магазин и абонементы",
+      "Nombre": "Название", "Precio (USD)": "Цена (USD)", "Tipo": "Тип", "Producto digital": "Цифровой товар",
+      "Suscripción": "Подписка", "Frecuencia": "Период", "Mensual": "Ежемесячно", "Anual": "Ежегодно",
+      "Disponible en la tienda": "Доступно в магазине", "Guardar producto": "Сохранить товар", "Limpiar": "Очистить",
+      "Editar": "Изменить", "Eliminar": "Удалить", "Perfil de jugador": "Профиль игрока",
+      "Buscar por nombre o email": "Поиск по имени или почте", "Rol": "Роль", "Nivel de juego": "Игровой уровень",
+      "Guardar cambios": "Сохранить изменения", "Editar partido": "Изменить матч",
+      "Eliminar partido": "Удалить матч", "Programar partido": "Запланировать матч",
+      "Jugador A": "Игрок A", "Jugador B": "Игрок B", "Ronda": "Раунд", "Ganador": "Победитель",
+      "Cancha": "Корт", "Guardar partido": "Сохранить матч", "Agregar jugador inscrito": "Добавить участника",
+      "Agregar participante": "Добавить участника", "Retirar": "Убрать", "Sin inscritos": "Нет участников",
+      "Reintentar": "Повторить", "No disponible": "Недоступно"
+    },
+    he: {
+      "CAMPEONATOS": "טורנירים", "CLASIFICACIÓN": "דירוג", "DESAFÍOS": "אתגרים",
+      "TIENDA": "חנות", "MEMBRESÍA": "מנוי", "Iniciar sesión": "התחברות",
+      "Registrarse": "הרשמה", "Miami, Florida · Liga de tenis": "מיאמי, פלורידה · ליגת טניס",
+      "Tu próximo partido": "המשחק הבא שלך", "empieza aquí.": "מתחיל כאן.",
+      "Compite en Miami. Encuentra torneos por nivel, sigue tu posición en la clasificación y juega con una comunidad que ama el tenis.": "התחרה במיאמי. מצא טורנירים לפי רמה, עקוב אחר הדירוג שלך ושחק עם קהילת אוהבי טניס.",
+      "Únete a la liga": "הצטרף לליגה", "Explorar campeonatos": "לצפייה בטורנירים",
+      "Compite": "התחרה", "Sube en el ranking": "עלה בדירוג", "Encuentra tu comunidad": "מצא את הקהילה שלך",
+      "PRÓXIMO EN LA LIGA": "הבא בליגה", "Campeonato mensual": "טורניר חודשי",
+      "Cada mes": "בכל חודש", "Inscripción por nivel · Eliminación directa · Cuadro y resultados publicados en la plataforma.": "הרשמה לפי רמה · נוקאאוט · הגרלה ותוצאות באתר.",
+      "Ver campeonato": "לצפייה בטורניר", "Explorar la liga": "לגלות את הליגה",
+      "Calendario y cuadros": "לוח זמנים והגרלות", "Jugadores y puntos": "שחקנים ונקודות",
+      "Productos y membresía": "מוצרים ומנוי", "JUEGA POR ALGO": "שחק למען מטרה",
+      "Campeonatos": "טורנירים", "Consulta torneos, jugadores inscritos, rondas y marcadores publicados.": "צפה בטורנירים, בשחקנים שנרשמו, בסיבובים ובתוצאות.",
+      "¿Sin torneo? Encuentra un desafío": "אין טורניר? מצא אתגר", "SUBE EN LA ESCALERILLA": "עלה בסולם הדירוג",
+      "Clasificación": "דירוג", "Cada partido confirmado cuenta. Encuentra tu posición y el próximo objetivo.": "כל משחק מאושר נחשב. מצא את המיקום שלך ואת היעד הבא.",
+      "+ Registrar resultado": "+ דיווח תוצאה", "Todos los niveles": "כל הרמות", "Todas las zonas": "כל האזורים",
+      "Buscar jugador...": "חיפוש שחקן...", "Pos.": "מקום", "Jugador": "שחקן", "Nivel": "רמה",
+      "Zona": "אזור", "Partidos": "משחקים", "Puntos": "נקודות", "UN RIVAL TE ESPERA": "היריב הבא מחכה לך",
+      "Zona de desafíos": "אזור האתגרים", "Encuentra un rival de tu nivel y coordina el próximo partido.": "מצא יריב ברמתך ותאם את המשחק הבא.",
+      "Cargando desafíos...": "האתגרים נטענים...", "+ Publicar desafío": "+ פרסום אתגר",
+      "Publica tu disponibilidad": "פרסם זמינות", "Indica qué días y horarios puedes jugar.": "ציין באילו ימים ושעות תוכל לשחק.",
+      "Encuentra un rival": "מצא יריב", "Los jugadores pueden aceptar tu propuesta.": "שחקנים יכולים לקבל את ההצעה שלך.",
+      "Jueguen y suban el resultado": "שחקו והעלו את התוצאה", "Un partido confirmado suma puntos al ranking.": "משחק מאושר מוסיף נקודות לדירוג.",
+      "Cómo funciona": "איך זה עובד", "Una sola plataforma para gestionar tu perfil, ranking, campeonatos y desafíos.": "פלטפורמה אחת לניהול הפרופיל, הדירוג, הטורנירים והאתגרים שלך.",
+      "01 · Crea tu perfil": "01 · יצירת פרופיל", "Agrega foto, nivel de juego y zona de Miami.": "הוסף תמונה, רמת משחק ואזור במיאמי.",
+      "02 · Juega y registra": "02 · שחק ודווח", "Coordina partidos y registra resultados para sumar puntos.": "תאם משחקים ודווח תוצאות כדי לצבור נקודות.",
+      "03 · Compite cada mes": "03 · התחרה בכל חודש", "Inscríbete al campeonato mensual y sigue jugando en Zona de desafíos.": "הירשם לטורניר החודשי והמשך לשחק באזור האתגרים.",
+      "EQUÍPATE PARA EL PARTIDO": "הצטייד למשחק", "La tienda": "החנות",
+      "Productos seleccionados para los jugadores de la liga.": "מוצרים נבחרים לשחקני הליגה.",
+      "Conoce League Member": "מידע על League Member", "JUEGA COMO MIEMBRO": "שחק כחבר מועדון",
+      "Más tenis.": "יותר טניס.", "Más ventajas.": "יותר יתרונות.",
+      "Una membresía para quienes quieren vivir la liga al máximo.": "מנוי למי שרוצה ליהנות מהליגה במלואה.",
+      "Acceso prioritario a inscripciones": "עדיפות בהרשמה", "Beneficios exclusivos para miembros": "הטבות בלעדיות לחברים",
+      "Una comunidad hecha para competir": "קהילה שנועדה להתחרות", "Planes de membresía": "תוכניות מנוי",
+      "Cargando planes disponibles...": "התוכניות הזמינות נטענות...", "Miami, Florida · Tu liga, tu juego.": "מיאמי, פלורידה · הליגה שלך, המשחק שלך.",
+      "Cerrar": "סגירה", "Tu próximo partido te espera.": "המשחק הבא שלך מחכה לך.",
+      "Entra para ver tus desafíos, seguir tu ranking y jugar con la comunidad.": "התחבר כדי לראות את האתגרים שלך, לעקוב אחר הדירוג ולשחק עם הקהילה.",
+      "QUÉ BUENO VERTE": "שמחים לראות אותך", "Usa el email y la contraseña de tu cuenta.": "הזן את כתובת הדוא״ל והסיסמה שלך.",
+      "Contraseña": "סיסמה", "Tu contraseña": "הסיסמה שלך", "Entrar a mi cuenta": "התחברות לחשבון",
+      "¿Aún no tienes cuenta?": "עדיין אין לך חשבון?", "Crea una gratis": "צור חשבון בחינם",
+      "Tu cuenta está protegida.": "החשבון שלך מוגן.", "Crear cuenta": "יצירת חשבון",
+      "Nombre completo": "שם מלא", "Tu nombre": "השם שלך", "Mínimo 8 caracteres": "לפחות 8 תווים",
+      "Nivel de tenis": "רמת טניס", "Opcional": "לא חובה", "Zona de Miami": "אזור במיאמי",
+      "Acepto las reglas de la liga.": "אני מסכים לכללי הליגה.", "Crear perfil de jugador": "יצירת פרופיל שחקן",
+      "Nombre para mostrar": "שם לתצוגה", "Seleccionar": "בחירה", "Registrar resultado": "דיווח תוצאה",
+      "Jugador ganador": "השחקן המנצח", "Rival": "יריב", "Marcador desde el punto de vista del ganador": "תוצאה מנקודת מבטו של המנצח",
+      "Mejor de 3 sets; separa cada set con coma. Ejemplo: 6-4, 4-6, 10-7.": "הטוב משלוש מערכות; הפרד בין המערכות בפסיק. לדוגמה: 6-4, 4-6, 10-7.",
+      "Guardar resultado": "שמירת תוצאה", "Crear desafío semanal": "יצירת אתגר שבועי",
+      "Disponibilidad": "זמינות", "Ej. tardes entre semana": "למשל, ערבים באמצע השבוע", "Publicar desafío": "פרסום אתגר",
+      "Inicia sesión para comprar": "התחבר כדי לבצע רכישה", "Pago confirmado. ¡Gracias por tu compra!": "התשלום אושר. תודה על הרכישה!",
+      "Procesando pago...": "התשלום נבדק...", "Pago cancelado. No se realizó ningún cargo.": "התשלום בוטל. לא בוצע חיוב.",
+      "Tu pago está pendiente de confirmación.": "התשלום ממתין לאישור.",
+      "No pudimos verificar el pago.": "לא הצלחנו לאמת את התשלום.",
+      "Volver a verificar": "בדיקה חוזרת", "Iniciar sesión para verificar": "התחבר כדי לאמת",
+      "Busca rival": "מחפש יריב", "Partido coordinado": "המשחק תואם", "Cerrado": "סגור",
+      "Desafío": "אתגר", "Inscripciones abiertas": "ההרשמה פתוחה", "Programado": "מתוכנן",
+      "En curso": "בתהליך", "Finalizado": "הסתיים", "Cancelado": "בוטל", "Sin estado": "ללא סטטוס",
+      "Pendiente": "ממתין", "En revisión": "בבדיקה", "Confirmado": "אושר",
+      "Rechazado": "נדחה", "Pagado": "שולם", "Fallido": "נכשל", "Reembolsado": "הוחזר",
+      "No hay resultados pendientes de confirmación.": "אין תוצאות שממתינות לאישור.",
+      "Resultados por confirmar": "תוצאות לאישור", "Confirmar": "אישור",
+      "Desacuerdo": "ערעור", "Pendiente de confirmación": "ממתין לאישור",
+      "Resultado confirmado; se actualizó el ranking.": "התוצאה אושרה; הדירוג עודכן.",
+      "Resultado marcado para revisión.": "התוצאה סומנה לבדיקה.",
+      "Desafío aceptado. Coordina fecha y cancha con el rival.": "האתגר התקבל. תאם תאריך ומגרש עם היריב.",
+      "Desafío publicado.": "האתגר פורסם.", "No hay jugadores todavía. Sé el primero!": "עדיין אין שחקנים. היה הראשון!",
+      "No hay jugadores con esos filtros.": "אין שחקנים שתואמים למסננים האלה.", "No hay productos disponibles en este momento.": "אין כרגע מוצרים זמינים.",
+      "Suscribirse ahora": "הצטרפות למנוי", "Suscribirse": "הצטרפות", "Comprar": "רכישה",
+      "Pago seguro procesado por Stripe.": "תשלום מאובטח באמצעות Stripe.", "Membresía": "מנוי",
+      "Cancelar cuando quieras.": "אפשר לבטל בכל עת.",
+      "Ver página pública": "צפייה באתר הציבורי", "CENTRO DE ADMINISTRACIÓN": "מרכז ניהול",
+      "GESTIÓN DE LA LIGA": "ניהול הליגה", "Administración": "ניהול",
+      "Organiza la liga desde un solo lugar. Elige una tarea y sigue las indicaciones en pantalla.": "נהל את הליגה ממקום אחד. בחר משימה ופעל לפי ההנחיות שעל המסך.",
+      "Actualizar información": "רענון מידע", "Cargando el centro de administración...": "מרכז הניהול נטען...",
+      "CENTRO DE CONTROL": "מרכז בקרה", "¿Qué quieres hacer hoy?": "מה תרצה לעשות היום?",
+      "Elige una tarea para empezar. Los cambios se guardan al pulsar el botón de guardar.": "בחר משימה כדי להתחיל. השינויים נשמרים בלחיצה על שמירה.",
+      "Organizar un torneo": "ארגון טורניר", "Fechas, niveles y partidos": "תאריכים, רמות ומשחקים",
+      "Revisar resultados": "בדיקת תוצאות", "por revisar": "לבדיקה", "Gestionar jugadores": "ניהול שחקנים",
+      "Perfiles y clasificación": "פרופילים ודירוג", "Editar la tienda": "עריכת החנות",
+      "Productos y membresías": "מוצרים ומנויים", "Cuentas registradas": "חשבונות רשומים",
+      "Perfiles de jugador": "פרופילי שחקנים", "Compras realizadas": "רכישות",
+      "Ingresos totales": "סך ההכנסות", "Membresías activas": "מנויים פעילים",
+      "Resultados por revisar": "תוצאות לבדיקה", "Torneos": "טורנירים", "Jugadores": "שחקנים",
+      "Resultados": "תוצאות", "Desafíos": "אתגרים", "Tienda": "חנות", "Compras": "רכישות", "Cuentas": "חשבונות",
+      "Compras recientes": "רכישות אחרונות", "Consulta las compras y pagos realizados en la tienda.": "צפה ברכישות ובתשלומים שבוצעו בחנות.",
+      "Sincronizar pagos con Stripe": "סנכרון תשלומים עם Stripe", "Usuario": "משתמש",
+      "Producto": "מוצר", "Monto": "סכום", "Estado": "סטטוס", "Fecha": "תאריך", "No hay pedidos": "אין הזמנות",
+      "Torneos y partidos": "טורנירים ומשחקים", "Datos del torneo": "פרטי הטורניר",
+      "Nombre del torneo": "שם הטורניר", "Mes del torneo": "חודש הטורניר",
+      "Niveles participantes": "רמות המשתתפים", "Selecciona uno o más niveles de juego.": "בחר רמת משחק אחת או יותר.",
+      "Estado del torneo": "סטטוס הטורניר", "Fecha de inicio": "תאריך התחלה", "Fecha de término": "תאריך סיום",
+      "Sede o cancha": "מקום או מגרש", "Formato del torneo": "פורמט הטורניר", "Descripción": "תיאור",
+      "Guardar torneo": "שמירת טורניר", "Limpiar formulario": "ניקוי הטופס", "Aún no hay torneos": "עדיין אין טורנירים",
+      "Desafíos publicados": "אתגרים שפורסמו", "Tienda y membresías": "חנות ומנויים",
+      "Nombre": "שם", "Precio (USD)": "מחיר (USD)", "Tipo": "סוג", "Producto digital": "מוצר דיגיטלי",
+      "Suscripción": "מנוי", "Frecuencia": "תדירות", "Mensual": "חודשי", "Anual": "שנתי",
+      "Disponible en la tienda": "זמין בחנות", "Guardar producto": "שמירת מוצר", "Limpiar": "ניקוי",
+      "Editar": "עריכה", "Eliminar": "מחיקה", "Perfil de jugador": "פרופיל שחקן",
+      "Buscar por nombre o email": "חיפוש לפי שם או דוא״ל", "Rol": "תפקיד", "Nivel de juego": "רמת משחק",
+      "Guardar cambios": "שמירת שינויים", "Editar partido": "עריכת משחק",
+      "Eliminar partido": "מחיקת משחק", "Programar partido": "תזמון משחק",
+      "Jugador A": "שחקן א׳", "Jugador B": "שחקן ב׳", "Ronda": "סיבוב", "Ganador": "מנצח",
+      "Cancha": "מגרש", "Guardar partido": "שמירת משחק", "Agregar jugador inscrito": "הוספת שחקן רשום",
+      "Agregar participante": "הוספת משתתף", "Retirar": "הסרה", "Sin inscritos": "אין נרשמים",
+      "Reintentar": "ניסיון חוזר", "No disponible": "לא זמין"
+    }
+  };
+
+  const localeKey = "league-tennis-language";
+  const supported = ["es", "en", "ru", "he"];
+  const sourceTitle = document.title;
+  let locale = supported.includes(localStorage.getItem(localeKey)) ? localStorage.getItem(localeKey) : "es";
+  const textRecords = new WeakMap();
+  const attributeRecords = new WeakMap();
+
+  function translate(source) {
+    const mapped = translations[locale]?.[source] || translations[`${locale}Extra`]?.[source];
+    if (mapped) return mapped;
+    for (const dictionary of [translations[locale], translations[`${locale}Extra`]]) {
+      const prefix = Object.keys(dictionary || {}).find(key => key.endsWith(":") && source.startsWith(key));
+      if (prefix) return `${dictionary[prefix]}${source.slice(prefix.length)}`;
+    }
+    const challengeCount = source.match(/^(\d+) desafío disponible$/);
+    if (challengeCount && locale === "en") return `${challengeCount[1]} challenge available`;
+    if (challengeCount && locale === "ru") return `${challengeCount[1]} ${russianCountWord(Number(challengeCount[1]), "доступный вызов", "доступных вызова", "доступных вызовов")}`;
+    if (challengeCount && locale === "he") return `${challengeCount[1]} אתגר זמין`;
+    const challengesCount = source.match(/^(\d+) desafíos disponibles$/);
+    if (challengesCount && locale === "en") return `${challengesCount[1]} challenges available`;
+    if (challengesCount && locale === "ru") return `${challengesCount[1]} ${russianCountWord(Number(challengesCount[1]), "доступный вызов", "доступных вызова", "доступных вызовов")}`;
+    if (challengesCount && locale === "he") return `${challengesCount[1]} אתגרים זמינים`;
+    const coordinatedCount = source.match(/^(\d+) partido coordinado$/);
+    if (coordinatedCount && locale === "en") return `${coordinatedCount[1]} match arranged`;
+    if (coordinatedCount && locale === "ru") return `${coordinatedCount[1]} ${russianCountWord(Number(coordinatedCount[1]), "матч согласован", "матча согласованы", "матчей согласовано")}`;
+    if (coordinatedCount && locale === "he") return `${coordinatedCount[1]} משחק תואם`;
+    const coordinatedCounts = source.match(/^(\d+) partidos coordinados$/);
+    if (coordinatedCounts && locale === "en") return `${coordinatedCounts[1]} matches arranged`;
+    if (coordinatedCounts && locale === "ru") return `${coordinatedCounts[1]} ${russianCountWord(Number(coordinatedCounts[1]), "матч согласован", "матча согласованы", "матчей согласовано")}`;
+    if (coordinatedCounts && locale === "he") return `${coordinatedCounts[1]} משחקים תואמו`;
+    return source;
+  }
+
+  function russianCountWord(count, one, few, many) {
+    const lastTwoDigits = count % 100;
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return many;
+    const lastDigit = count % 10;
+    if (lastDigit === 1) return one;
+    if (lastDigit >= 2 && lastDigit <= 4) return few;
+    return many;
+  }
+
+  function translateTextNode(node) {
+    let record = textRecords.get(node);
+    if (!record || node.nodeValue !== record.translated) {
+      record = { source: node.nodeValue, translated: node.nodeValue };
+    }
+    const leading = record.source.match(/^\s*/)?.[0] || "";
+    const trailing = record.source.match(/\s*$/)?.[0] || "";
+    const trimmed = record.source.trim();
+    const value = trimmed ? `${leading}${translate(trimmed)}${trailing}` : record.source;
+    if (node.nodeValue !== value) node.nodeValue = value;
+    record.translated = value;
+    textRecords.set(node, record);
+  }
+
+  function translateElement(element) {
+    for (const name of ["placeholder", "title", "aria-label", "alt"]) {
+      if (!element.hasAttribute(name)) continue;
+      let records = attributeRecords.get(element);
+      if (!records) {
+        records = new Map();
+        attributeRecords.set(element, records);
+      }
+      let record = records.get(name);
+      const current = element.getAttribute(name);
+      if (!record || current !== record.translated) record = { source: current, translated: current };
+      const value = translate(record.source);
+      if (current !== value) element.setAttribute(name, value);
+      record.translated = value;
+      records.set(name, record);
+    }
+  }
+
+  function translateTree(root) {
+    if (root.nodeType === Node.TEXT_NODE) {
+      translateTextNode(root);
+      return;
+    }
+    if (root.nodeType !== Node.ELEMENT_NODE && root !== document) return;
+    if (root.nodeType === Node.ELEMENT_NODE) translateElement(root);
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) translateTextNode(walker.currentNode);
+    if (root.querySelectorAll) root.querySelectorAll("*").forEach(translateElement);
+  }
+
+  function setLocale(nextLocale) {
+    if (!supported.includes(nextLocale)) return;
+    locale = nextLocale;
+    localStorage.setItem(localeKey, locale);
+    document.documentElement.lang = locale;
+    document.documentElement.dir = locale === "he" ? "rtl" : "ltr";
+    document.title = translate(sourceTitle);
+    translateTree(document.body);
+    document.querySelectorAll(".language-picker").forEach(select => {
+      select.value = locale;
+    });
+    document.dispatchEvent(new CustomEvent("languagechange", { detail: { locale } }));
+  }
+
+  function initialize() {
+    document.querySelectorAll(".language-picker").forEach(select => {
+      select.value = locale;
+      select.addEventListener("change", () => setLocale(select.value));
+    });
+    setLocale(locale);
+    const observer = new MutationObserver(records => {
+      for (const record of records) {
+        if (record.type === "characterData") translateTextNode(record.target);
+        for (const node of record.addedNodes) translateTree(node);
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
+
+  window.leagueI18n = {
+    get locale() { return locale; },
+    translate,
+    setLocale
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initialize, { once: true });
+  } else {
+    initialize();
+  }
+})();
