@@ -108,28 +108,17 @@
       <div>
         <span class="section-kicker">UN RIVAL TE ESPERA</span>
         <h2>Zona de desafíos</h2>
-        <p class="section-sub">Los jugadores eliminados del cuadro pueden continuar compitiendo mediante desafíos semanales.</p>
+        <p class="section-sub">Encuentra un rival de tu nivel y coordina el próximo partido.</p>
       </div>
-      <button class="btn btn-primary" onclick="openModal('challengeModal')">Solicitar desafío</button>
+      <div class="challenge-heading-actions">
+        <span class="challenge-count" id="challengeCount">Cargando desafíos...</span>
+        <button class="btn btn-primary" onclick="openModal('challengeModal')">+ Publicar desafío</button>
+      </div>
     </div>
-    <div class="grid grid-3">
-      <article class="card challenge">
-        <span class="tag">Desafío semanal</span>
-        <h3>Encuentra un rival</h3>
-        <p class="muted">Encuentra jugadores de tu nivel o de otras zonas. Coordinen fecha, cancha y hora entre ustedes.</p>
-        <button class="btn btn-dark" onclick="openModal('challengeModal')">Solicitar desafío</button>
-      </article>
-      <article class="card">
-        <span class="tag tag-blue">Regla de partido</span>
-        <h3>100 puntos por partido</h3>
-        <p class="muted">Cada partido validado suma 100 puntos a la escalerilla. Los puntos de torneo se contabilizan aparte.</p>
-      </article>
-      <article class="card">
-        <span class="tag">Resultado confirmado</span>
-        <h3>Validación de resultados</h3>
-        <p class="muted">El jugador registra el marcador y su rival lo confirma. Si hay desacuerdo, el administrador revisa.</p>
-        <button class="btn btn-dark" onclick="openResultModal()">Registrar marcador</button>
-      </article>
+    <div class="challenge-steps" aria-label="Cómo funcionan los desafíos">
+      <article><span>01</span><div><b>Publica tu disponibilidad</b><p>Indica qué días y horarios puedes jugar.</p></div></article>
+      <article><span>02</span><div><b>Encuentra un rival</b><p>Los jugadores pueden aceptar tu propuesta.</p></div></article>
+      <article><span>03</span><div><b>Jueguen y suban el resultado</b><p>Un partido confirmado suma puntos al ranking.</p></div></article>
     </div>
     <div id="challengesList" class="grid grid-3"></div>
   </section>
@@ -183,15 +172,32 @@
 
 <!-- LOGIN MODAL -->
 <div class="modal" id="loginModal">
-  <div class="modal-box">
-    <div class="modal-head"><h2>Iniciar sesión</h2><button class="close" onclick="closeModal('loginModal')">×</button></div>
-    <form id="loginForm">
-      <label class="full">Email<input name="email" type="email" required placeholder="tu@email.com"></label>
-      <label class="full">Contraseña<input name="password" type="password" required placeholder="Tu contraseña"></label>
-      <button class="btn btn-primary full" type="submit">Iniciar sesión</button>
-    </form>
-    <div id="loginNotice" class="notice-bar" style="margin-top:12px"></div>
-    <p class="muted" style="margin-top:12px">No tienes cuenta? <a href="#" onclick="closeModal('loginModal');openModal('registerModal')">Regístrate</a></p>
+  <div class="modal-box auth-modal-box">
+    <button class="close auth-close" aria-label="Cerrar" onclick="closeModal('loginModal')">×</button>
+    <div class="auth-visual">
+      <span class="auth-ball" aria-hidden="true">LT</span>
+      <span class="auth-eyebrow">LEAGUE TENNIS AVENTURA</span>
+      <h2>Tu próximo partido te espera.</h2>
+      <p>Entra para ver tus desafíos, seguir tu ranking y jugar con la comunidad.</p>
+      <div class="auth-decoration" aria-hidden="true"><span></span><span></span><span></span></div>
+    </div>
+    <div class="auth-content">
+      <span class="section-kicker">QUÉ BUENO VERTE</span>
+      <h2>Inicia sesión</h2>
+      <p class="auth-subtitle">Usa el email y la contraseña de tu cuenta.</p>
+      <form id="loginForm">
+        <label class="full">Email
+          <input name="email" type="email" autocomplete="email" required placeholder="tu@email.com">
+        </label>
+        <label class="full">Contraseña
+          <input name="password" type="password" autocomplete="current-password" required placeholder="Tu contraseña">
+        </label>
+        <button class="btn btn-primary full auth-submit" type="submit">Entrar a mi cuenta <span aria-hidden="true">→</span></button>
+      </form>
+      <div id="loginNotice" class="notice-bar auth-notice" role="alert"></div>
+      <p class="auth-register">¿Aún no tienes cuenta? <a href="#" onclick="closeModal('loginModal');openModal('registerModal')">Crea una gratis</a></p>
+      <p class="auth-security"><span aria-hidden="true">●</span> Tu cuenta está protegida.</p>
+    </div>
   </div>
 </div>
 

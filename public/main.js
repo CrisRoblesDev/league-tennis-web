@@ -65,8 +65,12 @@ function updateAuthUI() {
 async function login(e) {
   e.preventDefault();
   const form = e.target;
+  const submitButton = form.querySelector('button[type="submit"]');
+  const originalLabel = submitButton.textContent;
   const email = form.email.value;
   const password = form.password.value;
+  submitButton.disabled = true;
+  submitButton.textContent = "Iniciando sesión...";
   try {
     const data = await api("/api/auth/login", {
       method: "POST",
@@ -79,6 +83,9 @@ async function login(e) {
     showToast("Bienvenido, " + data.user.name);
   } catch (error) {
     showNotice("loginNotice", error.message, true);
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = originalLabel;
   }
 }
 
@@ -110,14 +117,7 @@ async function logout() {
   try {
     await api("/api/auth/logout", { method: "POST" });
     currentUser = null;
-    if (isAdminPage) {
-      window.location.replace("/");
-      return;
-    }
-    updateAuthUI();
-    renderResults();
-    renderChallenges();
-    showToast("Sesión cerrada");
+    window.location.replace("/");
   } catch (error) {
     showToast(error.message);
   }
@@ -428,6 +428,16 @@ async function loadChallenges() {
     leagueChallenges = await api("/api/challenges");
     renderChallenges();
   } catch (error) {
+    const container = document.getElementById("challengesList");
+    const count = document.getElementById("challengeCount");
+    if (count) count.textContent = "No disponible";
+    if (container) {
+      container.innerHTML = `
+        <div class="challenge-load-error" role="alert">
+          <p>No se pudieron cargar las propuestas: ${escapeHtml(error.message)}</p>
+          <button class="btn btn-secondary" type="button" onclick="loadChallenges()">Intentar de nuevo</button>
+        </div>`;
+    }
     showToast(`No se pudieron cargar los desafíos: ${error.message}`);
   }
 }
@@ -435,19 +445,107 @@ async function loadChallenges() {
 function renderChallenges() {
   const container = document.getElementById("challengesList");
   if (!container) return;
+  const count = document.getElementById("challengeCount");
+  if (count) {
+    const open = leagueChallenges.filter(challenge => challenge.status === "open").length;
+    count.textContent = open ?
+      `${open} ${open === 1 ? "desafío disponible" : "desafíos disponibles"}` :
+      `${leagueChallenges.length} ${leagueChallenges.length === 1 ? "partido coordinado" : "partidos coordinados"}`;
+  }
   if (!leagueChallenges.length) {
-    container.innerHTML = '<p class="muted">Aún no hay desafíos publicados.</p>';
+    container.innerHTML = `
+      <div class="challenge-empty">
+        <div class="challenge-empty-copy">
+          <span class="tag tag-blue">EJEMPLOS VISUALES</span>
+          <h3>Así se verá la zona cuando haya propuestas</h3>
+          <p>Estas tarjetas son solo una muestra del diseño; no son jugadores ni desafíos publicados.</p>
+        </div>
+        <div class="challenge-preview-grid">
+          ${renderChallengePreview("3.0", "Aventura / Sunny Isles", "Tardes entre semana", "A")}
+          ${renderChallengePreview("3.5", "Downtown / Brickell", "Sábado por la mañana", "B")}
+          ${renderChallengePreview("4.0", "North Miami / Miami Gardens", "Flexible · coordinar horario", "C")}
+        </div>
+      </div>`;
     return;
   }
   container.innerHTML = leagueChallenges.map(challenge => {
     const canAccept = currentUser && currentUser.id !== challenge.creatorUserId && challenge.status === "open";
-    return `<article class="card">
-      <span class="tag">${challenge.status === "open" ? "Abierto" : "Aceptado"}</span>
-      <h3>${escapeHtml(challenge.creatorName)} · ${escapeHtml(challenge.level)}</h3>
-      <p class="muted">${escapeHtml(challenge.zone)} · ${escapeHtml(challenge.availability)}</p>
-      ${canAccept ? `<button class="btn btn-dark" onclick="acceptChallenge('${escapeHtml(challenge.id)}')">Aceptar desafío</button>` : ""}
+    const initials = (challenge.creatorName || "Jugador").split(" ").map(part => part[0]).join("").slice(0, 2);
+    return `<article class="challenge-card">
+      <div class="challenge-card-top">
+        <div class="challenge-player">
+          <span class="challenge-avatar">${escapeHtml(initials)}</span>
+          <div><small>PROPUESTA DE</small><h3>${escapeHtml(challenge.creatorName)}</h3></div>
+        </div>
+        <span class="challenge-status ${challenge.status === "accepted" ? "is-accepted" : ""}">${challengeStatusLabel(challenge.status)}</span>
+      </div>
+      <div class="challenge-card-details">
+        <div><span class="challenge-detail-icon">NIVEL</span><b>${escapeHtml(challenge.level || "Por definir")}</b></div>
+        <div><span class="challenge-detail-icon">ZONA</span><b>${escapeHtml(challenge.zone || "Miami")}</b></div>
+      </div>
+      <div class="challenge-availability"><span aria-hidden="true">◷</span><div><small>DISPONIBILIDAD</small><p>${escapeHtml(challenge.availability)}</p></div></div>
+      ${canAccept ? `<button class="btn btn-dark challenge-accept" onclick="acceptChallenge('${escapeHtml(challenge.id)}')">Aceptar desafío <span aria-hidden="true">→</span></button>` :
+        challenge.status === "accepted" ? '<p class="challenge-coordinating">Los jugadores están coordinando el partido.</p>' : ""}
     </article>`;
-  }).join("");
+  }).join("") + [
+    ["3.0", "Aventura / Sunny Isles", "Tardes entre semana", "A"],
+    ["3.5", "Downtown / Brickell", "Sábado por la mañana", "B"],
+    ["4.0", "North Miami / Miami Gardens", "Flexible · coordinar horario", "C"]
+  ].slice(0, Math.max(0, 3 - leagueChallenges.length))
+    .map(example => renderChallengePreview(...example)).join("");
+}
+
+function renderChallengePreview(level, zone, availability, initials) {
+  return `<article class="challenge-card challenge-card-preview">
+    <div class="challenge-card-top">
+      <div class="challenge-player">
+        <span class="challenge-avatar">${initials}</span>
+        <div><small>JUGADOR/A DE EJEMPLO</small><h3>Tenista de la liga</h3></div>
+      </div>
+      <span class="challenge-status">Busca rival</span>
+    </div>
+    <div class="challenge-card-details">
+      <div><span class="challenge-detail-icon">NIVEL</span><b>${level}</b></div>
+      <div><span class="challenge-detail-icon">ZONA</span><b>${zone}</b></div>
+    </div>
+    <div class="challenge-availability"><span aria-hidden="true">◷</span><div><small>DISPONIBILIDAD</small><p>${availability}</p></div></div>
+    <span class="challenge-example-label">Muestra · no publicado</span>
+  </article>`;
+}
+
+function challengeStatusLabel(status) {
+  if (status === "open") return "Busca rival";
+  if (status === "accepted") return "Partido coordinado";
+  if (status === "closed") return "Cerrado";
+  return "Desafío";
+}
+
+function tournamentStatusLabel(status) {
+  return ({
+    registration: "Inscripciones abiertas",
+    scheduled: "Programado",
+    in_progress: "En curso",
+    completed: "Finalizado",
+    cancelled: "Cancelado"
+  })[status] || "Sin estado";
+}
+
+function resultStatusLabel(status) {
+  return ({
+    pending: "Pendiente",
+    disputed: "En revisión",
+    confirmed: "Confirmado",
+    rejected: "Rechazado"
+  })[status] || "Sin estado";
+}
+
+function orderStatusLabel(status) {
+  return ({
+    paid: "Pagado",
+    pending: "Pendiente",
+    failed: "Fallido",
+    refunded: "Reembolsado"
+  })[status] || status || "Sin estado";
 }
 
 async function acceptChallenge(challengeId) {
@@ -700,26 +798,40 @@ async function showAdminPanel() {
   );
 
   content.innerHTML = `
+    <div class="admin-welcome">
+      <div>
+        <span class="section-kicker">CENTRO DE CONTROL</span>
+        <h2>¿Qué quieres hacer hoy?</h2>
+        <p>Elige una tarea para empezar. Los cambios se guardan al pulsar el botón de guardar.</p>
+      </div>
+      <div class="admin-quick-actions">
+        <button type="button" onclick="scrollAdminTo('admin-tournaments')"><span>01</span><b>Organizar un torneo</b><small>Fechas, niveles y partidos</small></button>
+        <button type="button" onclick="scrollAdminTo('admin-results')"><span>02</span><b>Revisar resultados</b><small>${pendingResults.length} por revisar</small></button>
+        <button type="button" onclick="scrollAdminTo('admin-players')"><span>03</span><b>Gestionar jugadores</b><small>Perfiles y clasificación</small></button>
+        <button type="button" onclick="scrollAdminTo('admin-products')"><span>04</span><b>Editar la tienda</b><small>Productos y membresías</small></button>
+      </div>
+    </div>
     <div class="admin-stats">
-      <div class="stat-card"><div class="stat-number">${stats.totalUsers}</div><div class="stat-label">Usuarios</div></div>
-      <div class="stat-card"><div class="stat-number">${stats.totalPlayers}</div><div class="stat-label">Jugadores</div></div>
-      <div class="stat-card"><div class="stat-number">${stats.totalOrders}</div><div class="stat-label">Pedidos</div></div>
-      <div class="stat-card"><div class="stat-number">$${(stats.revenue / 100).toFixed(2)}</div><div class="stat-label">Ingresos</div></div>
-      <div class="stat-card"><div class="stat-number">${stats.activeSubscriptions}</div><div class="stat-label">Suscripciones</div></div>
-      <div class="stat-card"><div class="stat-number">${pendingResults.length}</div><div class="stat-label">Por revisar</div></div>
+      <div class="stat-card"><div class="stat-number">${stats.totalUsers}</div><div class="stat-label">Cuentas registradas</div></div>
+      <div class="stat-card"><div class="stat-number">${stats.totalPlayers}</div><div class="stat-label">Perfiles de jugador</div></div>
+      <div class="stat-card"><div class="stat-number">${stats.totalOrders}</div><div class="stat-label">Compras realizadas</div></div>
+      <div class="stat-card"><div class="stat-number">$${(stats.revenue / 100).toFixed(2)}</div><div class="stat-label">Ingresos totales</div></div>
+      <div class="stat-card"><div class="stat-number">${stats.activeSubscriptions}</div><div class="stat-label">Membresías activas</div></div>
+      <div class="stat-card"><div class="stat-number">${pendingResults.length}</div><div class="stat-label">Resultados por revisar</div></div>
     </div>
 
     <nav class="admin-nav" aria-label="Secciones de administración">
-      <button type="button" onclick="scrollAdminTo('admin-orders')">Pedidos</button>
-      <button type="button" onclick="scrollAdminTo('admin-tournaments')">Torneos y partidos</button>
+      <button type="button" onclick="scrollAdminTo('admin-tournaments')">Torneos</button>
       <button type="button" onclick="scrollAdminTo('admin-players')">Jugadores</button>
-      <button type="button" onclick="scrollAdminTo('admin-products')">Productos</button>
-      <button type="button" onclick="scrollAdminTo('admin-challenges')">Desafíos</button>
       <button type="button" onclick="scrollAdminTo('admin-results')">Resultados</button>
-      <button type="button" onclick="scrollAdminTo('admin-users')">Usuarios</button>
+      <button type="button" onclick="scrollAdminTo('admin-challenges')">Desafíos</button>
+      <button type="button" onclick="scrollAdminTo('admin-products')">Tienda</button>
+      <button type="button" onclick="scrollAdminTo('admin-orders')">Compras</button>
+      <button type="button" onclick="scrollAdminTo('admin-users')">Cuentas</button>
     </nav>
 
-    <section class="admin-section" id="admin-orders"><h3>Pedidos recientes</h3>
+    <section class="admin-section" id="admin-orders"><h3>Compras recientes</h3>
+    <p class="admin-section-help">Consulta las compras y pagos realizados en la tienda.</p>
     <div class="table-wrap" style="margin-bottom:20px">
       <table>
         <thead><tr><th>ID</th><th>Usuario</th><th>Producto</th><th>Monto</th><th>Estado</th><th>Fecha</th></tr></thead>
@@ -729,7 +841,7 @@ async function showAdminPanel() {
             <td>${escapeHtml(o.userName)}</td>
             <td>${escapeHtml(o.productName)}</td>
             <td>$${(o.amount / 100).toFixed(2)}</td>
-            <td><span class="tag">${escapeHtml(o.status)}</span></td>
+            <td><span class="tag">${escapeHtml(orderStatusLabel(o.status))}</span></td>
             <td>${o.created ? new Date(o.created).toLocaleDateString() : "-"}</td>
           </tr>`).join("") || '<tr><td colspan="6" class="muted">No hay pedidos</td></tr>'}
         </tbody>
@@ -737,30 +849,36 @@ async function showAdminPanel() {
     </div>
     </section>
 
-    <section class="admin-section" id="admin-tournaments"><h3>Torneos y cuadros</h3>
+    <section class="admin-section" id="admin-tournaments"><h3>Torneos y partidos</h3>
+    <p class="admin-section-help">Crea el torneo y define sus niveles. Después podrás inscribir jugadores y organizar partidos.</p>
     <form id="adminTournamentForm" class="admin-form">
       <input type="hidden" name="id">
-      <label>Nombre<input name="title" maxlength="120" required></label>
-      <label>Mes<input name="month" type="month" required></label>
-      <label>Niveles<select name="levels" multiple required>${levels.map(level => `<option value="${level}">${level}</option>`).join("")}</select></label>
-      <label>Estado<select name="status"><option value="registration">Inscripciones</option><option value="scheduled">Programado</option><option value="in_progress">En curso</option><option value="completed">Finalizado</option><option value="cancelled">Cancelado</option></select></label>
+      <h4 class="full admin-form-title">Datos del torneo</h4>
+      <label>Nombre del torneo<input name="title" maxlength="120" required placeholder="Ej. Copa de noviembre"></label>
+      <label>Mes del torneo<input name="month" type="month" required></label>
+      <fieldset class="admin-level-select full">
+        <legend>Niveles participantes</legend>
+        <p>Selecciona uno o más niveles de juego.</p>
+        <div>${levels.map(level => `<label><input type="checkbox" name="levels" value="${level}"><span>${level}</span></label>`).join("")}</div>
+      </fieldset>
+      <label>Estado del torneo<select name="status"><option value="registration">Inscripciones abiertas</option><option value="scheduled">Programado</option><option value="in_progress">En curso</option><option value="completed">Finalizado</option><option value="cancelled">Cancelado</option></select></label>
       <label>Fecha de inicio<input name="startDate" type="date"></label>
       <label>Fecha de término<input name="endDate" type="date"></label>
-      <label>Cancha / sede<input name="venue" maxlength="120"></label>
-      <label>Formato<input name="format" maxlength="120" value="Eliminación directa · Best of 3"></label>
+      <label>Sede o cancha<input name="venue" maxlength="120" placeholder="Ej. Aventura Tennis Center"></label>
+      <label>Formato del torneo<input name="format" maxlength="120" value="Eliminación directa · Best of 3"></label>
       <label class="full">Descripción<textarea name="description" rows="2" maxlength="500"></textarea></label>
-      <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar torneo</button><button class="btn btn-secondary" type="button" onclick="resetTournamentForm()">Limpiar</button></div>
+      <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar torneo</button><button class="btn btn-secondary" type="button" onclick="resetTournamentForm()">Limpiar formulario</button></div>
     </form>
     <div class="grid grid-2 admin-records">
-      ${allTournaments.map(tournament => renderAdminTournament(tournament)).join("") || '<p class="muted">Aún no hay torneos. Usa el formulario para crear el primero.</p>'}
+      ${allTournaments.map(tournament => renderAdminTournament(tournament)).join("") || '<div class="admin-empty-state"><b>Aún no hay torneos</b><p>Completa el formulario de arriba para publicar el primero.</p></div>'}
     </div>
     </section>
 
-    <section class="admin-section" id="admin-challenges"><h3>Desafíos</h3>
+    <section class="admin-section" id="admin-challenges"><h3>Desafíos publicados</h3>
     <p class="muted">Revisa la actividad de la comunidad, cierra publicaciones resueltas o elimina contenido inválido.</p>
     <div class="grid grid-3 admin-records">
       ${allChallenges.map(challenge => `<article class="card admin-record">
-        <span class="tag ${challenge.status === "accepted" ? "tag-blue" : ""}">${escapeHtml(challenge.status)}</span>
+        <span class="tag ${challenge.status === "accepted" ? "tag-blue" : ""}">${escapeHtml(challengeStatusLabel(challenge.status))}</span>
         <h4>${escapeHtml(challenge.playerName)}</h4>
         <p>${escapeHtml(challenge.availability || "")}</p>
         ${challenge.acceptedPlayerName ? `<p class="muted">Aceptado por ${escapeHtml(challenge.acceptedPlayerName)}</p>` : ""}
@@ -774,7 +892,8 @@ async function showAdminPanel() {
     </div>
     </section>
 
-    <section class="admin-section" id="admin-products"><h3>Productos y suscripciones</h3>
+    <section class="admin-section" id="admin-products"><h3>Tienda y membresías</h3>
+    <p class="admin-section-help">Lo que esté marcado como disponible se mostrará en la página principal.</p>
     <form id="adminProductForm" class="admin-form">
       <input type="hidden" name="id">
       <label>Nombre<input name="name" maxlength="120" required></label>
@@ -798,7 +917,7 @@ async function showAdminPanel() {
     </div>
     </section>
 
-    <section class="admin-section" id="admin-results"><h3>Resultados y moderación</h3>
+    <section class="admin-section" id="admin-results"><h3>Resultados de partidos</h3>
     <p class="muted">Confirma, rechaza o elimina un reporte. Los resultados confirmados impactan el ranking.</p>
     <div class="grid grid-2 admin-records">
       ${pendingResults.map(result => `<article class="card admin-record">
@@ -817,7 +936,7 @@ async function showAdminPanel() {
       <summary>Historial de resultados (${results.length})</summary>
       <div class="table-wrap">
         <table><thead><tr><th>Partido</th><th>Marcador</th><th>Estado</th><th>Fecha</th><th></th></tr></thead><tbody>
-          ${results.map(result => `<tr><td>${escapeHtml(result.winnerName)} vs ${escapeHtml(result.loserName)}</td><td>${escapeHtml(result.score)}</td><td>${escapeHtml(result.status)}</td><td>${result.playedAt ? new Date(result.playedAt).toLocaleDateString() : "-"}</td><td><button class="btn btn-sm btn-dark" onclick="editAdminResult('${escapeHtml(result.id)}')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminResult('${escapeHtml(result.id)}')">Eliminar</button></td></tr>`).join("") || '<tr><td colspan="5">Sin resultados</td></tr>'}
+          ${results.map(result => `<tr><td>${escapeHtml(result.winnerName)} vs ${escapeHtml(result.loserName)}</td><td>${escapeHtml(result.score)}</td><td>${escapeHtml(resultStatusLabel(result.status))}</td><td>${result.playedAt ? new Date(result.playedAt).toLocaleDateString() : "-"}</td><td><button class="btn btn-sm btn-dark" onclick="editAdminResult('${escapeHtml(result.id)}')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminResult('${escapeHtml(result.id)}')">Eliminar</button></td></tr>`).join("") || '<tr><td colspan="5">Sin resultados</td></tr>'}
         </tbody></table>
       </div>
     </details>
@@ -833,8 +952,8 @@ async function showAdminPanel() {
     </form>
     </section>
 
-    <section class="admin-section" id="admin-players"><h3>Perfiles de jugadores</h3>
-    <p class="muted">Edita el perfil público de competición. Para conservar el historial, los perfiles con partidos o torneos no se pueden borrar.</p>
+    <section class="admin-section" id="admin-players"><h3>Jugadores de la liga</h3>
+    <p class="admin-section-help">Administra el nombre, nivel y zona que aparecen en la clasificación. Los perfiles con historial deportivo no se pueden borrar.</p>
     <form id="adminPlayerForm" class="admin-form">
       <input type="hidden" name="playerId">
       <label class="full">Cuenta vinculada<select name="accountId" required>
@@ -856,8 +975,8 @@ async function showAdminPanel() {
     </table></div>
     </section>
 
-    <section class="admin-section" id="admin-users"><h3>Usuarios</h3>
-    <p class="muted">Actualiza roles, nivel, zona y estado de membresía. La contraseña nunca se muestra.</p>
+    <section class="admin-section" id="admin-users"><h3>Cuentas registradas</h3>
+    <p class="admin-section-help">Gestiona permisos y membresías. Por seguridad, las contraseñas nunca se muestran.</p>
     <label class="admin-search">Buscar usuario
       <input id="adminUserSearch" type="search" placeholder="Nombre o email">
     </label>
@@ -878,7 +997,7 @@ async function showAdminPanel() {
           ${users.map(u => `<tr>
             <td>${escapeHtml(u.name)}</td>
             <td>${escapeHtml(u.email)}</td>
-            <td><span class="tag ${u.role === "admin" ? "tag-blue" : ""}">${escapeHtml(u.role)}</span></td>
+            <td><span class="tag ${u.role === "admin" ? "tag-blue" : ""}">${u.role === "admin" ? "Administrador" : "Jugador"}</span></td>
             <td>${escapeHtml(u.level || "-")}</td>
             <td>${escapeHtml(u.zone || "-")}</td>
             <td>${u.membershipActive ? "Activa" : "-"}</td>
@@ -908,7 +1027,7 @@ function renderAdminTournament(tournament) {
     (tournament.levels || []).includes(player.level)
   );
   return `<article class="card admin-record">
-    <div class="admin-record-head"><div><span class="tag">${escapeHtml(tournament.status)}</span><h4>${escapeHtml(tournament.title || tournament.month)}</h4></div>
+    <div class="admin-record-head"><div><span class="tag">${escapeHtml(tournamentStatusLabel(tournament.status))}</span><h4>${escapeHtml(tournament.title || tournament.month)}</h4></div>
       <div class="admin-form-actions"><button class="btn btn-sm btn-dark" onclick="editTournament('${escapeHtml(tournament.id)}')">Editar</button>
       <button class="btn btn-sm btn-secondary" onclick="deleteTournament('${escapeHtml(tournament.id)}')">Eliminar</button></div>
     </div>
@@ -959,8 +1078,8 @@ function editTournament(tournamentId) {
   form.elements.namedItem("venue").value = tournament.venue || "";
   form.elements.namedItem("format").value = tournament.format || "";
   form.elements.namedItem("description").value = tournament.description || "";
-  Array.from(form.elements.namedItem("levels").options).forEach(option => {
-    option.selected = (tournament.levels || []).includes(option.value);
+  form.querySelectorAll('input[name="levels"]').forEach(input => {
+    input.checked = (tournament.levels || []).includes(input.value);
   });
   form.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -996,7 +1115,7 @@ async function saveTournament(event) {
   const body = {
     title: form.elements.namedItem("title").value,
     month: form.elements.namedItem("month").value,
-    levels: Array.from(form.elements.namedItem("levels").selectedOptions, option => option.value),
+    levels: Array.from(form.querySelectorAll('input[name="levels"]:checked'), input => input.value),
     status: form.elements.namedItem("status").value,
     startDate: form.elements.namedItem("startDate").value,
     endDate: form.elements.namedItem("endDate").value,
@@ -1004,6 +1123,11 @@ async function saveTournament(event) {
     format: form.elements.namedItem("format").value,
     description: form.elements.namedItem("description").value
   };
+  if (!body.levels.length) {
+    showToast("Selecciona al menos un nivel para el torneo.");
+    form.querySelector('fieldset input[type="checkbox"]')?.focus();
+    return;
+  }
   try {
     const id = form.elements.namedItem("id").value;
     await api(id ? `/api/admin/tournaments/${encodeURIComponent(id)}` : "/api/admin/tournaments", {
