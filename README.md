@@ -30,10 +30,10 @@ Para crear el primer administrador, configura `ADMIN_EMAIL` antes de registrar e
 
 ## Cloudflare Pages
 
-1. Conecta el repositorio y configura `league-tennis-web` como proyecto Pages; el directorio de salida es `public` y Wrangler publica las funciones de `functions/`.
+1. Crea/selecciona el proyecto en **Workers & Pages → Pages → Connect to Git** (no lo crees como Worker de activos estáticos). Configura `master` como rama de producción, deja vacío el comando de compilación y usa `public` como directorio de salida. Cloudflare Pages publica las funciones de `functions/`.
 2. En **Settings → Variables and Secrets**, configura las variables requeridas para los entornos Preview y Production. Marca como secretos `GITHUB_TOKEN`, `SESSION_SECRET`, `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET`.
 3. En producción, crea un webhook de Stripe dirigido a `https://TU-DOMINIO/api/stripe/webhook` y habilita `checkout.session.completed`, `checkout.session.async_payment_succeeded` y `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`.
-4. Despliega con `npm run deploy` o desde la integración de Cloudflare Pages.
+4. Despliega desde la integración de Cloudflare Pages o con `npm run deploy`. No uses `wrangler deploy` ni crees un Worker con Static Assets: ese producto solo sirve archivos estáticos y no habilita los ajustes de runtime usados por Pages Functions.
 
 No pegues claves secretas en el chat ni en archivos versionados. Las claves de prueba solo permiten pagos en modo test; los pagos reales requieren credenciales `live` y un webhook de producción.
 
