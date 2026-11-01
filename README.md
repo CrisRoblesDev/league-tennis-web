@@ -39,7 +39,7 @@ No pegues claves secretas en el chat ni en archivos versionados. Las claves de p
 
 ## Flujos disponibles
 
-- Registro con email y contraseña; contraseñas nuevas usan PBKDF2 y las cuentas con hashes anteriores se actualizan al iniciar sesión.
+- Registro con email y contraseña; contraseñas nuevas usan PBKDF2-HMAC-SHA-256 con 100.000 iteraciones, el máximo admitido por el runtime de Cloudflare Workers. Las cuentas con hashes anteriores compatibles se actualizan al iniciar sesión.
 - Sesiones firmadas, con caducidad y cookie HttpOnly.
 - Compra de productos y suscripciones mediante Stripe Checkout; el servidor verifica la sesión de Stripe y el webhook mantiene los estados de suscripción.
 - El panel de administración muestra métricas, usuarios, pedidos y catálogo. Solo administradores pueden modificar productos o usuarios.

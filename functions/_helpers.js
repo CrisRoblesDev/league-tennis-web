@@ -152,7 +152,7 @@ async function hmac(secret, value) {
 }
 
 export async function hashPw(password) {
-  const iterations = 120000;
+  const iterations = 100000;
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
   const hash = new Uint8Array(await crypto.subtle.deriveBits(
@@ -177,7 +177,7 @@ export async function verifyPw(password, storedHash) {
   const parts = storedHash.split("$");
   if (parts.length === 4 && parts[0] === "pbkdf2") {
     const iterations = Number(parts[1]);
-    if (!Number.isInteger(iterations) || iterations < 10000 || iterations > 1000000) return false;
+    if (!Number.isInteger(iterations) || iterations < 10000 || iterations > 100000) return false;
     const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
     const hash = new Uint8Array(await crypto.subtle.deriveBits(
       { name: "PBKDF2", salt: fromBase64Url(parts[2]), iterations, hash: "SHA-256" },

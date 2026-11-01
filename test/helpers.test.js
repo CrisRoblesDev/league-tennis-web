@@ -6,10 +6,11 @@ const env = { SESSION_SECRET: "test-session-secret-with-more-than-32-characters"
 
 test("passwords use a salted PBKDF2 hash and verify correctly", async () => {
   const hash = await hashPw("secure-password");
-  assert.match(hash, /^pbkdf2\$120000\$/);
+  assert.match(hash, /^pbkdf2\$100000\$/);
   assert.notEqual(hash, "secure-password");
   assert.equal(await verifyPw("secure-password", hash), true);
   assert.equal(await verifyPw("incorrect-password", hash), false);
+  assert.equal(await verifyPw("secure-password", hash.replace("$100000$", "$120000$")), false);
 });
 
 test("session cookie is signed, expires, and cannot be tampered with", async () => {
