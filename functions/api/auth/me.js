@@ -2,7 +2,7 @@ import { gRead, requireAuth, jsonResponse } from "../../_helpers.js";
 
 export async function onRequestGet(context) {
   const { request, env } = context;
-  const userId = requireAuth(request);
+  const userId = await requireAuth(request, env);
   if (!userId) return jsonResponse({ user: null });
   const users = await gRead(env, "users");
   const user = users.find(u => u.id === userId);

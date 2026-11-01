@@ -2,20 +2,49 @@ import { gRead, gWrite, hashPw, setSessionResp, jsonResponse } from "../../_help
 
 export async function onRequestPost(context) {
   const { request, env } = context;
-  const b = await request.json();
-  if (!b.name || !b.email || !b.password) return jsonResponse({ error: "Campos requeridos" }, 400);
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: "Solicitud JSON inválida" }, 400);
+  }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return jsonResponse({ error: "Datos de registro inválidos" }, 400);
+  }
+
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  const password = typeof body.password === "string" ? body.password : "";
+  if (!name || name.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 8 || password.length > 128) {
+    return jsonResponse({ error: "Ingresa un nombre, email válido y contraseña de 8 a 128 caracteres" }, 400);
+  }
 
   const users = await gRead(env, "users");
-  if (users.find(u => u.email === b.email)) return jsonResponse({ error: "Email ya registrado" }, 400);
+  if (users.find(u => typeof u.email === "string" && u.email.toLowerCase() === email)) {
+    return jsonResponse({ error: "Email ya registrado" }, 409);
+  }
 
   const user = {
-    id: "user-" + Date.now(), name: b.name, email: b.email,
-    password: hashPw(b.password), level: b.level || null, zone: b.zone || null,
-    role: users.length === 0 ? "admin" : "user",
+    id: `user-${crypto.randomUUID()}`, name, email,
+    password: await hashPw(password),
+    level: typeof body.level === "string" ? body.level : null,
+    zone: typeof body.zone === "string" ? body.zone : null,
+    role: env.ADMIN_EMAIL && email === env.ADMIN_EMAIL.trim().toLowerCase() ? "admin" : "user",
     created: new Date().toISOString(), membershipActive: false
   };
   users.push(user);
   await gWrite(env, "users", users);
 
-  return setSessionResp({ userId: user.id, user: { id: user.id, name: user.name, email: user.email, role: user.role, level: user.level, zone: user.zone } });
+  return setSessionResp({
+    userId: user.id,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      level: user.level,
+      zone: user.zone,
+      membershipActive: user.membershipActive
+    }
+  }, env, request);
 }

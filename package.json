@@ -1,1 +1,13 @@
-{"name":"league-tennis-web","version":"1.0.0","type":"module","private":true}
+{
+  "name": "league-tennis-web",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev public",
+    "deploy": "wrangler pages deploy public --project-name=league-tennis-web",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "wrangler": "^4.156.0"
+  }
+}

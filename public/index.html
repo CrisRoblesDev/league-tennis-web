@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>League Tennis Aventura | Official League</title>
 <link rel="stylesheet" href="styles.css">
-<script src="https://js.stripe.com/v3/" defer></script>
 <script src="main.js" defer></script>
 </head>
 <body>
@@ -98,7 +97,7 @@
         <h2>Clasificación oficial</h2>
         <p class="section-sub">Ranking general por puntos · Filtra por categoría y zona.</p>
       </div>
-      <button class="btn btn-dark" onclick="openModal('resultModal')">+ Registrar resultado</button>
+      <button class="btn btn-dark" onclick="openResultModal()">+ Registrar resultado</button>
     </div>
     <div class="filters">
       <select id="levelFilter">
@@ -120,6 +119,7 @@
         <tbody id="rankingBody"></tbody>
       </table>
     </div>
+    <div id="resultsList" class="results-list"></div>
   </section>
 
   <section class="section" id="desafios">
@@ -146,9 +146,10 @@
         <span class="tag">Resultado confirmado</span>
         <h3>Validación de resultados</h3>
         <p class="muted">El jugador registra el marcador y su rival lo confirma. Si hay desacuerdo, el administrador revisa.</p>
-        <button class="btn btn-dark" onclick="openModal('resultModal')">Registrar marcador</button>
+        <button class="btn btn-dark" onclick="openResultModal()">Registrar marcador</button>
       </article>
     </div>
+    <div id="challengesList" class="grid grid-3"></div>
   </section>
 
   <section class="section">
@@ -228,7 +229,7 @@
     <form id="registerForm">
       <label>Nombre completo<input name="name" required placeholder="Tu nombre"></label>
       <label>Email<input name="email" type="email" required placeholder="tu@email.com"></label>
-      <label>Contraseña<input name="password" type="password" required placeholder="Mínimo 6 caracteres"></label>
+      <label>Contraseña<input name="password" type="password" minlength="8" maxlength="128" required placeholder="Mínimo 8 caracteres"></label>
       <label>Nivel de tenis<select name="level"><option value="">Opcional</option><option>2.5</option><option>3.0</option><option>3.5</option><option>4.0</option><option>4.5</option><option>5.0</option></select></label>
       <label>Zona de Miami<select name="zone"><option value="">Opcional</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
       <label class="full"><span><input type="checkbox" required> Acepto las reglas de la liga.</span></label>
@@ -255,8 +256,8 @@
   <div class="modal-box">
     <div class="modal-head"><h2>Registrar resultado</h2><button class="close" onclick="closeModal('resultModal')">×</button></div>
     <form id="resultForm">
-      <label>Jugador ganador<input name="winner" required placeholder="Nombre"></label>
-      <label>Rival<input name="opponent" required placeholder="Nombre"></label>
+      <label>Jugador ganador<select name="winnerId" required><option value="">Seleccionar</option></select></label>
+      <label>Rival<select name="loserId" required><option value="">Seleccionar</option></select></label>
       <label>Marcador<input name="score" required placeholder="6-4, 3-6, 10-7"></label>
       <label>Fecha<input name="date" type="date" required></label>
       <button class="btn btn-primary full">Guardar resultado</button>
@@ -270,11 +271,8 @@
   <div class="modal-box">
     <div class="modal-head"><h2>Crear desafío semanal</h2><button class="close" onclick="closeModal('challengeModal')">×</button></div>
     <form id="challengeForm">
-      <label>Tu nombre<input name="name" required></label>
-      <label>Nivel<select name="level" required><option value="">Seleccionar</option><option>2.5</option><option>3.0</option><option>3.5</option><option>4.0</option><option>4.5</option><option>5.0</option></select></label>
-      <label>Zona<select name="zone" required><option value="">Seleccionar</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
-      <label>Disponibilidad<input name="availability" required placeholder="Ej. tardes entre semana"></label>
-      <button class="btn btn-primary full">Crear desafío</button>
+      <label class="full">Disponibilidad<input name="availability" maxlength="200" required placeholder="Ej. tardes entre semana"></label>
+      <button class="btn btn-primary full" type="submit">Publicar desafío</button>
     </form>
     <div id="challengeNotice" class="muted"></div>
   </div>

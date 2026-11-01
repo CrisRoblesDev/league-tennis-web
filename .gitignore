@@ -4,6 +4,8 @@ package-lock.json
 
 # Environment (SECRETOS - NO SUBIR)
 .env
+.dev.vars
+.wrangler/
 
 # Build output
 dist/

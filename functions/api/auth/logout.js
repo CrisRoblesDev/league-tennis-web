@@ -1,10 +1,11 @@
-export async function onRequestPost() {
+export async function onRequestPost({ request }) {
+  const secure = new URL(request.url).protocol === "https:" ? "; Secure" : "";
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
     headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Set-Cookie": "session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+      "Set-Cookie": `session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`
     }
   });
 }
