@@ -1,0 +1,16 @@
+name = "league-tennis-web"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+
+# Cloudflare Pages configuration
+[site]
+bucket = "./public"
+
+[vars]
+GITHUB_OWNER = "CrisRoblesDev"
+GITHUB_REPO = "league-tennis-web"
+GITHUB_BRANCH = "main"
+
+# Secrets (set with `wrangler secret put`):
+# GITHUB_TOKEN
+# STRIPE_SECRET_KEY
