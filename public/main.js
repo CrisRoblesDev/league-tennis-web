@@ -2,7 +2,7 @@
 // Auth + Stripe Checkout + Ranking + Campeonato + Admin
 
 const API = ""; // same origin
-const isAdminPage = window.location.pathname.endsWith("/admin.html");
+const isAdminPage = /\/admin(?:\.html)?\/?$/.test(window.location.pathname);
 
 let currentUser = null;
 let players = [];
@@ -645,6 +645,7 @@ function renderTournaments() {
 // ============ ADMIN PANEL ============
 async function showAdminPanel() {
   if (!currentUser || currentUser.role !== "admin") return;
+  const content = document.getElementById("adminContent");
   let stats;
   let orders;
   let users;
@@ -663,11 +664,17 @@ async function showAdminPanel() {
       api("/api/admin/challenges")
     ]);
   } catch (error) {
+    if (content) {
+      content.innerHTML = `
+        <div class="admin-load-error" role="alert">
+          <p>No se pudo cargar el panel: ${escapeHtml(error.message)}</p>
+          <button class="btn btn-primary" type="button" onclick="showAdminPanel()">Reintentar</button>
+        </div>`;
+    }
     showToast(`No se pudo abrir administración: ${error.message}`);
     return;
   }
 
-  const content = document.getElementById("adminContent");
   if (!content) return;
   products = allProducts;
   tournaments = allTournaments;
@@ -677,6 +684,11 @@ async function showAdminPanel() {
   try {
     allPlayers = await api("/api/admin/players");
   } catch (error) {
+    content.innerHTML = `
+      <div class="admin-load-error" role="alert">
+        <p>No se pudieron cargar los perfiles de jugadores: ${escapeHtml(error.message)}</p>
+        <button class="btn btn-primary" type="button" onclick="showAdminPanel()">Reintentar</button>
+      </div>`;
     showToast(`No se pudieron cargar los perfiles de jugadores: ${error.message}`);
     return;
   }

@@ -321,6 +321,8 @@ form select[multiple] { min-height: 120px; }
 .admin-history { margin: 16px 0; }
 .admin-history summary { cursor: pointer; font-weight: 800; padding: 12px; border-radius: 8px; background: #f5f7f8; }
 .admin-loading { padding: 50px 20px; text-align: center; color: var(--muted); }
+.admin-load-error { padding: 24px; border: 1px solid #efc5bf; border-radius: 12px; background: #fff5f3; color: #8e3028; }
+.admin-load-error p { margin: 0 0 16px; }
 .btn-danger { background: #f8e8e5; color: #8e3028; }
 .btn-danger:hover { background: #f1d3ce; }
 @media (max-width: 760px) {
