@@ -4,6 +4,8 @@ import { onRequestPost as register } from "../functions/api/auth/register.js";
 import { onRequestPost as login } from "../functions/api/auth/login.js";
 import { onRequestPost as checkout } from "../functions/api/stripe/checkout.js";
 import { onRequestGet as verifyCheckout } from "../functions/api/stripe/session/[session_id].js";
+import { onRequestPost as reconcileAdminOrders } from "../functions/api/admin/orders/reconcile.js";
+import { onRequestGet as listAdminOrders } from "../functions/api/admin/orders.js";
 import { onRequestPost as createTournament, onRequestGet as listAdminTournaments } from "../functions/api/admin/tournaments.js";
 import { onRequestPut as updateTournament } from "../functions/api/admin/tournaments/[id].js";
 import { onRequestPatch as moderateResult } from "../functions/api/admin/results.js";
@@ -135,13 +137,31 @@ test("registration, login, Stripe checkout, and payment reconciliation use the c
       if (url.hostname === "api.stripe.com" && url.pathname.endsWith("/checkout/sessions/cs_test_session")) {
         return Response.json({
           id: "cs_test_session",
+          status: "complete",
           payment_status: "paid",
           mode: "subscription",
           amount_total: 999,
           currency: "usd",
+          created: 1783814400,
           client_reference_id: createdUser.user.id,
           metadata: { userId: createdUser.user.id, productId: "member-1" },
           subscription: "sub_test_active"
+        });
+      }
+      if (url.hostname === "api.stripe.com" && url.pathname.endsWith("/checkout/sessions")) {
+        return Response.json({
+          data: [{
+            id: "cs_test_session",
+            status: "complete",
+            payment_status: "paid",
+            mode: "subscription",
+            amount_total: 999,
+            currency: "usd",
+            created: 1783814400,
+            client_reference_id: createdUser.user.id,
+            metadata: { userId: createdUser.user.id, productId: "member-1" }
+          }],
+          has_more: false
         });
       }
       if (url.hostname === "api.stripe.com" && url.pathname.endsWith("/subscriptions/sub_test_active")) {
@@ -179,6 +199,26 @@ test("registration, login, Stripe checkout, and payment reconciliation use the c
       headers: { "Content-Type": "application/json", Cookie: sessionCookie },
       ...(body ? { body: JSON.stringify(body) } : {})
     });
+    github.files.set("orders.json", JSON.stringify([]));
+    const reconciliation = await reconcileAdminOrders({
+      request: adminRequest("https://league.example/api/admin/orders/reconcile", "POST"),
+      env
+    });
+    assert.deepEqual(await reconciliation.json(), { added: 1, scanned: 1 });
+    const reconciledOrders = JSON.parse(github.files.get("orders.json"));
+    assert.equal(reconciledOrders.length, 1);
+    assert.equal(reconciledOrders[0].stripeSessionId, "cs_test_session");
+    assert.equal(reconciledOrders[0].productName, "League Member");
+
+    const adminOrders = await listAdminOrders({
+      request: adminRequest("https://league.example/api/admin/orders", "GET"),
+      env
+    });
+    const listedOrders = await adminOrders.json();
+    assert.equal(listedOrders.length, 1);
+    assert.equal(listedOrders[0].userName, "Admin Test");
+    assert.equal(listedOrders[0].userEmail, "admin@example.com");
+
     const adminUserUpdate = await updateAdminUser({
       request: adminRequest("https://league.example/api/admin/users", "POST", {
         userId: createdUser.user.id,

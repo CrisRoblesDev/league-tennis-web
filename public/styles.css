@@ -399,6 +399,9 @@ form select[multiple] { min-height: 120px; }
 .admin-quick-actions b { font-size: 11px; }
 .admin-quick-actions small { color: var(--muted); font-size: 10px; }
 .admin-section-help { margin: -2px 0 14px; color: var(--muted); font-size: 12px; }
+.admin-order-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.admin-order-tools .admin-section-help { margin: 0; }
+.admin-order-sync-message { margin: 0 0 12px; color: var(--muted); font-size: 12px; }
 .admin-form-title { margin: 0; font-size: 15px; }
 .admin-level-select { min-width: 0; margin: 0; padding: 12px; border: 1px solid #dfe5e9; border-radius: 9px; }
 .admin-level-select legend { padding: 0 5px; font-size: 12px; font-weight: 800; }
@@ -424,6 +427,7 @@ form select[multiple] { min-height: 120px; }
   .ranking-section { padding: 22px 14px; }
   .admin-page-heading { align-items: flex-start; flex-direction: column; }
   .admin-page #adminContent { padding: 16px; }
+  .admin-order-tools { align-items: flex-start; flex-direction: column; }
   .admin-header-actions { justify-content: flex-end; }
   .challenge-steps { grid-template-columns: 1fr; }
   .challenge-preview-grid { grid-template-columns: 1fr; }

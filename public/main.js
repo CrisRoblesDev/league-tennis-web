@@ -11,6 +11,7 @@ let matchResults = [];
 let leagueChallenges = [];
 let tournaments = [];
 let adminUsers = [];
+let adminOrdersChecked = false;
 
 // ============ API HELPER ============
 async function api(endpoint, options = {}) {
@@ -744,6 +745,18 @@ function renderTournaments() {
 async function showAdminPanel() {
   if (!currentUser || currentUser.role !== "admin") return;
   const content = document.getElementById("adminContent");
+  let orderSyncMessage = "";
+  if (!adminOrdersChecked) {
+    adminOrdersChecked = true;
+    try {
+      const sync = await api("/api/admin/orders/reconcile", { method: "POST" });
+      if (sync.added) {
+        orderSyncMessage = `Se recuperaron ${sync.added} compra(s) faltante(s) desde Stripe.`;
+      }
+    } catch (error) {
+      orderSyncMessage = `No se pudo sincronizar con Stripe: ${error.message}`;
+    }
+  }
   let stats;
   let orders;
   let users;
@@ -831,7 +844,11 @@ async function showAdminPanel() {
     </nav>
 
     <section class="admin-section" id="admin-orders"><h3>Compras recientes</h3>
-    <p class="admin-section-help">Consulta las compras y pagos realizados en la tienda.</p>
+    <div class="admin-order-tools">
+      <p class="admin-section-help">Consulta las compras y pagos realizados en la tienda.</p>
+      <button class="btn btn-secondary btn-sm" type="button" onclick="syncAdminOrders()">Sincronizar pagos con Stripe</button>
+    </div>
+    ${orderSyncMessage ? `<p class="admin-order-sync-message" role="status">${escapeHtml(orderSyncMessage)}</p>` : ""}
     <div class="table-wrap" style="margin-bottom:20px">
       <table>
         <thead><tr><th>ID</th><th>Usuario</th><th>Producto</th><th>Monto</th><th>Estado</th><th>Fecha</th></tr></thead>
@@ -1018,6 +1035,19 @@ async function showAdminPanel() {
   resetTournamentForm();
   resetProductForm();
   if (document.getElementById("adminModal")) openModal("adminModal");
+}
+
+async function syncAdminOrders() {
+  try {
+    const result = await api("/api/admin/orders/reconcile", { method: "POST" });
+    adminOrdersChecked = true;
+    showToast(result.added
+      ? `Se recuperaron ${result.added} compra(s) desde Stripe.`
+      : "Stripe está sincronizado; no hay compras faltantes.");
+    await showAdminPanel();
+  } catch (error) {
+    showToast(`No se pudieron sincronizar los pagos: ${error.message}`);
+  }
 }
 
 function renderAdminTournament(tournament) {
