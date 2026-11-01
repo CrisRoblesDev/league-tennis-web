@@ -9,5 +9,16 @@
     "role": "admin",
     "created": "2026-11-01T22:16:57.588Z",
     "membershipActive": false
+  },
+  {
+    "id": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
+    "name": "Administración",
+    "email": "admin@gmail.com",
+    "password": "pbkdf2$100000$iczAclauIPqBm782vE0BCw$NgEHRYU9KfElbTdUSjOBRWE6VuExmHJHj0ow_QULEjI",
+    "level": "",
+    "zone": "",
+    "role": "user",
+    "created": "2026-11-01T23:50:42.382Z",
+    "membershipActive": false
   }
 ]
