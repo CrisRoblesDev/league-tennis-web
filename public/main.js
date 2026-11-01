@@ -2,6 +2,7 @@
 // Auth + Stripe Checkout + Ranking + Campeonato + Admin
 
 const API = ""; // same origin
+const isAdminPage = window.location.pathname.endsWith("/admin.html");
 
 let currentUser = null;
 let players = [];
@@ -49,8 +50,8 @@ function updateAuthUI() {
   if (currentUser) {
     authBtns.innerHTML = `
       <span class="user-name">Hola, ${escapeHtml(currentUser.name)}</span>
-      ${players.some(player => player.userId === currentUser.id) ? "" : '<button class="btn btn-sm" onclick="openModal(\'createPlayerModal\')">Crear perfil</button>'}
-      ${currentUser.role === "admin" ? '<button class="btn btn-sm btn-admin" onclick="showAdminPanel()">Admin</button>' : ""}
+      ${!isAdminPage && !players.some(player => player.userId === currentUser.id) ? '<button class="btn btn-sm" onclick="openModal(\'createPlayerModal\')">Crear perfil</button>' : ""}
+      ${currentUser.role === "admin" ? `<a class="btn btn-sm btn-admin" href="${isAdminPage ? "/" : "/admin.html"}">${isAdminPage ? "Página pública" : "Administración"}</a>` : ""}
       <button class="btn btn-sm btn-secondary" onclick="logout()">Salir</button>
     `;
   } else {
@@ -109,6 +110,10 @@ async function logout() {
   try {
     await api("/api/auth/logout", { method: "POST" });
     currentUser = null;
+    if (isAdminPage) {
+      window.location.replace("/");
+      return;
+    }
     updateAuthUI();
     renderResults();
     renderChallenges();
@@ -235,6 +240,86 @@ async function saveAdminUser(event) {
     showToast("Usuario actualizado.");
   } catch (error) {
     showToast(`No se pudo actualizar el usuario: ${error.message}`);
+  }
+}
+
+function editAdminPlayer(playerId) {
+  const player = players.find(item => item.id === playerId);
+  if (!player) return;
+  const form = document.getElementById("adminPlayerForm");
+  form.elements.namedItem("playerId").value = player.id;
+  const accountSelect = form.elements.namedItem("accountId");
+  if (!Array.from(accountSelect.options).some(option => option.value === player.userId)) {
+    const option = new Option(`${player.name} · perfil existente`, player.userId);
+    accountSelect.add(option);
+  }
+  accountSelect.value = player.userId;
+  accountSelect.disabled = true;
+  form.elements.namedItem("name").value = player.name;
+  form.elements.namedItem("level").value = player.level;
+  form.elements.namedItem("zone").value = player.zone;
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function resetAdminPlayerForm() {
+  const form = document.getElementById("adminPlayerForm");
+  form.reset();
+  form.elements.namedItem("playerId").value = "";
+  form.elements.namedItem("accountId").disabled = false;
+}
+
+async function saveAdminPlayer(event) {
+  event.preventDefault();
+  const form = event.target;
+  const playerId = form.elements.namedItem("playerId").value;
+  try {
+    if (playerId) {
+      await api("/api/admin/players", {
+        method: "PATCH",
+        body: JSON.stringify({
+          playerId,
+          updates: {
+            name: form.elements.namedItem("name").value,
+            level: form.elements.namedItem("level").value,
+            zone: form.elements.namedItem("zone").value
+          }
+        })
+      });
+    } else {
+      const userId = form.elements.namedItem("accountId").value;
+      if (!userId) {
+        showToast("Selecciona una cuenta para crearle un perfil.");
+        return;
+      }
+      await api("/api/admin/players", {
+        method: "POST",
+        body: JSON.stringify({
+          userId,
+          name: form.elements.namedItem("name").value,
+          level: form.elements.namedItem("level").value,
+          zone: form.elements.namedItem("zone").value
+        })
+      });
+    }
+    await Promise.all([loadPlayers(), showAdminPanel()]);
+    showToast(playerId ? "Perfil de jugador actualizado." : "Perfil de jugador creado.");
+  } catch (error) {
+    showToast(`No se pudo actualizar el perfil: ${error.message}`);
+  }
+}
+
+async function deleteAdminPlayer(playerId) {
+  const player = players.find(item => item.id === playerId);
+  if (!player || !window.confirm(`¿Eliminar el perfil de ${player.name}? No se borrará la cuenta. El historial deportivo impide borrar perfiles asociados a partidos o torneos.`)) return;
+  try {
+    await api("/api/admin/players", {
+      method: "DELETE",
+      body: JSON.stringify({ playerId })
+    });
+    await Promise.all([loadPlayers(), showAdminPanel()]);
+    showToast("Perfil de jugador eliminado.");
+  } catch (error) {
+    showToast(`No se pudo eliminar: ${error.message}`);
   }
 }
 
@@ -498,11 +583,18 @@ async function loadTournaments() {
       tournaments.find(item => ["registration", "scheduled", "in_progress"].includes(item.status)) ||
       tournaments[0];
     if (featured) {
-      document.getElementById("heroTournamentTitle").textContent = featured.title || `Campeonato · ${featured.month}`;
-      document.getElementById("heroTournamentDate").textContent =
-        featured.startDate ? new Date(`${featured.startDate}T00:00:00`).toLocaleDateString() : featured.month;
-      document.getElementById("heroTournamentSummary").textContent =
-        featured.description || `${(featured.entries || []).length} inscritos · ${featured.format || "Formato por anunciar"}`;
+      const title = document.getElementById("heroTournamentTitle");
+      const date = document.getElementById("heroTournamentDate");
+      const summary = document.getElementById("heroTournamentSummary");
+      if (title) title.textContent = featured.title || `Campeonato · ${featured.month}`;
+      if (date) {
+        date.textContent = featured.startDate ?
+          new Date(`${featured.startDate}T00:00:00`).toLocaleDateString() : featured.month;
+      }
+      if (summary) {
+        summary.textContent = featured.description ||
+          `${(featured.entries || []).length} inscritos · ${featured.format || "Formato por anunciar"}`;
+      }
     }
   } catch (error) {
     showToast(`No se pudieron cargar los torneos: ${error.message}`);
@@ -559,14 +651,16 @@ async function showAdminPanel() {
   let allProducts;
   let allTournaments;
   let results;
+  let allChallenges;
   try {
-    [stats, orders, users, allProducts, allTournaments, results] = await Promise.all([
+    [stats, orders, users, allProducts, allTournaments, results, allChallenges] = await Promise.all([
       api("/api/admin/stats"),
       api("/api/admin/orders"),
       api("/api/admin/users"),
       api("/api/admin/products"),
       api("/api/admin/tournaments"),
-      api("/api/results")
+      api("/api/results"),
+      api("/api/admin/challenges")
     ]);
   } catch (error) {
     showToast(`No se pudo abrir administración: ${error.message}`);
@@ -579,7 +673,19 @@ async function showAdminPanel() {
   tournaments = allTournaments;
   matchResults = results;
   adminUsers = users;
+  let allPlayers;
+  try {
+    allPlayers = await api("/api/admin/players");
+  } catch (error) {
+    showToast(`No se pudieron cargar los perfiles de jugadores: ${error.message}`);
+    return;
+  }
+  players = allPlayers;
   const levels = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0"];
+  const pendingResults = results.filter(result => ["pending", "disputed"].includes(result.status));
+  const playersWithoutProfile = adminUsers.filter(user =>
+    !allPlayers.some(player => player.userId === user.id)
+  );
 
   content.innerHTML = `
     <div class="admin-stats">
@@ -588,12 +694,15 @@ async function showAdminPanel() {
       <div class="stat-card"><div class="stat-number">${stats.totalOrders}</div><div class="stat-label">Pedidos</div></div>
       <div class="stat-card"><div class="stat-number">$${(stats.revenue / 100).toFixed(2)}</div><div class="stat-label">Ingresos</div></div>
       <div class="stat-card"><div class="stat-number">${stats.activeSubscriptions}</div><div class="stat-label">Suscripciones</div></div>
+      <div class="stat-card"><div class="stat-number">${pendingResults.length}</div><div class="stat-label">Por revisar</div></div>
     </div>
 
     <nav class="admin-nav" aria-label="Secciones de administración">
       <button type="button" onclick="scrollAdminTo('admin-orders')">Pedidos</button>
       <button type="button" onclick="scrollAdminTo('admin-tournaments')">Torneos y partidos</button>
+      <button type="button" onclick="scrollAdminTo('admin-players')">Jugadores</button>
       <button type="button" onclick="scrollAdminTo('admin-products')">Productos</button>
+      <button type="button" onclick="scrollAdminTo('admin-challenges')">Desafíos</button>
       <button type="button" onclick="scrollAdminTo('admin-results')">Resultados</button>
       <button type="button" onclick="scrollAdminTo('admin-users')">Usuarios</button>
     </nav>
@@ -635,6 +744,24 @@ async function showAdminPanel() {
     </div>
     </section>
 
+    <section class="admin-section" id="admin-challenges"><h3>Desafíos</h3>
+    <p class="muted">Revisa la actividad de la comunidad, cierra publicaciones resueltas o elimina contenido inválido.</p>
+    <div class="grid grid-3 admin-records">
+      ${allChallenges.map(challenge => `<article class="card admin-record">
+        <span class="tag ${challenge.status === "accepted" ? "tag-blue" : ""}">${escapeHtml(challenge.status)}</span>
+        <h4>${escapeHtml(challenge.playerName)}</h4>
+        <p>${escapeHtml(challenge.availability || "")}</p>
+        ${challenge.acceptedPlayerName ? `<p class="muted">Aceptado por ${escapeHtml(challenge.acceptedPlayerName)}</p>` : ""}
+        <p class="muted">${challenge.created ? new Date(challenge.created).toLocaleDateString() : ""}</p>
+        <div class="admin-form-actions">
+          ${challenge.status !== "closed" ? `<button class="btn btn-sm btn-dark" onclick="setChallengeStatus('${escapeHtml(challenge.id)}','closed')">Cerrar</button>` : ""}
+          ${challenge.status === "closed" ? `<button class="btn btn-sm btn-secondary" onclick="setChallengeStatus('${escapeHtml(challenge.id)}','open')">Reabrir</button>` : ""}
+          <button class="btn btn-sm btn-danger" onclick="deleteAdminChallenge('${escapeHtml(challenge.id)}')">Eliminar</button>
+        </div>
+      </article>`).join("") || '<p class="muted">No hay desafíos publicados.</p>'}
+    </div>
+    </section>
+
     <section class="admin-section" id="admin-products"><h3>Productos y suscripciones</h3>
     <form id="adminProductForm" class="admin-form">
       <input type="hidden" name="id">
@@ -659,18 +786,62 @@ async function showAdminPanel() {
     </div>
     </section>
 
-    <section class="admin-section" id="admin-results"><h3>Resultados por moderar</h3>
+    <section class="admin-section" id="admin-results"><h3>Resultados y moderación</h3>
+    <p class="muted">Confirma, rechaza o elimina un reporte. Los resultados confirmados impactan el ranking.</p>
     <div class="grid grid-2 admin-records">
-      ${results.filter(result => ["pending", "disputed"].includes(result.status)).map(result => `<article class="card admin-record">
+      ${pendingResults.map(result => `<article class="card admin-record">
         <span class="tag ${result.status === "disputed" ? "tag-red" : ""}">${result.status === "disputed" ? "En disputa" : "Pendiente"}</span>
         <h4>${escapeHtml(result.winnerName)} vs ${escapeHtml(result.loserName)}</h4>
         <p class="muted">${escapeHtml(result.score)} · ${escapeHtml(result.playedAt || "")}</p>
         <div class="admin-form-actions">
           <button class="btn btn-primary" onclick="moderateResult('${escapeHtml(result.id)}','confirm')">Confirmar</button>
           <button class="btn btn-secondary" onclick="moderateResult('${escapeHtml(result.id)}','reject')">Rechazar</button>
+          <button class="btn btn-sm btn-dark" onclick="editAdminResult('${escapeHtml(result.id)}')">Editar</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteAdminResult('${escapeHtml(result.id)}')">Eliminar</button>
         </div>
       </article>`).join("") || '<p class="muted">No hay resultados pendientes.</p>'}
     </div>
+    <details class="admin-history">
+      <summary>Historial de resultados (${results.length})</summary>
+      <div class="table-wrap">
+        <table><thead><tr><th>Partido</th><th>Marcador</th><th>Estado</th><th>Fecha</th><th></th></tr></thead><tbody>
+          ${results.map(result => `<tr><td>${escapeHtml(result.winnerName)} vs ${escapeHtml(result.loserName)}</td><td>${escapeHtml(result.score)}</td><td>${escapeHtml(result.status)}</td><td>${result.playedAt ? new Date(result.playedAt).toLocaleDateString() : "-"}</td><td><button class="btn btn-sm btn-dark" onclick="editAdminResult('${escapeHtml(result.id)}')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminResult('${escapeHtml(result.id)}')">Eliminar</button></td></tr>`).join("") || '<tr><td colspan="5">Sin resultados</td></tr>'}
+        </tbody></table>
+      </div>
+    </details>
+    <form id="adminResultForm" class="admin-form admin-result-form" hidden>
+      <input type="hidden" name="resultId">
+      <h4 class="full">Editar resultado reportado</h4>
+      <p class="full muted">Al guardar, volverá a estado pendiente para que el rival confirme el cambio.</p>
+      <label>Ganador<select name="winnerId" required>${allPlayers.map(player => `<option value="${escapeHtml(player.id)}">${escapeHtml(player.name)}</option>`).join("")}</select></label>
+      <label>Rival<select name="loserId" required>${allPlayers.map(player => `<option value="${escapeHtml(player.id)}">${escapeHtml(player.name)}</option>`).join("")}</select></label>
+      <label>Marcador desde el ganador<input name="score" required placeholder="6-4, 4-6, 10-7"></label>
+      <label>Fecha<input name="playedAt" type="date" required></label>
+      <div class="admin-form-actions full"><button class="btn btn-primary">Guardar y solicitar confirmación</button><button type="button" class="btn btn-secondary" onclick="cancelAdminResultEdit()">Cancelar</button></div>
+    </form>
+    </section>
+
+    <section class="admin-section" id="admin-players"><h3>Perfiles de jugadores</h3>
+    <p class="muted">Edita el perfil público de competición. Para conservar el historial, los perfiles con partidos o torneos no se pueden borrar.</p>
+    <form id="adminPlayerForm" class="admin-form">
+      <input type="hidden" name="playerId">
+      <label class="full">Cuenta vinculada<select name="accountId" required>
+        <option value="">Selecciona una cuenta sin perfil</option>
+        ${playersWithoutProfile.map(user => `<option value="${escapeHtml(user.id)}">${escapeHtml(user.name)} · ${escapeHtml(user.email)}</option>`).join("")}
+      </select></label>
+      <label>Nombre público<input name="name" maxlength="100" required></label>
+      <label>Nivel<select name="level" required>${levels.map(level => `<option value="${level}">${level}</option>`).join("")}</select></label>
+      <label class="full">Zona<select name="zone" required><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
+      <div class="admin-form-actions full"><button class="btn btn-primary">Guardar perfil</button><button type="button" class="btn btn-secondary" onclick="resetAdminPlayerForm()">Cancelar</button></div>
+    </form>
+    <div class="table-wrap"><table><thead><tr><th>Jugador</th><th>Email</th><th>Nivel</th><th>Zona</th><th>Partidos</th><th>Puntos</th><th>Acciones</th></tr></thead>
+      <tbody>${allPlayers.map(player => `<tr>
+        <td>${escapeHtml(player.name)}</td><td>${escapeHtml(player.email || "-")}</td><td>${escapeHtml(player.level)}</td>
+        <td>${escapeHtml(player.zone)}</td><td>${Number(player.matches) || 0}</td><td>${Number(player.points) || 0}</td>
+        <td><button class="btn btn-sm btn-dark" onclick="editAdminPlayer('${escapeHtml(player.id)}')">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteAdminPlayer('${escapeHtml(player.id)}')">Eliminar</button></td>
+      </tr>`).join("") || '<tr><td colspan="7">No hay perfiles de jugador.</td></tr>'}</tbody>
+    </table></div>
     </section>
 
     <section class="admin-section" id="admin-users"><h3>Usuarios</h3>
@@ -709,22 +880,37 @@ async function showAdminPanel() {
   document.getElementById("adminTournamentForm").addEventListener("submit", saveTournament);
   document.getElementById("adminProductForm").addEventListener("submit", saveProduct);
   document.getElementById("adminUserForm").addEventListener("submit", saveAdminUser);
+  document.getElementById("adminPlayerForm").addEventListener("submit", saveAdminPlayer);
+  document.getElementById("adminResultForm").addEventListener("submit", saveAdminResult);
   document.getElementById("adminUserSearch").addEventListener("input", filterAdminUsers);
   resetAdminUserForm();
   resetTournamentForm();
   resetProductForm();
-  openModal("adminModal");
+  if (document.getElementById("adminModal")) openModal("adminModal");
 }
 
 function renderAdminTournament(tournament) {
   const entrants = tournament.entries || [];
+  const availablePlayers = players.filter(player =>
+    !(tournament.entries || []).some(entry => entry.playerId === player.id) &&
+    (tournament.levels || []).includes(player.level)
+  );
   return `<article class="card admin-record">
     <div class="admin-record-head"><div><span class="tag">${escapeHtml(tournament.status)}</span><h4>${escapeHtml(tournament.title || tournament.month)}</h4></div>
       <div class="admin-form-actions"><button class="btn btn-sm btn-dark" onclick="editTournament('${escapeHtml(tournament.id)}')">Editar</button>
       <button class="btn btn-sm btn-secondary" onclick="deleteTournament('${escapeHtml(tournament.id)}')">Eliminar</button></div>
     </div>
     <p class="muted">${escapeHtml(tournament.month)} · ${entrants.length} inscritos · ${escapeHtml(tournament.venue || "Sede por definir")}</p>
-    <p>${entrants.map(entry => escapeHtml(entry.name)).join(", ") || "Sin inscritos"}</p>
+    <ul class="admin-entrant-list">${entrants.map(entry => `<li>
+      <span>${escapeHtml(entry.name)} <small>${escapeHtml(entry.level || "")}</small></span>
+      <button class="btn btn-sm btn-danger" onclick="removeTournamentEntry('${escapeHtml(tournament.id)}','${escapeHtml(entry.playerId)}')">Retirar</button>
+    </li>`).join("") || '<li class="muted">Sin inscritos</li>'}</ul>
+    ${tournament.status === "registration" && availablePlayers.length ? `<form class="admin-entry-form" onsubmit="addTournamentEntry(event,'${escapeHtml(tournament.id)}')">
+      <label class="full">Agregar jugador inscrito
+        <select name="playerId">${availablePlayers.map(player => `<option value="${escapeHtml(player.id)}">${escapeHtml(player.name)} · ${escapeHtml(player.level)}</option>`).join("")}</select>
+      </label>
+      <button class="btn btn-sm btn-dark full">Agregar participante</button>
+    </form>` : ""}
     ${entrants.length >= 2 ? `<form id="admin-match-form-${escapeHtml(tournament.id)}" class="admin-match-form" onsubmit="saveTournamentMatch(event,'${escapeHtml(tournament.id)}')">
       <input type="hidden" name="matchId">
       <b class="full">Programar partido</b>
@@ -743,6 +929,7 @@ function renderAdminTournament(tournament) {
     ${(tournament.matches || []).map(match => `<div class="admin-match-row">
       <p class="muted">${escapeHtml(match.round)}: ${escapeHtml(match.playerAName || match.playerAId)} vs ${escapeHtml(match.playerBName || match.playerBId)}${match.score ? ` · ${escapeHtml(match.score)}` : ""}</p>
       <button class="btn btn-sm btn-dark" onclick="editTournamentMatch('${escapeHtml(tournament.id)}','${escapeHtml(match.id)}')">Editar partido</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteTournamentMatch('${escapeHtml(tournament.id)}','${escapeHtml(match.id)}')">Eliminar partido</button>
     </div>`).join("")}
   </article>`;
 }
@@ -831,6 +1018,35 @@ async function deleteTournament(tournamentId) {
   }
 }
 
+async function addTournamentEntry(event, tournamentId) {
+  event.preventDefault();
+  const playerId = event.target.elements.namedItem("playerId").value;
+  try {
+    await api(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}`, {
+      method: "PUT",
+      body: JSON.stringify({ addEntryPlayerId: playerId })
+    });
+    await Promise.all([loadTournaments(), showAdminPanel()]);
+    showToast("Participante agregado al torneo.");
+  } catch (error) {
+    showToast(`No se pudo agregar al participante: ${error.message}`);
+  }
+}
+
+async function removeTournamentEntry(tournamentId, playerId) {
+  if (!window.confirm("¿Retirar este jugador del torneo? No se puede retirar si ya tiene partidos en el cuadro.")) return;
+  try {
+    await api(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}`, {
+      method: "PUT",
+      body: JSON.stringify({ removeEntryPlayerId: playerId })
+    });
+    await Promise.all([loadTournaments(), showAdminPanel()]);
+    showToast("Inscripción retirada.");
+  } catch (error) {
+    showToast(`No se pudo retirar la inscripción: ${error.message}`);
+  }
+}
+
 async function saveTournamentMatch(event, tournamentId) {
   event.preventDefault();
   const form = event.target;
@@ -863,6 +1079,20 @@ async function saveTournamentMatch(event, tournamentId) {
     showToast("Partido programado");
   } catch (error) {
     showToast(`No se pudo programar: ${error.message}`);
+  }
+}
+
+async function deleteTournamentMatch(tournamentId, matchId) {
+  if (!window.confirm("¿Eliminar este partido del cuadro?")) return;
+  try {
+    await api(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}`, {
+      method: "PUT",
+      body: JSON.stringify({ deleteMatchId: matchId })
+    });
+    await Promise.all([loadTournaments(), showAdminPanel()]);
+    showToast("Partido eliminado del cuadro.");
+  } catch (error) {
+    showToast(`No se pudo eliminar el partido: ${error.message}`);
   }
 }
 
@@ -961,6 +1191,92 @@ async function moderateResult(resultId, action) {
   }
 }
 
+function editAdminResult(resultId) {
+  const result = matchResults.find(item => item.id === resultId);
+  const form = document.getElementById("adminResultForm");
+  if (!result || !form) return;
+  form.hidden = false;
+  form.elements.namedItem("resultId").value = result.id;
+  form.elements.namedItem("winnerId").value = result.winnerId;
+  form.elements.namedItem("loserId").value = result.loserId;
+  form.elements.namedItem("score").value = result.score;
+  form.elements.namedItem("playedAt").value = (result.playedAt || result.created || "").slice(0, 10);
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function cancelAdminResultEdit() {
+  const form = document.getElementById("adminResultForm");
+  form.reset();
+  form.hidden = true;
+}
+
+async function saveAdminResult(event) {
+  event.preventDefault();
+  const form = event.target;
+  if (form.elements.namedItem("winnerId").value === form.elements.namedItem("loserId").value) {
+    showToast("El ganador y el rival deben ser distintos.");
+    return;
+  }
+  try {
+    await api("/api/admin/results", {
+      method: "PATCH",
+      body: JSON.stringify({
+        action: "edit",
+        resultId: form.elements.namedItem("resultId").value,
+        winnerId: form.elements.namedItem("winnerId").value,
+        loserId: form.elements.namedItem("loserId").value,
+        score: form.elements.namedItem("score").value,
+        playedAt: form.elements.namedItem("playedAt").value
+      })
+    });
+    await Promise.all([loadPlayers(), loadResults(), showAdminPanel()]);
+    showToast("Resultado corregido; falta confirmación del rival.");
+  } catch (error) {
+    showToast(`No se pudo corregir el resultado: ${error.message}`);
+  }
+}
+
+async function deleteAdminResult(resultId) {
+  if (!window.confirm("¿Eliminar este resultado definitivamente? Si estaba confirmado, dejará de contar en el ranking.")) return;
+  try {
+    await api("/api/admin/results", {
+      method: "DELETE",
+      body: JSON.stringify({ resultId })
+    });
+    await Promise.all([loadPlayers(), loadResults(), showAdminPanel()]);
+    showToast("Resultado eliminado.");
+  } catch (error) {
+    showToast(`No se pudo eliminar el resultado: ${error.message}`);
+  }
+}
+
+async function setChallengeStatus(challengeId, status) {
+  try {
+    await api("/api/admin/challenges", {
+      method: "PATCH",
+      body: JSON.stringify({ challengeId, status })
+    });
+    await showAdminPanel();
+    showToast(status === "closed" ? "Desafío cerrado." : "Desafío reabierto.");
+  } catch (error) {
+    showToast(`No se pudo actualizar el desafío: ${error.message}`);
+  }
+}
+
+async function deleteAdminChallenge(challengeId) {
+  if (!window.confirm("¿Eliminar este desafío definitivamente?")) return;
+  try {
+    await api("/api/admin/challenges", {
+      method: "DELETE",
+      body: JSON.stringify({ challengeId })
+    });
+    await showAdminPanel();
+    showToast("Desafío eliminado.");
+  } catch (error) {
+    showToast(`No se pudo eliminar: ${error.message}`);
+  }
+}
+
 // ============ UI HELPERS ============
 function openModal(id) {
   document.getElementById(id).classList.add("open");
@@ -1019,6 +1335,18 @@ function showToast(msg) {
 // ============ INIT ============
 document.addEventListener("DOMContentLoaded", async () => {
   await checkAuth();
+  if (isAdminPage) {
+    if (!currentUser) {
+      window.location.replace("/?admin=login");
+      return;
+    }
+    if (currentUser.role !== "admin") {
+      window.location.replace("/");
+      return;
+    }
+    await showAdminPanel();
+    return;
+  }
   await loadProducts();
   await loadPlayers();
   await loadTournaments();
@@ -1057,4 +1385,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("levelFilter")?.addEventListener("change", filterPlayers);
   document.getElementById("zoneFilter")?.addEventListener("change", filterPlayers);
   document.getElementById("searchPlayer")?.addEventListener("input", filterPlayers);
+  if (new URLSearchParams(window.location.search).get("admin") === "login") {
+    openModal("loginModal");
+  }
 });

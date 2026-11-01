@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>League Tennis Aventura | Official League</title>
+<title>League Tennis Aventura | Liga de tenis en Miami</title>
 <link rel="stylesheet" href="styles.css">
 <script src="main.js" defer></script>
 </head>
@@ -12,11 +12,11 @@
 <header class="header" id="header">
   <div class="brand">
     <span class="brand-name">LEAGUE TENNIS <span class="brand-accent">AVENTURA</span></span>
-    <span class="brand-sub">MIAMI · EST. 2026</span>
+    <span class="brand-sub">MIAMI · LIGA DE TENIS</span>
   </div>
   <nav class="nav" id="nav">
-    <a href="#torneo">TORNEO</a>
-    <a href="#ranking">RANKING</a>
+    <a href="#torneo">CAMPEONATOS</a>
+    <a href="#ranking">CLASIFICACIÓN</a>
     <a href="#desafios">DESAFÍOS</a>
     <a href="#tienda">TIENDA</a>
     <a href="#membresia">MEMBRESÍA</a>
@@ -35,68 +35,48 @@
 <section class="hero">
   <div class="hero-content">
     <span class="eyebrow">Miami, Florida · Liga de tenis</span>
-    <h1>La competencia<br>tiene su lugar.</h1>
-    <p>Una liga organizada para jugadores de Miami. Consulta la clasificación, compite en el campeonato mensual y encuentra nuevos desafíos según tu nivel y zona.</p>
+    <h1>Tu próximo partido<br>empieza aquí.</h1>
+    <p>Compite en Miami. Encuentra torneos por nivel, sigue tu posición en la clasificación y juega con una comunidad que ama el tenis.</p>
     <div class="hero-cta">
-      <button class="btn btn-primary" onclick="openModal('registerModal')">Registrarse como jugador</button>
-      <button class="btn btn-secondary" onclick="scrollTo('#torneo')">Consultar campeonato</button>
+      <button class="btn btn-primary" onclick="openModal('registerModal')">Únete a la liga</button>
+      <button class="btn btn-secondary" onclick="scrollTo('#torneo')">Explorar campeonatos</button>
     </div>
+    <div class="hero-highlights"><span><b>01</b> Compite</span><span><b>02</b> Sube en el ranking</span><span><b>03</b> Encuentra tu comunidad</span></div>
   </div>
   <div class="hero-card">
-    <span class="tag">TEMPORADA ACTIVA</span>
+    <span class="tag">PRÓXIMO EN LA LIGA</span>
     <h3 id="heroTournamentTitle">Campeonato mensual</h3>
     <div class="hero-date" id="heroTournamentDate">Cada mes</div>
     <p id="heroTournamentSummary">Inscripción por nivel · Eliminación directa · Cuadro y resultados publicados en la plataforma.</p>
-    <button class="btn btn-primary" onclick="joinTournament()">Inscribirse al torneo</button>
+    <button class="btn btn-primary" onclick="scrollTo('#torneo')">Ver campeonato</button>
   </div>
 </section>
 
 <main>
+  <section class="quick-links" aria-label="Explorar la liga">
+    <a href="#torneo"><span class="quick-icon">01</span><span><b>Campeonatos</b><small>Calendario y cuadros</small></span><span class="quick-arrow">↗</span></a>
+    <a href="#ranking"><span class="quick-icon">02</span><span><b>Clasificación</b><small>Jugadores y puntos</small></span><span class="quick-arrow">↗</span></a>
+    <a href="#tienda"><span class="quick-icon">03</span><span><b>Tienda</b><small>Productos y membresía</small></span><span class="quick-arrow">↗</span></a>
+  </section>
+
   <section class="section" id="torneo">
     <div class="section-head">
       <div>
-        <h2>Campeonato mensual</h2>
+        <span class="section-kicker">JUEGA POR ALGO</span>
+        <h2>Campeonatos</h2>
         <p class="section-sub">Consulta torneos, jugadores inscritos, rondas y marcadores publicados.</p>
       </div>
-      <span class="tag">Calendario oficial</span>
+      <a class="section-link" href="#desafios">¿Sin torneo? Encuentra un desafío <span>→</span></a>
     </div>
     <div id="tournamentsList" class="grid grid-3"></div>
-    <div class="grid grid-3">
-      <article class="card">
-        <span class="tag">Inscripciones</span>
-        <h3>Monthly Championship</h3>
-        <p class="muted">Elige tu nivel y confirma tu participación. El administrador publicará el cuadro y las fechas de cada ronda.</p>
-        <div class="big-number">6 niveles</div>
-        <p class="muted">2.5 · 3.0 · 3.5 · 4.0 · 4.5 · 5.0</p>
-        <button class="btn btn-dark" onclick="joinTournament()">Inscribirse</button>
-      </article>
-      <article class="card">
-        <span class="tag tag-blue">Formato</span>
-        <h3>Eliminación directa</h3>
-        <p class="muted">Cada ronda se registra en la web. Los jugadores eliminados pueden seguir compitiendo en los desafíos semanales.</p>
-        <div class="big-number">Best of 3</div>
-        <p class="muted">Tercer set: Super Tie-Break a 10, por diferencia de 2.</p>
-      </article>
-      <article class="card">
-        <span class="tag">Puntos de torneo</span>
-        <h3>Puntuación del campeonato</h3>
-        <p class="muted">Los puntos de campeonato se muestran por separado del ranking de partidos.</p>
-        <table class="points-table">
-          <tr><td>Campeón</td><td><b>12 pts</b></td></tr>
-          <tr><td>Finalista</td><td><b>10 pts</b></td></tr>
-          <tr><td>Semifinal</td><td><b>6 pts</b></td></tr>
-          <tr><td>Cuartos</td><td><b>4 pts</b></td></tr>
-          <tr><td>Ronda 2 / ronda 1</td><td><b>2 / 1 pts</b></td></tr>
-        </table>
-      </article>
-    </div>
   </section>
 
-  <section class="section" id="ranking">
+  <section class="section ranking-section" id="ranking">
     <div class="section-head">
       <div>
-        <h2>Clasificación oficial</h2>
-        <p class="section-sub">Ranking general por puntos · Filtra por categoría y zona.</p>
+        <span class="section-kicker">SUBE EN LA ESCALERILLA</span>
+        <h2>Clasificación</h2>
+        <p class="section-sub">Cada partido confirmado cuenta. Encuentra tu posición y el próximo objetivo.</p>
       </div>
       <button class="btn btn-dark" onclick="openResultModal()">+ Registrar resultado</button>
     </div>
@@ -126,6 +106,7 @@
   <section class="section" id="desafios">
     <div class="section-head">
       <div>
+        <span class="section-kicker">UN RIVAL TE ESPERA</span>
         <h2>Zona de desafíos</h2>
         <p class="section-sub">Los jugadores eliminados del cuadro pueden continuar compitiendo mediante desafíos semanales.</p>
       </div>
@@ -153,7 +134,7 @@
     <div id="challengesList" class="grid grid-3"></div>
   </section>
 
-  <section class="section">
+  <section class="section how-section">
     <div class="section-head">
       <div><h2>Cómo funciona</h2><p class="section-sub">Una sola plataforma para gestionar tu perfil, ranking, campeonatos y desafíos.</p></div>
     </div>
@@ -166,8 +147,8 @@
 
   <section class="section" id="tienda">
     <div class="section-head">
-      <div><h2>Tienda y accesorios</h2><p class="section-sub">Equipamiento seleccionado para jugadores de League Tennis Aventura.</p></div>
-      <span class="tag tag-blue">Tienda de tenis</span>
+      <div><span class="section-kicker">EQUÍPATE PARA EL PARTIDO</span><h2>La tienda</h2><p class="section-sub">Productos seleccionados para los jugadores de la liga.</p></div>
+      <a class="section-link" href="#membresia">Conoce League Member <span>→</span></a>
     </div>
     <div class="grid grid-3" id="productsList">
       <!-- Products loaded from API -->
@@ -175,21 +156,19 @@
   </section>
 
   <section class="section" id="membresia">
-    <div class="section-head">
-      <div><h2>Membresía League Member</h2><p class="section-sub">Beneficios exclusivos para miembros de la liga.</p></div>
-    </div>
-    <div class="grid grid-2">
-      <article class="card">
-        <h3>Beneficios incluidos</h3>
+    <div class="membership-feature">
+      <div class="membership-copy">
+        <span class="section-kicker">JUEGA COMO MIEMBRO</span>
+        <h2>Más tenis.<br><span>Más ventajas.</span></h2>
+        <p>Una membresía para quienes quieren vivir la liga al máximo.</p>
         <ul class="benefits-list">
-          <li>Acceso prioritario a inscripciones de torneos</li>
-          <li>Descuento del 10% en la tienda</li>
-          <li>Libros digitales incluidos</li>
-          <li>Perfil destacado en el ranking</li>
-          <li>Soporte prioritario</li>
+          <li>Acceso prioritario a inscripciones</li>
+          <li>Beneficios exclusivos para miembros</li>
+          <li>Una comunidad hecha para competir</li>
         </ul>
-      </article>
-      <article class="card membership-card" id="membershipPlan">
+      </div>
+      <article class="membership-plan" id="membershipPlan">
+        <span class="tag">LEAGUE MEMBER</span>
         <h3>Planes de membresía</h3>
         <p class="muted">Cargando planes disponibles...</p>
       </article>
@@ -198,8 +177,8 @@
 </main>
 
 <footer class="footer">
-  <div><b>LEAGUE TENNIS AVENTURA</b><br>Miami, Florida · Official league platform</div>
-  <div>Resultados sujetos a confirmación · Pagos seguros procesados por Stripe.</div>
+  <div><b>LEAGUE TENNIS AVENTURA</b><br>Miami, Florida · Tu liga, tu juego.</div>
+  <div><a href="#torneo">Campeonatos</a> · <a href="#ranking">Clasificación</a> · <a href="#tienda">Tienda</a></div>
 </footer>
 
 <!-- LOGIN MODAL -->
@@ -276,14 +255,6 @@
       <button class="btn btn-primary full" type="submit">Publicar desafío</button>
     </form>
     <div id="challengeNotice" class="muted"></div>
-  </div>
-</div>
-
-<!-- ADMIN MODAL -->
-<div class="modal" id="adminModal">
-  <div class="modal-box modal-wide">
-    <div class="modal-head"><h2>Panel de administración</h2><button class="close" onclick="closeModal('adminModal')">×</button></div>
-    <div id="adminContent"></div>
   </div>
 </div>
 

@@ -9,6 +9,18 @@ import { onRequestPut as updateTournament } from "../functions/api/admin/tournam
 import { onRequestPatch as moderateResult } from "../functions/api/admin/results.js";
 import { onRequestGet as listPublicTournaments } from "../functions/api/tournament/index.js";
 import { onRequestPost as updateAdminUser } from "../functions/api/admin/users.js";
+import {
+  onRequestPost as createAdminPlayer,
+  onRequestGet as listAdminPlayers,
+  onRequestPatch as updateAdminPlayer,
+  onRequestDelete as deleteAdminPlayer
+} from "../functions/api/admin/players.js";
+import {
+  onRequestGet as listAdminChallenges,
+  onRequestPatch as updateAdminChallenge,
+  onRequestDelete as deleteAdminChallenge
+} from "../functions/api/admin/challenges.js";
+import { onRequestDelete as deleteAdminResult } from "../functions/api/admin/results.js";
 
 function createGitHubMock() {
   const files = new Map();
@@ -215,8 +227,8 @@ test("registration, login, Stripe checkout, and payment reconciliation use the c
     assert.equal(tournamentResponse.status, 201);
     const { tournament } = await tournamentResponse.json();
     github.files.set("players.json", JSON.stringify([
-      { id: "player-a", name: "Player A", level: "3.5" },
-      { id: "player-b", name: "Player B", level: "3.5" }
+      { id: "player-a", userId: "user-a", name: "Player A", level: "3.5", zone: "Aventura / Sunny Isles" },
+      { id: "player-b", userId: "user-b", name: "Player B", level: "3.5", zone: "Aventura / Sunny Isles" }
     ]));
     const storedTournaments = JSON.parse(github.files.get("tournaments.json"));
     storedTournaments[0].entries = [{ playerId: "player-a" }, { playerId: "player-b" }];
@@ -274,6 +286,14 @@ test("registration, login, Stripe checkout, and payment reconciliation use the c
     });
     assert.equal(completedMatchResponse.status, 200);
     assert.equal((await completedMatchResponse.json()).tournament.matches.length, 1);
+    const removeMatchedEntry = await updateTournament({
+      request: adminRequest(`https://league.example/api/admin/tournaments/${tournament.id}`, "PUT", {
+        removeEntryPlayerId: "player-a"
+      }),
+      env,
+      params: { id: tournament.id }
+    });
+    assert.equal(removeMatchedEntry.status, 409);
     const publicTournamentResponse = await listPublicTournaments({ env });
     const publicData = await publicTournamentResponse.json();
     assert.equal(publicData.tournaments[0].entries.length, 2);
@@ -283,6 +303,96 @@ test("registration, login, Stripe checkout, and payment reconciliation use the c
       env
     });
     assert.equal(adminTournamentResponse.status, 200);
+    const adminPlayersResponse = await listAdminPlayers({
+      request: adminRequest("https://league.example/api/admin/players", "GET"),
+      env
+    });
+    assert.equal(adminPlayersResponse.status, 200);
+    const createPlayerResponse = await createAdminPlayer({
+      request: adminRequest("https://league.example/api/admin/players", "POST", {
+        userId: createdUser.user.id,
+        name: "Admin Player",
+        level: "3.5",
+        zone: "Aventura / Sunny Isles"
+      }),
+      env
+    });
+    assert.equal(createPlayerResponse.status, 201);
+    const createdAdminPlayer = (await createPlayerResponse.json()).player;
+    const updatePlayerResponse = await updateAdminPlayer({
+      request: adminRequest("https://league.example/api/admin/players", "PATCH", {
+        playerId: "player-a",
+        updates: {
+          name: "Updated Player A",
+          level: "4.0",
+          zone: "Downtown / Brickell"
+        }
+      }),
+      env
+    });
+    assert.equal(updatePlayerResponse.status, 200);
+    assert.equal(JSON.parse(github.files.get("players.json"))[0].level, "4.0");
+    const protectedPlayerDelete = await deleteAdminPlayer({
+      request: adminRequest("https://league.example/api/admin/players", "DELETE", { playerId: "player-a" }),
+      env
+    });
+    assert.equal(protectedPlayerDelete.status, 409);
+    const deleteUnusedPlayer = await deleteAdminPlayer({
+      request: adminRequest("https://league.example/api/admin/players", "DELETE", {
+        playerId: createdAdminPlayer.id
+      }),
+      env
+    });
+    assert.equal(deleteUnusedPlayer.status, 200);
+
+    github.files.set("players.json", JSON.stringify([
+      ...JSON.parse(github.files.get("players.json")),
+      { id: "player-c", userId: "user-c", name: "Player C", level: "3.5", zone: "Aventura / Sunny Isles" }
+    ]));
+    const addEntryResponse = await updateTournament({
+      request: adminRequest(`https://league.example/api/admin/tournaments/${tournament.id}`, "PUT", {
+        addEntryPlayerId: "player-c"
+      }),
+      env,
+      params: { id: tournament.id }
+    });
+    assert.equal(addEntryResponse.status, 200);
+    const removeEntryResponse = await updateTournament({
+      request: adminRequest(`https://league.example/api/admin/tournaments/${tournament.id}`, "PUT", {
+        removeEntryPlayerId: "player-c"
+      }),
+      env,
+      params: { id: tournament.id }
+    });
+    assert.equal(removeEntryResponse.status, 200);
+
+    github.files.set("challenges.json", JSON.stringify([{
+      id: "challenge-test",
+      playerId: "player-b",
+      status: "open",
+      availability: "Fines de semana",
+      created: new Date().toISOString()
+    }]));
+    const challengeListResponse = await listAdminChallenges({
+      request: adminRequest("https://league.example/api/admin/challenges", "GET"),
+      env
+    });
+    assert.equal(challengeListResponse.status, 200);
+    const challengeUpdateResponse = await updateAdminChallenge({
+      request: adminRequest("https://league.example/api/admin/challenges", "PATCH", {
+        challengeId: "challenge-test",
+        status: "closed"
+      }),
+      env
+    });
+    assert.equal(challengeUpdateResponse.status, 200);
+    const challengeDeleteResponse = await deleteAdminChallenge({
+      request: adminRequest("https://league.example/api/admin/challenges", "DELETE", {
+        challengeId: "challenge-test"
+      }),
+      env
+    });
+    assert.equal(challengeDeleteResponse.status, 200);
 
     github.files.set("results.json", JSON.stringify([{
       id: "result-test",
@@ -299,6 +409,27 @@ test("registration, login, Stripe checkout, and payment reconciliation use the c
     });
     assert.equal(moderationResponse.status, 200);
     assert.equal(JSON.parse(github.files.get("results.json"))[0].status, "confirmed");
+    const editResultResponse = await moderateResult({
+      request: adminRequest("https://league.example/api/admin/results", "PATCH", {
+        action: "edit",
+        resultId: "result-test",
+        winnerId: "player-a",
+        loserId: "player-b",
+        score: "6-4, 4-6, 10-7",
+        playedAt: "2026-07-12"
+      }),
+      env
+    });
+    assert.equal(editResultResponse.status, 200);
+    assert.equal(JSON.parse(github.files.get("results.json"))[0].status, "pending");
+    const resultDeleteResponse = await deleteAdminResult({
+      request: adminRequest("https://league.example/api/admin/results", "DELETE", {
+        resultId: "result-test"
+      }),
+      env
+    });
+    assert.equal(resultDeleteResponse.status, 200);
+    assert.equal(JSON.parse(github.files.get("results.json")).length, 0);
 
     const unauthorizedResponse = await createTournament({
       request: new Request("https://league.example/api/admin/tournaments", { method: "POST" }),

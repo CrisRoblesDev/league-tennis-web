@@ -68,6 +68,51 @@ export async function onRequestPut({ request, env, params }) {
   if (tournament.startDate && tournament.endDate && tournament.startDate > tournament.endDate) {
     return jsonResponse({ error: "La fecha de término debe ser igual o posterior al inicio." }, 400);
   }
+  if (body.deleteMatchId !== undefined) {
+    if (typeof body.deleteMatchId !== "string") {
+      return jsonResponse({ error: "Partido inválido" }, 400);
+    }
+    const matches = tournament.matches || [];
+    const matchIndex = matches.findIndex(match => match.id === body.deleteMatchId);
+    if (matchIndex < 0) return jsonResponse({ error: "Partido no encontrado" }, 404);
+    matches.splice(matchIndex, 1);
+    tournament.matches = matches;
+  }
+  if (body.removeEntryPlayerId !== undefined) {
+    if (typeof body.removeEntryPlayerId !== "string") {
+      return jsonResponse({ error: "Inscripción inválida" }, 400);
+    }
+    if ((tournament.matches || []).some(match =>
+      [match.playerAId, match.playerBId].includes(body.removeEntryPlayerId)
+    )) {
+      return jsonResponse({ error: "No se puede retirar a un jugador que ya tiene partidos en el cuadro." }, 409);
+    }
+    const entries = tournament.entries || [];
+    const entryIndex = entries.findIndex(entry => entry.playerId === body.removeEntryPlayerId);
+    if (entryIndex < 0) return jsonResponse({ error: "Inscripción no encontrada" }, 404);
+    entries.splice(entryIndex, 1);
+    tournament.entries = entries;
+  }
+  if (body.addEntryPlayerId !== undefined) {
+    if (typeof body.addEntryPlayerId !== "string" || tournament.status !== "registration") {
+      return jsonResponse({ error: "Solo se pueden agregar jugadores durante la inscripción." }, 409);
+    }
+    const players = await gRead(env, "players");
+    const player = players.find(item => item.id === body.addEntryPlayerId);
+    if (!player) return jsonResponse({ error: "Jugador no encontrado" }, 404);
+    if (!tournament.levels?.includes(player.level)) {
+      return jsonResponse({ error: "El nivel del jugador no está habilitado para este torneo." }, 409);
+    }
+    tournament.entries ||= [];
+    if (tournament.entries.some(entry => entry.playerId === player.id)) {
+      return jsonResponse({ error: "El jugador ya está inscrito." }, 409);
+    }
+    tournament.entries.push({
+      playerId: player.id,
+      userId: player.userId,
+      created: new Date().toISOString()
+    });
+  }
   if (body.match !== undefined) {
     const match = body.match;
     if (!match || typeof match !== "object" ||
