@@ -1,17 +1,1 @@
-{
-  "name": "league-tennis-web",
-  "version": "1.0.0",
-  "description": "League Tennis Aventura — Landing page web with Stripe payments and GitHub CMS",
-  "type": "module",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
-  },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.0",
-    "express": "^4.21.0",
-    "express-session": "^1.19.0",
-    "stripe": "^17.0.0"
-  }
-}
+{"name":"league-tennis-web","version":"1.0.0","type":"module","private":true}
