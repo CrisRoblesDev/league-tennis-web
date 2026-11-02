@@ -20,7 +20,7 @@
   {
     "id": "member-1",
     "name": "League Member",
-    "price": 999,
+    "price": 2500,
     "type": "subscription",
     "active": true,
     "description": "Suscripción mensual",
