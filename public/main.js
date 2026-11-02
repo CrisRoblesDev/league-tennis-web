@@ -675,19 +675,7 @@ function renderChallenges() {
       `${leagueChallenges.length} ${leagueChallenges.length === 1 ? "partido coordinado" : "partidos coordinados"}`;
   }
   if (!leagueChallenges.length) {
-    container.innerHTML = `
-      <div class="challenge-empty">
-        <div class="challenge-empty-copy">
-          <span class="tag tag-blue">EJEMPLOS VISUALES</span>
-          <h3>Así se verá la zona cuando haya propuestas</h3>
-          <p>Estas tarjetas son solo una muestra del diseño; no son jugadores ni desafíos publicados.</p>
-        </div>
-        <div class="challenge-preview-grid">
-          ${renderChallengePreview("3.0", "Aventura / Sunny Isles", "Tardes entre semana", "A")}
-          ${renderChallengePreview("3.5", "Downtown / Brickell", "Sábado por la mañana", "B")}
-          ${renderChallengePreview("4.0", "North Miami / Miami Gardens", "Flexible · coordinar horario", "C")}
-        </div>
-      </div>`;
+    container.innerHTML = '<p class="muted challenge-empty-note">Aún no hay desafíos publicados. ¡Publica el primero y encuentra tu rival!</p>';
     return;
   }
   container.innerHTML = leagueChallenges.map(challenge => {
@@ -709,30 +697,7 @@ function renderChallenges() {
       ${canAccept ? `<button class="btn btn-dark challenge-accept" onclick="acceptChallenge('${escapeHtml(challenge.id)}')">Aceptar desafío <span aria-hidden="true">→</span></button>` :
         challenge.status === "accepted" ? '<p class="challenge-coordinating">Los jugadores están coordinando el partido.</p>' : ""}
     </article>`;
-  }).join("") + [
-    ["3.0", "Aventura / Sunny Isles", "Tardes entre semana", "A"],
-    ["3.5", "Downtown / Brickell", "Sábado por la mañana", "B"],
-    ["4.0", "North Miami / Miami Gardens", "Flexible · coordinar horario", "C"]
-  ].slice(0, Math.max(0, 3 - leagueChallenges.length))
-    .map(example => renderChallengePreview(...example)).join("");
-}
-
-function renderChallengePreview(level, zone, availability, initials) {
-  return `<article class="challenge-card challenge-card-preview">
-    <div class="challenge-card-top">
-      <div class="challenge-player">
-        <span class="challenge-avatar">${initials}</span>
-        <div><small>JUGADOR/A DE EJEMPLO</small><h3>Tenista de la liga</h3></div>
-      </div>
-      <span class="challenge-status">Busca rival</span>
-    </div>
-    <div class="challenge-card-details">
-      <div><span class="challenge-detail-icon">NIVEL</span><b>${level}</b></div>
-      <div><span class="challenge-detail-icon">ZONA</span><b>${zone}</b></div>
-    </div>
-    <div class="challenge-availability"><span aria-hidden="true">◷</span><div><small>DISPONIBILIDAD</small><p>${availability}</p></div></div>
-    <span class="challenge-example-label">Muestra · no publicado</span>
-  </article>`;
+  }).join("");
 }
 
 function challengeStatusLabel(status) {

@@ -137,13 +137,7 @@ main { max-width: 1200px; margin: auto; padding: 0 5%; }
 .challenge-availability p { margin-top: 3px; font-size: 13px; font-weight: 700; }
 .challenge-accept { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
 .challenge-coordinating { margin-top: auto; padding: 10px; border-radius: 8px; background: #f2f5f7; color: #526171; font-size: 12px; font-weight: 700; }
-.challenge-empty { grid-column: 1 / -1; padding: 22px; border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(145deg, #fff, #f7f9f4); }
-.challenge-empty-copy { margin-bottom: 18px; }
-.challenge-empty-copy h3 { margin: 10px 0 4px; font-size: 18px; }
-.challenge-empty-copy p { color: var(--muted); font-size: 13px; }
-.challenge-preview-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.challenge-card-preview { border-style: dashed; box-shadow: none; }
-.challenge-example-label { margin-top: auto; color: var(--muted); font-size: 10px; font-weight: 700; }
+.challenge-empty-note { grid-column: 1 / -1; padding: 18px; border: 1px dashed #cbd4da; border-radius: 12px; background: #fafbfc; }
 .challenge-load-error { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px; border: 1px solid #efc5bf; border-radius: 12px; background: #fff5f3; color: #8e3028; }
 .challenge-load-error p { font-size: 13px; }
 .challenge-load-error .btn-secondary { border-color: #b97269; color: #8e3028; }
@@ -514,7 +508,6 @@ form select[multiple] { min-height: 120px; }
   .admin-page .stat-number { font-size: 20px; }
   .admin-page .stat-label { font-size: 10px; }
   .challenge-steps { grid-template-columns: 1fr; }
-  .challenge-preview-grid { grid-template-columns: 1fr; }
   .admin-quick-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 html[dir="rtl"] body { text-align: right; }
