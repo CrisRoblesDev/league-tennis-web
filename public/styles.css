@@ -286,9 +286,10 @@ form select[multiple] { min-height: 120px; }
   .hero-cta .btn { width: 100%; text-align: center; }
   .hero-card { padding: 14px; }
   .hero-date { font-size: 26px; }
-  .header { align-items: center; padding: 8px 4%; gap: 8px; }
-  .header-actions { gap: 6px; }
+  .header { align-items: center; padding: 8px 4%; gap: 8px; flex-wrap: nowrap; }
+  .header-actions { gap: 6px; flex-wrap: nowrap; }
   .brand-name { font-size: 12px; }
+  .header-actions .btn { padding: 6px 8px; font-size: 10px; white-space: nowrap; }
   .brand-sub { display: none; }
   .btn-sm { padding: 6px 10px; font-size: 11px; }
   .section { margin: 36px 0; }
@@ -466,7 +467,7 @@ html[dir="rtl"] .admin-header-actions { direction: rtl; }
 html[dir="rtl"] .admin-quick-actions button { text-align: right; }
 html[dir="rtl"] .admin-record-head { direction: rtl; }
 @media (max-width: 1080px) {
-  .header { padding-left: 4%; padding-right: 4%; }
+  .header { padding-left: 4%; padding-right: 4%; flex-wrap: nowrap; }
   .header .nav {
     position: absolute;
     top: 100%;
