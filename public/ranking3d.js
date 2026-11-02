@@ -4,8 +4,10 @@ let rankingContainer = null;
 
 const THREE_CDN = "https://unpkg.com/three@0.160.0/build/three.module.js";
 const NAVY = 0x10243a;
-const NAVY2 = 0x183653;
+const NAVY2 = 0x1d3d5c;
 const GREEN = 0xb7d96b;
+const SILVER = 0xd9e2ea;
+const BRONZE = 0xc98a5c;
 
 function makeLabel(text, subtext) {
   const THREE = window.__threeModule;
@@ -13,18 +15,50 @@ function makeLabel(text, subtext) {
   canvas.width = 512;
   canvas.height = 160;
   const context = canvas.getContext("2d");
-  context.fillStyle = "rgba(16,36,58,0.92)";
-  context.fillRect(0, 0, canvas.width, canvas.height);
+  const radius = 26;
+  context.beginPath();
+  context.moveTo(radius, 0);
+  context.arcTo(canvas.width, 0, canvas.width, canvas.height, radius);
+  context.arcTo(canvas.width, canvas.height, 0, canvas.height, radius);
+  context.arcTo(0, canvas.height, 0, 0, radius);
+  context.arcTo(0, 0, canvas.width, 0, radius);
+  context.closePath();
+  context.fillStyle = "rgba(13,28,45,0.94)";
+  context.fill();
+  context.strokeStyle = "rgba(183,217,107,0.55)";
+  context.lineWidth = 6;
+  context.stroke();
   context.fillStyle = "#ffffff";
-  context.font = "bold 52px Arial";
+  context.font = "bold 50px Arial";
   context.textAlign = "center";
-  context.fillText(text.slice(0, 18), 256, 70);
+  context.fillText(text.slice(0, 18), 256, 68);
   context.fillStyle = "#b7d96b";
-  context.font = "bold 44px Arial";
-  context.fillText(subtext, 256, 130);
+  context.font = "bold 42px Arial";
+  context.fillText(subtext, 256, 128);
   const texture = new THREE.CanvasTexture(canvas);
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true }));
-  sprite.scale.set(2.4, 0.75, 1);
+  sprite.scale.set(2.6, 0.8, 1);
+  return sprite;
+}
+
+function makeRankBadge(rank) {
+  const THREE = window.__threeModule;
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 128;
+  const context = canvas.getContext("2d");
+  context.beginPath();
+  context.arc(64, 64, 58, 0, Math.PI * 2);
+  context.fillStyle = "rgba(255,255,255,0.92)";
+  context.fill();
+  context.fillStyle = "#10243a";
+  context.font = "bold 72px Arial";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(String(rank), 64, 68);
+  const texture = new THREE.CanvasTexture(canvas);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true }));
+  sprite.scale.set(0.9, 0.9, 1);
   return sprite;
 }
 
@@ -56,43 +90,63 @@ function buildScene(container, players) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   container.appendChild(renderer.domElement);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-  const light = new THREE.DirectionalLight(0xffffff, 1.1);
-  light.position.set(6, 12, 8);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const light = new THREE.DirectionalLight(0xffffff, 1.15);
+  light.position.set(8, 14, 10);
   scene.add(light);
+  const rim = new THREE.PointLight(0xb7d96b, 0.7, 40);
+  rim.position.set(-8, 6, -6);
+  scene.add(rim);
 
   const group = new THREE.Group();
   scene.add(group);
   const maxPoints = Math.max(...top.map(player => player.points || 0), 1);
-  const spacing = 2.2;
+  const spacing = 2.3;
+  const podiumColors = [GREEN, SILVER, BRONZE];
+  const podiumHeights = [3.4, 2.6, 2.0];
   const bars = [];
   top.forEach((player, index) => {
-    const height = 1.2 + ((player.points || 0) / maxPoints) * 4.8;
-    const color = index === 0 ? GREEN : index < 3 ? 0x9cc455 : NAVY2;
-    const material = new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.15 });
-    const bar = new THREE.Mesh(new THREE.BoxGeometry(1.4, height, 1.4), material);
+    const isPodium = index < 3;
+    const height = isPodium ? podiumHeights[index] : 1.1 + ((player.points || 0) / maxPoints) * 1.8;
+    const color = isPodium ? podiumColors[index] : NAVY2;
+    const material = new THREE.MeshStandardMaterial({
+      color,
+      roughness: isPodium ? 0.3 : 0.55,
+      metalness: isPodium ? 0.35 : 0.1
+    });
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(1.6, height, 1.6), material);
     bar.position.set((index - (top.length - 1) / 2) * spacing, height / 2, 0);
     bar.userData = { player };
     group.add(bar);
     bars.push(bar);
     const label = makeLabel(player.name, `${player.points || 0} pts`);
-    label.position.set(bar.position.x, height + 0.6, 0);
+    label.position.set(bar.position.x, height + 0.75, 0);
     group.add(label);
+    const badge = makeRankBadge(index + 1);
+    badge.position.set(bar.position.x, height / 2, 0.85);
+    group.add(badge);
   });
 
   const base = new THREE.Mesh(
-    new THREE.BoxGeometry(top.length * spacing + 2, 0.3, 4),
-    new THREE.MeshStandardMaterial({ color: 0x0b1a2b, roughness: 0.9 })
+    new THREE.CylinderGeometry(top.length * spacing * 0.72, top.length * spacing * 0.78, 0.35, 48),
+    new THREE.MeshStandardMaterial({ color: 0x0b1a2b, roughness: 0.85 })
   );
-  base.position.y = -0.15;
+  base.position.y = -0.18;
   group.add(base);
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(top.length * spacing * 0.75, 0.05, 12, 64),
+    new THREE.MeshStandardMaterial({ color: GREEN, roughness: 0.4, metalness: 0.3 })
+  );
+  ring.rotation.x = Math.PI / 2;
+  ring.position.y = 0.02;
+  group.add(ring);
 
   const info = document.createElement("div");
   info.className = "ranking3d-info";
   container.appendChild(info);
 
-  let rotationY = 0.5;
-  let zoom = 16;
+  let rotationY = 0.55;
+  let zoom = 15;
   let dragging = false;
   let lastX = 0;
   const raycaster = new THREE.Raycaster();
@@ -105,8 +159,8 @@ function buildScene(container, players) {
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     group.rotation.y = rotationY;
-    camera.position.set(0, 5.5, zoom);
-    camera.lookAt(0, 2.4, 0);
+    camera.position.set(0, 5.2, zoom);
+    camera.lookAt(0, 2.2, 0);
     renderer.render(scene, camera);
   }
 
@@ -149,6 +203,10 @@ function buildScene(container, players) {
   render();
   const loop = () => {
     if (sceneState !== state) return;
+    if (container.offsetParent === null) {
+      requestAnimationFrame(loop);
+      return;
+    }
     if (!dragging) rotationY += 0.0022;
     render();
     requestAnimationFrame(loop);

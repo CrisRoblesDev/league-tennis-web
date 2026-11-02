@@ -226,6 +226,10 @@
       "Cuenta creada.": "Account created.", "No se pudo crear la cuenta:": "Could not create the account:",
       "Imagen del producto": "Product image", "No se pudo subir la imagen:": "Could not upload the image:",
       "Ropa y accesorios": "Apparel and accessories", "Libros digitales": "Digital books", "General": "General",
+      "Lista": "List", "Primera ronda": "First round", "Unirme al grupo": "Join the group",
+      "Únete al grupo de WhatsApp de la liga y no te pierdas ningún desafío.": "Join the league's WhatsApp group and never miss a challenge.",
+      "Coordina partidos y desafíos al instante en nuestro grupo de WhatsApp.": "Arrange matches and challenges instantly in our WhatsApp group.",
+      "¡La comunidad te espera! Entra al grupo de WhatsApp de League Tennis.": "The community is waiting for you! Join the League Tennis WhatsApp group.",
     },
     ruExtra: {
       "Idioma": "Язык", "MIAMI · LIGA DE TENIS": "МАЙАМИ · ТЕННИСНАЯ ЛИГА",
@@ -329,7 +333,11 @@
       "Nueva contraseña": "Новый пароль", "Dejar vacío para no cambiar": "Оставь пустым, чтобы не менять",
       "Cuenta creada.": "Аккаунт создан.", "No se pudo crear la cuenta:": "Не удалось создать аккаунт:",
       "Imagen del producto": "Изображение товара", "No se pudo subir la imagen:": "Не удалось загрузить изображение:",
-      "Ropa y accesorios": "Одежда и аксессуары", "Libros digitales": "Цифровые книги", "General": "Общее"
+      "Ropa y accesorios": "Одежда и аксессуары", "Libros digitales": "Цифровые книги", "General": "Общее",
+      "Lista": "Список", "Primera ronda": "Первый раунд", "Unirme al grupo": "Присоединиться к группе",
+      "Únete al grupo de WhatsApp de la liga y no te pierdas ningún desafío.": "Присоединяйся к группе WhatsApp лиги и не пропускай вызовы.",
+      "Coordina partidos y desafíos al instante en nuestro grupo de WhatsApp.": "Договаривайся о матчах и вызовах мгновенно в нашей группе WhatsApp.",
+      "¡La comunidad te espera! Entra al grupo de WhatsApp de League Tennis.": "Сообщество ждёт тебя! Заходи в группу WhatsApp League Tennis."
     },
     heExtra: {
       "Idioma": "שפה", "MIAMI · LIGA DE TENIS": "מיאמי · ליגת טניס",
@@ -433,7 +441,11 @@
       "Nueva contraseña": "סיסמה חדשה", "Dejar vacío para no cambiar": "השאר ריק כדי לשמור את הנוכחית",
       "Cuenta creada.": "החשבון נוצר.", "No se pudo crear la cuenta:": "לא ניתן ליצור את החשבון:",
       "Imagen del producto": "תמונת המוצר", "No se pudo subir la imagen:": "לא ניתן להעלות את התמונה:",
-      "Ropa y accesorios": "בגדים ואביזרים", "Libros digitales": "ספרים דיגיטליים", "General": "כללי"
+      "Ropa y accesorios": "בגדים ואביזרים", "Libros digitales": "ספרים דיגיטליים", "General": "כללי",
+      "Lista": "רשימה", "Primera ronda": "סיבוב ראשון", "Unirme al grupo": "הצטרפות לקבוצה",
+      "Únete al grupo de WhatsApp de la liga y no te pierdas ningún desafío.": "הצטרף לקבוצת ה-WhatsApp של הליגה ואל תפספס אף אתגר.",
+      "Coordina partidos y desafíos al instante en nuestro grupo de WhatsApp.": "תאם משחקים ואתגרים באופן מיידי בקבוצת ה-WhatsApp שלנו.",
+      "¡La comunidad te espera! Entra al grupo de WhatsApp de League Tennis.": "הקהילה מחכה לך! הצטרף לקבוצת ה-WhatsApp של League Tennis."
     },
     ru: {
       "CAMPEONATOS": "ТУРНИРЫ", "CLASIFICACIÓN": "РЕЙТИНГ", "DESAFÍOS": "ВЫЗОВЫ",

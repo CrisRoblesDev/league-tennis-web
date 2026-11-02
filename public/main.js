@@ -230,17 +230,34 @@ function applyWhatsAppLinks() {
   });
 }
 
-let ranking3dStarted = false;
 async function setupRanking3d() {
   const container = document.getElementById("ranking3d");
-  if (!container || ranking3dStarted) return;
-  ranking3dStarted = true;
+  if (!container || container.dataset.initialized === "true") return;
+  container.dataset.initialized = "true";
   try {
     const module = await import("./ranking3d.js");
     window.__ranking3dUpdate = players => module.updateRanking3d(players);
     await module.initRanking3d(container, players);
   } catch {
+    container.dataset.initialized = "";
     container.innerHTML = '<p class="muted" style="padding:20px">La vista 3D no está disponible en este navegador.</p>';
+  }
+}
+
+function setRankingView(mode) {
+  const container = document.getElementById("ranking3d");
+  const table = document.getElementById("rankingTableWrap");
+  if (!container || !table) return;
+  document.querySelectorAll("[data-ranking-view]").forEach(button => {
+    button.classList.toggle("active", button.dataset.rankingView === mode);
+  });
+  if (mode === "3d") {
+    table.hidden = true;
+    container.hidden = false;
+    setupRanking3d();
+  } else {
+    container.hidden = true;
+    table.hidden = false;
   }
 }
 
@@ -252,12 +269,74 @@ async function openDraw3d(tournamentId) {
   if (title) title.textContent = tournament.title || `Campeonato · ${tournament.month}`;
   openModal("draw3dModal");
   if (container) container.innerHTML = '<p class="muted" style="padding:30px;text-align:center">Cargando cuadro 3D...</p>';
+  let matches = tournament.matches || [];
+  if (!matches.length && (tournament.entries || []).length >= 2) {
+    matches = [];
+    for (let index = 0; index + 1 < tournament.entries.length; index += 2) {
+      matches.push({
+        round: "Primera ronda",
+        playerAName: tournament.entries[index].name,
+        playerBName: tournament.entries[index + 1].name,
+        status: "scheduled"
+      });
+    }
+  }
   try {
     const module = await import("./draw3d.js");
-    await module.initDraw3d(container, tournament.matches || []);
+    await module.initDraw3d(container, matches);
   } catch (error) {
     if (container) container.innerHTML = `<p class="muted" style="padding:20px">No se pudo cargar el cuadro 3D: ${escapeHtml(error.message)}</p>`;
   }
+}
+
+const WHATSAPP_PROMOS = [
+  "Únete al grupo de WhatsApp de la liga y no te pierdas ningún desafío.",
+  "Coordina partidos y desafíos al instante en nuestro grupo de WhatsApp.",
+  "¡La comunidad te espera! Entra al grupo de WhatsApp de League Tennis."
+];
+
+function initWhatsAppPromos() {
+  if (isAdminPage) return;
+  const fab = document.createElement("a");
+  fab.className = "whatsapp-fab";
+  fab.href = WHATSAPP_GROUP_URL;
+  fab.target = "_blank";
+  fab.rel = "noopener";
+  fab.setAttribute("aria-label", "Grupo de WhatsApp");
+  fab.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm5.8 14.09c-.24.68-1.4 1.3-1.93 1.35-.53.05-1.03.24-3.47-.72-2.94-1.16-4.78-4.22-4.93-4.42-.14-.2-1.16-1.55-1.16-2.96 0-1.4.73-2.09 1-2.38.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.18.01.41-.07.64.49.24.56.8 1.95.87 2.09.07.15.12.32.02.51-.1.2-.15.32-.29.49-.15.17-.31.39-.44.52-.15.15-.3.31-.13.6.17.29.75 1.24 1.61 2.01 1.11.99 2.04 1.3 2.33 1.44.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.19-.29.39-.24.65-.15.27.1 1.69.8 1.98.94.29.15.48.22.55.34.07.12.07.7-.17 1.38Z"/></svg>';
+  document.body.appendChild(fab);
+
+  const bubble = document.createElement("div");
+  bubble.className = "whatsapp-bubble";
+  bubble.hidden = true;
+  bubble.innerHTML = `
+    <button type="button" class="whatsapp-bubble-close" aria-label="Cerrar">×</button>
+    <p></p>
+    <a class="btn btn-whatsapp btn-sm" href="${WHATSAPP_GROUP_URL}" target="_blank" rel="noopener">Unirme al grupo</a>`;
+  document.body.appendChild(bubble);
+
+  let promoIndex = 0;
+  let hideTimer;
+  const showBubble = () => {
+    if (sessionStorage.getItem("whatsapp-joined")) return;
+    if (!bubble.hidden) return;
+    bubble.querySelector("p").textContent = WHATSAPP_PROMOS[promoIndex % WHATSAPP_PROMOS.length];
+    promoIndex++;
+    bubble.hidden = false;
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => { bubble.hidden = true; }, 10000);
+  };
+  bubble.querySelector(".whatsapp-bubble-close").addEventListener("click", () => {
+    clearTimeout(hideTimer);
+    bubble.hidden = true;
+  });
+  bubble.querySelector("a").addEventListener("click", () => {
+    sessionStorage.setItem("whatsapp-joined", "1");
+    clearTimeout(hideTimer);
+    bubble.hidden = true;
+  });
+  setTimeout(showBubble, 6000);
+  setInterval(showBubble, 90000);
 }
 
 function filterAdminUsers() {
@@ -877,7 +956,7 @@ function renderTournaments() {
       ).join("")}</ul></details>` : ""}
       ${(tournament.category && tournament.category !== "singles") || (tournament.gender && tournament.gender !== "mixto") ?
         `<p class="muted">${escapeHtml(CATEGORY_LABELS[tournament.category || "singles"] || "Singles")}${tournament.gender && tournament.gender !== "mixto" ? ` · ${escapeHtml(GENDER_LABELS[tournament.gender] || tournament.gender)}` : ""}</p>` : ""}
-      ${(tournament.matches || []).length ? `<button class="btn btn-dark" onclick="openDraw3d('${escapeHtml(tournament.id)}')">Ver cuadro 3D</button>` : ""}
+      ${(tournament.matches || []).length || entries.length >= 2 ? `<button class="btn btn-dark" onclick="openDraw3d('${escapeHtml(tournament.id)}')">Ver cuadro 3D</button>` : ""}
       ${renderTournamentMatches(tournament.matches)}
       ${canJoin ? '<button class="btn btn-dark" onclick="joinTournament()">Inscribirse</button>' : ""}
     </article>`;
@@ -1865,8 +1944,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("categoryFilter")?.addEventListener("change", filterPlayers);
   document.getElementById("genderFilter")?.addEventListener("change", filterPlayers);
   document.getElementById("searchPlayer")?.addEventListener("input", filterPlayers);
-  applyWhatsAppLinks();
-  setupRanking3d();
+  initWhatsAppPromos();
 
   const nav = document.getElementById("nav");
   nav?.addEventListener("click", event => {
