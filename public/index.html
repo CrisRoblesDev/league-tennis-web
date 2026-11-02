@@ -40,10 +40,10 @@
       <button class="btn btn-sm" onclick="openModal('loginModal')">Iniciar sesión</button>
       <button class="btn btn-sm btn-primary" onclick="openModal('registerModal')">Registrarse</button>
     </div>
-    <button class="hamburger" id="hamburger" aria-label="Menu" onclick="toggleMenu()">
-      <span></span><span></span><span></span>
-    </button>
   </div>
+  <button class="hamburger" id="hamburger" aria-label="Menu" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </button>
 </header>
 <div id="paymentReturnNotice" class="payment-return-notice" hidden aria-live="polite"></div>
 
@@ -54,7 +54,7 @@
     <p>Compite en Miami. Encuentra torneos por nivel, sigue tu posición en la clasificación y juega con una comunidad que ama el tenis.</p>
     <div class="hero-cta">
       <button class="btn btn-primary" onclick="openModal('registerModal')">Únete a la liga</button>
-      <button class="btn btn-secondary" onclick="scrollTo('#torneo')">Explorar campeonatos</button>
+      <button class="btn btn-secondary" onclick="scrollToSection('#torneo')">Explorar campeonatos</button>
     </div>
     <div class="hero-highlights"><span><b>01</b> Compite</span><span><b>02</b> Sube en el ranking</span><span><b>03</b> Encuentra tu comunidad</span></div>
   </div>
@@ -63,7 +63,7 @@
     <h3 id="heroTournamentTitle">Campeonato mensual</h3>
     <div class="hero-date" id="heroTournamentDate">Cada mes</div>
     <p id="heroTournamentSummary">Inscripción por nivel · Eliminación directa · Cuadro y resultados publicados en la plataforma.</p>
-    <button class="btn btn-primary" onclick="scrollTo('#torneo')">Ver campeonato</button>
+    <button class="btn btn-primary" onclick="scrollToSection('#torneo')">Ver campeonato</button>
   </div>
 </section>
 

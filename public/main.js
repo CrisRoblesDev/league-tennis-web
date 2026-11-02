@@ -295,6 +295,20 @@ const WHATSAPP_PROMOS = [
   "¡La comunidad te espera! Entra al grupo de WhatsApp de League Tennis."
 ];
 
+const HEADER_MOBILE_MEDIA = window.matchMedia("(max-width: 1080px)");
+
+function syncHeaderLayout() {
+  const header = document.querySelector(".header");
+  const nav = document.getElementById("nav");
+  const actions = document.querySelector(".header-actions");
+  if (!header || !nav || !actions) return;
+  if (HEADER_MOBILE_MEDIA.matches) {
+    if (actions.parentElement !== nav) nav.appendChild(actions);
+  } else if (actions.parentElement !== header) {
+    header.appendChild(actions);
+  }
+}
+
 function initWhatsAppPromos() {
   if (isAdminPage) return;
   const fab = document.createElement("a");
@@ -1799,7 +1813,7 @@ function closeNavMenu() {
   nav.classList.remove("open");
   moveAuthActionsToMenu(false);
 }
-function scrollTo(sel) {
+function scrollToSection(sel) {
   const el = document.querySelector(sel);
   if (el) el.scrollIntoView({ behavior: "smooth" });
 }
@@ -1944,6 +1958,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("categoryFilter")?.addEventListener("change", filterPlayers);
   document.getElementById("genderFilter")?.addEventListener("change", filterPlayers);
   document.getElementById("searchPlayer")?.addEventListener("input", filterPlayers);
+  syncHeaderLayout();
+  HEADER_MOBILE_MEDIA.addEventListener("change", syncHeaderLayout);
   initWhatsAppPromos();
 
   const nav = document.getElementById("nav");
