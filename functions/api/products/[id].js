@@ -45,6 +45,10 @@ export async function onRequestPut(context) {
     if (typeof updates.active !== "boolean") return jsonResponse({ error: "Estado inválido" }, 400);
     products[idx].active = updates.active;
   }
+  if (updates.image !== undefined) {
+    if (typeof updates.image !== "string") return jsonResponse({ error: "Imagen inválida" }, 400);
+    products[idx].image = updates.image.trim() || null;
+  }
   await gWrite(env, "products", products);
   return jsonResponse(products[idx]);
 }

@@ -35,6 +35,7 @@ export async function onRequestPost(context) {
     type: b.type || "digital",
     description: typeof b.description === "string" ? b.description.trim() : "",
     active: b.active !== false,
+    ...(typeof b.image === "string" && b.image.trim() ? { image: b.image.trim() } : {}),
     ...(b.type === "subscription" ? { interval: ["month", "year"].includes(b.interval) ? b.interval : "month" } : {})
   };
   products.push(product);

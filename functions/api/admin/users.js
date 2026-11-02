@@ -66,6 +66,13 @@ export async function onRequestPost(context) {
     }
     target.zone = updates.zone || null;
   }
+  if (updates.phone !== undefined) {
+    const phoneValue = typeof updates.phone === "string" ? updates.phone.trim() : "";
+    if (phoneValue && (phoneValue.length < 7 || phoneValue.replace(/\D/g, "").length < 7)) {
+      return jsonResponse({ error: "Teléfono inválido" }, 400);
+    }
+    target.phone = phoneValue || null;
+  }
   await gWrite(env, "users", users);
   return jsonResponse({ ok: true });
 }

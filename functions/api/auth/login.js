@@ -36,6 +36,6 @@ export async function onRequestPost(context) {
 
   return setSessionResp({
     userId: user.id,
-    user: { id: user.id, name: user.name, email: user.email, role: user.role, level: user.level, zone: user.zone, membershipActive: user.membershipActive }
+    user: { id: user.id, name: user.name, email: user.email, role: user.role, level: user.level, zone: user.zone, phone: user.phone || "", membershipActive: user.membershipActive }
   }, env, request);
 }

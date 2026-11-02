@@ -104,6 +104,7 @@ async function register(e) {
         name: form.elements.namedItem("name").value,
         email: form.email.value,
         password: form.password.value,
+        phone: form.elements.namedItem("phone").value.trim(),
         level: form.level.value,
         zone: form.zone.value
       })
@@ -167,7 +168,7 @@ function renderProducts() {
       </article>`;
     }
     return `<article class="card book-card">
-      <div class="book-cover">${escapeHtml(p.name).replace(" ", "<br>")}</div>
+      ${p.image ? `<div class="book-cover"><img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}"></div>` : `<div class="book-cover">${escapeHtml(p.name).replace(" ", "<br>")}</div>`}
       <h3>${escapeHtml(p.name)}</h3>
       <p class="muted">${escapeHtml(p.description || "")}</p>
       <div class="price">$${(p.price / 100).toFixed(2)}</div>
@@ -209,6 +210,7 @@ function editAdminUser(userId) {
   form.elements.namedItem("role").value = user.role || "user";
   form.elements.namedItem("level").value = user.level || "";
   form.elements.namedItem("zone").value = user.zone || "";
+  form.elements.namedItem("phone").value = user.phone || "";
   form.elements.namedItem("membershipActive").checked = user.membershipActive === true;
   document.getElementById("adminUserSelection").textContent = `Editando: ${user.name}`;
   form.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -234,6 +236,7 @@ async function saveAdminUser(event) {
     role: form.elements.namedItem("role").value,
     level: form.elements.namedItem("level").value,
     zone: form.elements.namedItem("zone").value,
+    phone: form.elements.namedItem("phone").value.trim() || null,
     membershipActive: form.elements.namedItem("membershipActive").checked
   };
   try {
@@ -922,6 +925,8 @@ async function showAdminPanel() {
       <label>Tipo<select name="type"><option value="digital">Producto digital</option><option value="subscription">Suscripción</option></select></label>
       <label>Frecuencia<select name="interval"><option value="month">Mensual</option><option value="year">Anual</option></select></label>
       <label class="full">Descripción<textarea name="description" rows="2" maxlength="500"></textarea></label>
+      <label class="full">Imagen (URL)<input name="image" type="url" placeholder="https://..." oninput="previewProductImage(this)"></label>
+      <div class="full"><img id="productImagePreview" alt="" style="display:none; width:100%; max-height:160px; object-fit:cover; border-radius:8px; border:1px solid var(--line);"></div>
       <label class="full"><span><input name="active" type="checkbox" checked> Disponible en la tienda</span></label>
       <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar producto</button><button class="btn btn-secondary" type="button" onclick="resetProductForm()">Limpiar</button></div>
     </form>
@@ -1008,16 +1013,18 @@ async function showAdminPanel() {
       <label>Rol<select name="role"><option value="user">Usuario</option><option value="admin">Administrador</option></select></label>
       <label>Nivel<select name="level"><option value="">Sin nivel</option>${levels.map(level => `<option value="${level}">${level}</option>`).join("")}</select></label>
       <label>Zona<select name="zone"><option value="">Sin zona</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
+      <label>Teléfono<input name="phone" type="tel" placeholder="Ej. +1 305 555 0123"></label>
       <label class="full"><span><input name="membershipActive" type="checkbox"> Membresía activa</span></label>
       <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar usuario</button><button class="btn btn-secondary" type="button" onclick="resetAdminUserForm()">Cancelar</button></div>
     </form>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Nivel</th><th>Zona</th><th>Membresía</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Rol</th><th>Nivel</th><th>Zona</th><th>Membresía</th><th>Acciones</th></tr></thead>
         <tbody id="adminUsersBody">
           ${users.map(u => `<tr>
             <td>${escapeHtml(u.name)}</td>
             <td>${escapeHtml(u.email)}</td>
+            <td>${escapeHtml(u.phone || "-")}</td>
             <td><span class="tag ${u.role === "admin" ? "tag-blue" : ""}">${u.role === "admin" ? "Administrador" : "Jugador"}</span></td>
             <td>${escapeHtml(u.level || "-")}</td>
             <td>${escapeHtml(u.zone || "-")}</td>
@@ -1277,13 +1284,28 @@ function editProduct(productId) {
   form.elements.namedItem("interval").value = product.interval || "month";
   form.elements.namedItem("description").value = product.description || "";
   form.elements.namedItem("active").checked = product.active !== false;
+  const imageInput = form.elements.namedItem("image");
+  imageInput.value = product.image || "";
+  const preview = document.getElementById("productImagePreview");
+  if (preview) preview.style.display = imageInput.value ? "block" : "none";
   form.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function previewProductImage(input) {
+  const preview = document.getElementById("productImagePreview");
+  if (!preview) return;
+  const url = input.value ? input.value.trim() : "";
+  preview.style.display = url ? "block" : "none";
+  if (url) preview.src = url;
 }
 
 function resetProductForm() {
   const form = document.getElementById("adminProductForm");
   form.reset();
   form.elements.namedItem("id").value = "";
+  form.elements.namedItem("image").value = "";
+  const preview = document.getElementById("productImagePreview");
+  if (preview) preview.style.display = "none";
   form.elements.namedItem("active").checked = true;
 }
 
@@ -1302,6 +1324,7 @@ async function saveProduct(event) {
     type: form.elements.namedItem("type").value,
     interval: form.elements.namedItem("interval").value,
     description: form.elements.namedItem("description").value,
+    image: form.elements.namedItem("image").value.trim(),
     active: form.elements.namedItem("active").checked
   };
   const id = form.elements.namedItem("id").value;
@@ -1466,6 +1489,7 @@ document.querySelectorAll(".modal").forEach(m => {
 
 function toggleMenu() { document.getElementById("nav").classList.toggle("open"); }
 
+function closeNavMenu() { document.getElementById("nav")?.classList.remove("open"); }
 function scrollTo(sel) {
   const el = document.querySelector(sel);
   if (el) el.scrollIntoView({ behavior: "smooth" });
@@ -1609,6 +1633,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("levelFilter")?.addEventListener("change", filterPlayers);
   document.getElementById("zoneFilter")?.addEventListener("change", filterPlayers);
   document.getElementById("searchPlayer")?.addEventListener("input", filterPlayers);
+
+  const nav = document.getElementById("nav");
+  nav?.addEventListener("click", event => {
+    if (event.target.closest("a")) closeNavMenu();
+  });
 
   if (!isAdminPage) handlePaymentReturn();
   await checkAuth();
