@@ -1,0 +1,28 @@
+[
+  {
+    "id": "book-1",
+    "name": "The Inner Game of Tennis",
+    "price": 1000,
+    "type": "digital",
+    "active": true,
+    "description": "Guía digital",
+    "interval": "month"
+  },
+  {
+    "id": "book-2",
+    "name": "Entrenamiento inteligente",
+    "price": 1000,
+    "type": "digital",
+    "active": true,
+    "description": "Guía digital"
+  },
+  {
+    "id": "member-1",
+    "name": "League Member",
+    "price": 999,
+    "type": "subscription",
+    "active": true,
+    "description": "Suscripción mensual",
+    "interval": "month"
+  }
+]
