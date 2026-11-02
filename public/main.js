@@ -993,6 +993,23 @@ function renderTournaments() {
 }
 
 // ============ ADMIN PANEL ============
+function setupAdminNavScrollSpy() {
+  const nav = document.querySelector(".admin-nav");
+  if (!nav) return;
+  const sections = [...document.querySelectorAll(".admin-section")].map(section => ({ section, id: section.id }));
+  if (!sections.length) return;
+  const observer = new IntersectionObserver(entries => {
+    const visible = entries
+      .filter(entry => entry.isIntersecting)
+      .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+    if (!visible) return;
+    nav.querySelectorAll("button").forEach(button => button.classList.remove("active"));
+    const button = [...nav.querySelectorAll("button")].find(item => (item.getAttribute("onclick") || "").includes(visible.target.id));
+    if (button) button.classList.add("active");
+  }, { rootMargin: "-45% 0px -50% 0px", threshold: [0, 0.2, 0.5, 1] });
+  sections.forEach(({ section }) => observer.observe(section));
+}
+
 async function showAdminPanel() {
   if (!currentUser || currentUser.role !== "admin") return;
   const content = document.getElementById("adminContent");
@@ -1321,6 +1338,7 @@ async function showAdminPanel() {
   resetAdminUserForm();
   resetTournamentForm();
   resetProductForm();
+  setupAdminNavScrollSpy();
   fillAdminSettingsForm();
   setAdminModule(currentAdminModule);
   if (document.getElementById("adminModal")) openModal("adminModal");

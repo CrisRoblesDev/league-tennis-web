@@ -292,6 +292,7 @@ form .full { grid-column: 1 / -1; }
 .admin-nav button.active { background: var(--navy); border-color: var(--navy); color: #fff; }
 .admin-module[hidden] { display: none; }
 .admin-nav button:hover { background: var(--green); color: var(--navy); }
+.admin-nav button.active { background: var(--green); color: var(--navy); }
 .admin-section { scroll-margin-top: 60px; margin: 20px 0 28px; }
 .admin-search { max-width: 460px; margin: 12px 0; }
 .admin-search input { width: 100%; }
