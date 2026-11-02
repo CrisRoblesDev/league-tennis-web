@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tienda | League Tennis Aventura</title>
+<link rel="icon" type="image/png" href="/league-tennis-favicon.png">
+<link rel="stylesheet" href="styles.css">
+<script src="i18n.js" defer></script>
+<script src="main.js" defer></script>
+</head>
+<body class="store-page">
+
+<header class="header">
+  <a class="brand" href="/" aria-label="Volver a League Tennis">
+    <img class="brand-logo" src="/league-tennis-logo.png" alt="">
+    <span class="brand-copy">
+      <span class="brand-name">LEAGUE TENNIS <span class="brand-accent">AVENTURA</span></span>
+      <span class="brand-sub">TIENDA OFICIAL</span>
+    </span>
+  </a>
+  <div class="header-actions">
+    <label class="language-picker-wrap">
+      <span class="sr-only">Idioma</span>
+      <select class="language-picker" aria-label="Idioma">
+        <option value="es">Español</option><option value="en">English</option>
+        <option value="ru">Русский</option><option value="he">עברית</option>
+      </select>
+    </label>
+    <div id="authButtons"></div>
+  </div>
+</header>
+
+<section class="store-hero">
+  <div>
+    <span class="eyebrow">EQUÍPATE PARA EL PARTIDO</span>
+    <h1>Tienda oficial</h1>
+    <p>Todo lo que necesitas para jugar: ropa, accesorios y libros de tenis en formato digital. Pago seguro con Stripe.</p>
+  </div>
+</section>
+
+<main class="store-main">
+  <div class="store-tabs" role="tablist" aria-label="Categorías de la tienda">
+    <button type="button" class="active" data-store-tab="ropa" role="tab" onclick="setStoreTab('ropa')">
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M8 3 4 6l2 3 2-1v13h8V8l2 1 2-3-4-3a4 4 0 0 1-8 0Z"/></svg>
+      Ropa y Accesorios
+    </button>
+    <button type="button" data-store-tab="libros" role="tab" onclick="setStoreTab('libros')">
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15ZM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>
+      Libros de tenis
+    </button>
+  </div>
+
+  <section class="store-panel" data-store-panel="ropa">
+    <div class="grid grid-3" id="storeRopaList"></div>
+  </section>
+
+  <section class="store-panel" data-store-panel="libros" hidden>
+    <div class="grid grid-3" id="storeLibrosList"></div>
+  </section>
+
+  <div class="store-back">
+    <a class="btn btn-secondary" href="/">← Volver al inicio</a>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="footer-brand"><img src="/league-tennis-logo.png" alt=""><span><b>LEAGUE TENNIS AVENTURA</b><br>Miami, Florida · Tu liga, tu juego.</span></div>
+  <div><a href="/#torneo">Campeonatos</a> · <a href="/#ranking">Clasificación</a> · <a href="/#membresia">Membresía</a></div>
+</footer>
+
+</body>
+</html>

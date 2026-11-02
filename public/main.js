@@ -26,6 +26,8 @@ let tournaments = [];
 let adminUsers = [];
 let adminOrdersChecked = false;
 let paymentNoticeState = null;
+let currentAdminModule = "tournaments";
+const isStorePage = /\/tienda(?:\.html)?\/?$/.test(window.location.pathname);
 
 // ============ API HELPER ============
 async function api(endpoint, options = {}) {
@@ -189,6 +191,35 @@ function renderProductCard(p) {
     <div class="price">$${(p.price / 100).toFixed(2)}</div>
     <button class="btn btn-dark" onclick="checkout('${p.id}')">Comprar</button>
   </article>`;
+}
+
+function setStoreTab(tab) {
+  document.querySelectorAll("[data-store-tab]").forEach(button => {
+    button.classList.toggle("active", button.dataset.storeTab === tab);
+  });
+  document.querySelectorAll("[data-store-panel]").forEach(panel => {
+    panel.hidden = panel.dataset.storePanel !== tab;
+  });
+  if (location.hash !== `#${tab}`) {
+    history.replaceState(null, "", `#${tab}`);
+  }
+}
+
+function renderStorePage() {
+  const ropaContainer = document.getElementById("storeRopaList");
+  const librosContainer = document.getElementById("storeLibrosList");
+  if (!ropaContainer || !librosContainer) return;
+  const shopProducts = products.filter(product => product.type !== "subscription");
+  const ropa = shopProducts.filter(product =>
+    product.category === "ropa" || (!product.category && product.type !== "digital"));
+  const libros = shopProducts.filter(product =>
+    product.category === "libros" || (!product.category && product.type === "digital"));
+  ropaContainer.innerHTML = ropa.map(renderProductCard).join("") ||
+    '<p class="muted">No hay productos de ropa y accesorios disponibles en este momento.</p>';
+  librosContainer.innerHTML = libros.map(renderProductCard).join("") ||
+    '<p class="muted">No hay libros disponibles en este momento.</p>';
+  const initialTab = location.hash === "#libros" ? "libros" : "ropa";
+  setStoreTab(initialTab);
 }
 
 async function checkout(productId) {
@@ -1038,10 +1069,10 @@ async function showAdminPanel() {
         <p>Elige una tarea para empezar. Los cambios se guardan al pulsar el botón de guardar.</p>
       </div>
       <div class="admin-quick-actions">
-        <button type="button" onclick="scrollAdminTo('admin-tournaments')"><span>01</span><b>Organizar un torneo</b><small>Fechas, niveles y partidos</small></button>
-        <button type="button" onclick="scrollAdminTo('admin-results')"><span>02</span><b>Revisar resultados</b><small>${pendingResults.length} por revisar</small></button>
-        <button type="button" onclick="scrollAdminTo('admin-players')"><span>03</span><b>Gestionar jugadores</b><small>Perfiles y clasificación</small></button>
-        <button type="button" onclick="scrollAdminTo('admin-products')"><span>04</span><b>Editar la tienda</b><small>Productos y membresías</small></button>
+        <button type="button" onclick="setAdminModule('tournaments')"><span>01</span><b>Organizar un torneo</b><small>Fechas, niveles y partidos</small></button>
+        <button type="button" onclick="setAdminModule('results')"><span>02</span><b>Revisar resultados</b><small>${pendingResults.length} por revisar</small></button>
+        <button type="button" onclick="setAdminModule('players')"><span>03</span><b>Gestionar jugadores</b><small>Perfiles y clasificación</small></button>
+        <button type="button" onclick="setAdminModule('products')"><span>04</span><b>Editar la tienda</b><small>Productos y membresías</small></button>
       </div>
     </div>
     <div class="admin-stats">
@@ -1053,18 +1084,18 @@ async function showAdminPanel() {
       <div class="stat-card"><div class="stat-number">${pendingResults.length}</div><div class="stat-label">Resultados por revisar</div></div>
     </div>
 
-    <nav class="admin-nav" aria-label="Secciones de administración">
-      <button type="button" onclick="scrollAdminTo('admin-tournaments')">Torneos</button>
-      <button type="button" onclick="scrollAdminTo('admin-players')">Jugadores</button>
-      <button type="button" onclick="scrollAdminTo('admin-results')">Resultados</button>
-      <button type="button" onclick="scrollAdminTo('admin-challenges')">Desafíos</button>
-      <button type="button" onclick="scrollAdminTo('admin-products')">Tienda</button>
-      <button type="button" onclick="scrollAdminTo('admin-orders')">Compras</button>
-      <button type="button" onclick="scrollAdminTo('admin-users')">Cuentas</button>
-      <button type="button" onclick="scrollAdminTo('admin-settings')">Ajustes</button>
+    <nav class="admin-nav" aria-label="Módulos de administración">
+      <button type="button" data-module-btn="tournaments" onclick="setAdminModule('tournaments')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/></svg>Torneos</button>
+      <button type="button" data-module-btn="players" onclick="setAdminModule('players')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Jugadores</button>
+      <button type="button" data-module-btn="results" onclick="setAdminModule('results')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3 21h18M7 17V9M12 17V5M17 17v-6"/></svg>Resultados</button>
+      <button type="button" data-module-btn="challenges" onclick="setAdminModule('challenges')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg>Desafíos</button>
+      <button type="button" data-module-btn="products" onclick="setAdminModule('products')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6ZM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>Tienda</button>
+      <button type="button" data-module-btn="orders" onclick="setAdminModule('orders')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6ZM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>Compras</button>
+      <button type="button" data-module-btn="users" onclick="setAdminModule('users')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87"/></svg>Cuentas</button>
+      <button type="button" data-module-btn="settings" onclick="setAdminModule('settings')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.4-3a7.4 7.4 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7.5 7.5 0 0 0-2-1.2L14.5 2h-5l-.4 2.6a7.5 7.5 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7.5 7.5 0 0 0 2 1.2l.4 2.6h5l.4-2.6a7.5 7.5 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z"/></svg>Ajustes</button>
     </nav>
 
-    <section class="admin-section" id="admin-orders"><h3>Compras recientes</h3>
+    <section class="admin-section admin-module" data-module="orders" hidden><h3>Compras recientes</h3>
     <div class="admin-order-tools">
       <p class="admin-section-help">Consulta las compras y pagos realizados en la tienda.</p>
       <button class="btn btn-secondary btn-sm" type="button" onclick="syncAdminOrders()">Sincronizar pagos con Stripe</button>
@@ -1087,7 +1118,7 @@ async function showAdminPanel() {
     </div>
     </section>
 
-    <section class="admin-section" id="admin-tournaments"><h3>Torneos y partidos</h3>
+    <section class="admin-section admin-module" data-module="tournaments" hidden><h3>Torneos y partidos</h3>
     <p class="admin-section-help">Crea el torneo y define sus niveles. Después podrás inscribir jugadores y organizar partidos.</p>
     <form id="adminTournamentForm" class="admin-form">
       <input type="hidden" name="id">
@@ -1114,7 +1145,7 @@ async function showAdminPanel() {
     </div>
     </section>
 
-    <section class="admin-section" id="admin-challenges"><h3>Desafíos publicados</h3>
+    <section class="admin-section admin-module" data-module="challenges" hidden><h3>Desafíos publicados</h3>
     <p class="muted">Revisa la actividad de la comunidad, cierra publicaciones resueltas o elimina contenido inválido.</p>
     <div class="grid grid-3 admin-records">
       ${allChallenges.map(challenge => `<article class="card admin-record">
@@ -1132,7 +1163,7 @@ async function showAdminPanel() {
     </div>
     </section>
 
-    <section class="admin-section" id="admin-products"><h3>Tienda y membresías</h3>
+    <section class="admin-section admin-module" data-module="products" hidden><h3>Tienda y membresías</h3>
     <p class="admin-section-help">Lo que esté marcado como disponible se mostrará en la página principal.</p>
     <form id="adminProductForm" class="admin-form">
       <input type="hidden" name="id">
@@ -1161,7 +1192,7 @@ async function showAdminPanel() {
     </div>
     </section>
 
-    <section class="admin-section" id="admin-results"><h3>Resultados de partidos</h3>
+    <section class="admin-section admin-module" data-module="results" hidden><h3>Resultados de partidos</h3>
     <p class="muted">Confirma, rechaza o elimina un reporte. Los resultados confirmados impactan el ranking.</p>
     <div class="grid grid-2 admin-records">
       ${pendingResults.map(result => `<article class="card admin-record">
@@ -1196,7 +1227,7 @@ async function showAdminPanel() {
     </form>
     </section>
 
-    <section class="admin-section" id="admin-players"><h3>Jugadores de la liga</h3>
+    <section class="admin-section admin-module" data-module="players" hidden><h3>Jugadores de la liga</h3>
     <p class="admin-section-help">Administra el nombre, nivel y zona que aparecen en la clasificación. Los perfiles con historial deportivo no se pueden borrar.</p>
     <form id="adminPlayerForm" class="admin-form">
       <input type="hidden" name="playerId">
@@ -1223,7 +1254,7 @@ async function showAdminPanel() {
     </table></div>
     </section>
 
-    <section class="admin-section" id="admin-users"><h3>Cuentas registradas</h3>
+    <section class="admin-section admin-module" data-module="users" hidden><h3>Cuentas registradas</h3>
     <p class="admin-section-help">Crea cuentas, gestiona emails y contraseñas, permisos y membresías. Por seguridad, las contraseñas nunca se muestran.</p>
     <label class="admin-search">Buscar usuario
       <input id="adminUserSearch" type="search" placeholder="Nombre o email">
@@ -1268,7 +1299,7 @@ async function showAdminPanel() {
     </div>
     </section>
 
-    <section class="admin-section" id="admin-settings"><h3>Ajustes del sitio</h3>
+    <section class="admin-section admin-module" data-module="settings" hidden><h3>Ajustes del sitio</h3>
     <p class="admin-section-help">Configura el enlace del grupo de WhatsApp que aparece en la página pública.</p>
     <form id="adminSettingsForm" class="admin-form">
       <label class="full">Enlace del grupo de WhatsApp
@@ -1291,7 +1322,19 @@ async function showAdminPanel() {
   resetTournamentForm();
   resetProductForm();
   fillAdminSettingsForm();
+  setAdminModule(currentAdminModule);
   if (document.getElementById("adminModal")) openModal("adminModal");
+}
+
+function setAdminModule(moduleId) {
+  currentAdminModule = moduleId;
+  document.querySelectorAll(".admin-module").forEach(section => {
+    section.hidden = section.dataset.module !== moduleId;
+  });
+  document.querySelectorAll("[data-module-btn]").forEach(button => {
+    button.classList.toggle("active", button.dataset.moduleBtn === moduleId);
+  });
+  document.querySelector(".admin-nav")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 async function syncAdminOrders() {
@@ -1953,7 +1996,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!event.matches) closeNavMenu();
   });
 
-  if (!isAdminPage) handlePaymentReturn();
+  if (!isAdminPage && !isStorePage) handlePaymentReturn();
   await checkAuth();
   if (!isAdminPage) await loadWhatsAppSettings();
   if (isAdminPage) {
@@ -1966,6 +2009,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
     await showAdminPanel();
+    return;
+  }
+  if (isStorePage) {
+    await loadProducts();
+    renderStorePage();
     return;
   }
   await Promise.all([loadProducts(), loadPlayers(), loadTournaments()]);
