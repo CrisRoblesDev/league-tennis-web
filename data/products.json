@@ -33,5 +33,13 @@
     "type": "digital",
     "description": "Learn to play doubles",
     "active": true
+  },
+  {
+    "id": "prod-cc840f03-2adf-4020-ae34-13d5166a8792",
+    "name": "Real tennis the Doubles Game",
+    "price": 1000,
+    "type": "digital",
+    "description": "Learn to play doubles",
+    "active": true
   }
 ]
