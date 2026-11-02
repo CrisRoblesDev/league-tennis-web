@@ -486,6 +486,8 @@ html[dir="rtl"] .admin-record-head { direction: rtl; }
     box-shadow: 0 18px 30px rgba(0,0,0,.18);
   }
   .header .nav.open { display: flex; }
+  .header .nav.open .header-actions { margin-left: 0; flex-direction: column; align-items: stretch; gap: 12px; }
+  .header .nav.open .language-picker-wrap { width: 100%; }
   .header .nav a { display: block; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
   .header .nav a:last-child { border-bottom: 0; }
   .header .hamburger { display: flex; }
