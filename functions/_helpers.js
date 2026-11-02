@@ -2,6 +2,8 @@
 
 export const GH_API = "https://api.github.com";
 
+export const PRODUCT_CATEGORIES = ["", "libros", "ropa"];
+
 const FILES = {
   users: "users.json",
   products: "products.json",

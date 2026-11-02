@@ -1,4 +1,4 @@
-import { gRead, gWrite, requireAuth, jsonResponse } from "../../_helpers.js";
+import { gRead, gWrite, requireAuth, jsonResponse, PRODUCT_CATEGORIES } from "../../_helpers.js";
 
 export async function onRequestPut(context) {
   const { request, env, params } = context;
@@ -36,6 +36,12 @@ export async function onRequestPut(context) {
   if (updates.type !== undefined) {
     if (!["digital", "subscription"].includes(updates.type)) return jsonResponse({ error: "Tipo inválido" }, 400);
     products[idx].type = updates.type;
+  }
+  if (updates.category !== undefined) {
+    if (typeof updates.category !== "string" || !PRODUCT_CATEGORIES.includes(updates.category)) {
+      return jsonResponse({ error: "Categoría inválida" }, 400);
+    }
+    products[idx].category = updates.category;
   }
   if (updates.interval !== undefined) {
     if (!["month", "year"].includes(updates.interval)) return jsonResponse({ error: "Intervalo inválido" }, 400);

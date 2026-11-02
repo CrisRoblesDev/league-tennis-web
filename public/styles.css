@@ -378,6 +378,15 @@ form select[multiple] { min-height: 120px; }
 .footer a { color: #dbe4eb; text-decoration: none; }
 .footer a:hover { color: var(--green); }
 
+/* DONATIONS & RULES */
+.donation-card { display: flex; flex-direction: column; gap: 10px; }
+.donation-card h3 { margin: 0; font-size: 18px; }
+.donation-card .price { color: var(--green-dark); }
+.donation-card .btn { margin-top: auto; }
+.donation-card .tag { align-self: flex-start; }
+.rule-card h3 { margin: 8px 0 6px; font-size: 16px; }
+.rule-card p { font-size: 13px; }
+
 /* Dedicated administration page */
 .admin-page { min-height: 100vh; background: #f2f5f7; }
 .admin-page .header { position: sticky; top: 0; z-index: 100; }

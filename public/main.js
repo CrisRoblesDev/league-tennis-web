@@ -170,6 +170,7 @@ function renderProducts() {
     return `<article class="card book-card">
       ${p.image ? `<div class="book-cover"><img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}"></div>` : `<div class="book-cover">${escapeHtml(p.name).replace(" ", "<br>")}</div>`}
       <h3>${escapeHtml(p.name)}</h3>
+      ${p.category ? `<span class="tag">${p.category === "libros" ? "Libro digital" : "Ropa y accesorios"}</span>` : ""}
       <p class="muted">${escapeHtml(p.description || "")}</p>
       <div class="price">$${(p.price / 100).toFixed(2)}</div>
       <button class="btn btn-dark" onclick="checkout('${p.id}')">Comprar</button>
@@ -707,6 +708,24 @@ async function loadTournaments() {
   }
 }
 
+function renderTournamentMatches(matches) {
+  if (!matches || !matches.length) return "";
+  const rounds = new Map();
+  matches.forEach(match => {
+    const key = match.round || "Ronda";
+    if (!rounds.has(key)) rounds.set(key, []);
+    rounds.get(key).push(match);
+  });
+  const roundBlocks = [];
+  for (const [round, roundMatches] of rounds) {
+    const lines = roundMatches.map(match =>
+      `${escapeHtml(match.playerAName || match.playerAId)} vs ${escapeHtml(match.playerBName || match.playerBId)}${match.score ? ` · ${escapeHtml(match.score)}` : ""}${match.date ? ` · ${escapeHtml(match.date)}` : ""}${match.status === "cancelled" ? " · Cancelado" : ""}`
+    );
+    roundBlocks.push(`<p><span>${escapeHtml(round)}</span><br>${lines.join("<br>")}</p>`);
+  }
+  return `<div class="tournament-matches"><b>Main draw</b>${roundBlocks.join("")}</div>`;
+}
+
 function renderTournaments() {
   const container = document.getElementById("tournamentsList");
   if (!container) return;
@@ -723,7 +742,6 @@ function renderTournaments() {
   };
   container.innerHTML = tournaments.map(tournament => {
     const entries = tournament.entries || [];
-    const matches = tournament.matches || [];
     const status = statusLabels[tournament.status] || "Estado por confirmar";
     const dates = [tournament.startDate, tournament.endDate].filter(Boolean).join(" – ");
     const month = tournament.month || "";
@@ -740,9 +758,7 @@ function renderTournaments() {
       ${entries.length ? `<details><summary>Ver jugadores inscritos</summary><ul class="tournament-entries">${entries.map(entry =>
         `<li>${escapeHtml(entry.name)} <span class="muted">${escapeHtml(entry.level)}</span></li>`
       ).join("")}</ul></details>` : ""}
-      ${matches.length ? `<div class="tournament-matches"><b>Partidos</b>${matches.map(match =>
-        `<p><span>${escapeHtml(match.round || "Ronda")}</span><br>${escapeHtml(match.playerAName)} vs ${escapeHtml(match.playerBName)}${match.score ? ` · ${escapeHtml(match.score)}` : ""}${match.date ? ` · ${escapeHtml(match.date)}` : ""}${match.status === "cancelled" ? " · Cancelado" : ""}</p>`
-      ).join("")}</div>` : ""}
+      ${renderTournamentMatches(tournament.matches)}
       ${canJoin ? '<button class="btn btn-dark" onclick="joinTournament()">Inscribirse</button>' : ""}
     </article>`;
   }).join("");
@@ -924,6 +940,7 @@ async function showAdminPanel() {
       <label>Precio (USD)<input name="price" type="number" min="0.01" step="0.01" required></label>
       <label>Tipo<select name="type"><option value="digital">Producto digital</option><option value="subscription">Suscripción</option></select></label>
       <label>Frecuencia<select name="interval"><option value="month">Mensual</option><option value="year">Anual</option></select></label>
+      <label>Categoría<select name="category"><option value="">General</option><option value="libros">Libros digitales</option><option value="ropa">Ropa y accesorios</option></select></label>
       <label class="full">Descripción<textarea name="description" rows="2" maxlength="500"></textarea></label>
       <label class="full">Imagen (URL)<input name="image" type="url" placeholder="https://..." oninput="previewProductImage(this)"></label>
       <div class="full"><img id="productImagePreview" alt="" style="display:none; width:100%; max-height:160px; object-fit:cover; border-radius:8px; border:1px solid var(--line);"></div>
@@ -1282,6 +1299,7 @@ function editProduct(productId) {
   form.elements.namedItem("price").value = (product.price / 100).toFixed(2);
   form.elements.namedItem("type").value = product.type || "digital";
   form.elements.namedItem("interval").value = product.interval || "month";
+  form.elements.namedItem("category").value = product.category || "";
   form.elements.namedItem("description").value = product.description || "";
   form.elements.namedItem("active").checked = product.active !== false;
   const imageInput = form.elements.namedItem("image");
@@ -1306,6 +1324,7 @@ function resetProductForm() {
   form.elements.namedItem("image").value = "";
   const preview = document.getElementById("productImagePreview");
   if (preview) preview.style.display = "none";
+  form.elements.namedItem("category").value = "";
   form.elements.namedItem("active").checked = true;
 }
 
@@ -1323,6 +1342,7 @@ async function saveProduct(event) {
     price,
     type: form.elements.namedItem("type").value,
     interval: form.elements.namedItem("interval").value,
+    category: form.elements.namedItem("category").value,
     description: form.elements.namedItem("description").value,
     image: form.elements.namedItem("image").value.trim(),
     active: form.elements.namedItem("active").checked

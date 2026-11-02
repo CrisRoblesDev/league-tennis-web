@@ -1,4 +1,4 @@
-import { gRead, gWrite, requireAuth, jsonResponse } from "../../_helpers.js";
+import { gRead, gWrite, requireAuth, jsonResponse, PRODUCT_CATEGORIES } from "../../_helpers.js";
 
 export async function onRequestGet(context) {
   const { env } = context;
@@ -24,8 +24,9 @@ export async function onRequestPost(context) {
     return jsonResponse({ error: "Producto inválido" }, 400);
   }
   if (typeof b.name !== "string" || !b.name.trim() || !Number.isSafeInteger(b.price) || b.price < 1 ||
-      !["digital", "subscription"].includes(b.type || "digital")) {
-    return jsonResponse({ error: "Nombre, precio entero positivo y tipo válido son requeridos" }, 400);
+      !["digital", "subscription"].includes(b.type || "digital") ||
+      (b.category && !PRODUCT_CATEGORIES.includes(b.category))) {
+    return jsonResponse({ error: "Nombre, precio entero positivo, tipo y categoría válidos son requeridos" }, 400);
   }
   const products = await gRead(env, "products");
   const product = {
@@ -36,7 +37,8 @@ export async function onRequestPost(context) {
     description: typeof b.description === "string" ? b.description.trim() : "",
     active: b.active !== false,
     ...(typeof b.image === "string" && b.image.trim() ? { image: b.image.trim() } : {}),
-    ...(b.type === "subscription" ? { interval: ["month", "year"].includes(b.interval) ? b.interval : "month" } : {})
+    ...(b.type === "subscription" ? { interval: ["month", "year"].includes(b.interval) ? b.interval : "month" } : {}),
+    category: typeof b.category === "string" ? b.category : ""
   };
   products.push(product);
   await gWrite(env, "products", products);
