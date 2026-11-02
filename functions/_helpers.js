@@ -14,7 +14,8 @@ const FILES = {
   subscriptions: "subscriptions.json",
   challenges: "results.json",
   leagueChallenges: "challenges.json",
-  tournaments: "tournaments.json"
+  tournaments: "tournaments.json",
+  settings: "settings.json"
 };
 
 const DEFAULTS = {
@@ -29,7 +30,8 @@ const DEFAULTS = {
   subscriptions: [],
   challenges: [],
   leagueChallenges: [],
-  tournaments: []
+  tournaments: [],
+  settings: { whatsappUrl: "" }
 };
 
 function assertGitHubConfig(env) {

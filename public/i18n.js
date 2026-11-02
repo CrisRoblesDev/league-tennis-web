@@ -230,6 +230,15 @@
       "Únete al grupo de WhatsApp de la liga y no te pierdas ningún desafío.": "Join the league's WhatsApp group and never miss a challenge.",
       "Coordina partidos y desafíos al instante en nuestro grupo de WhatsApp.": "Arrange matches and challenges instantly in our WhatsApp group.",
       "¡La comunidad te espera! Entra al grupo de WhatsApp de League Tennis.": "The community is waiting for you! Join the League Tennis WhatsApp group.",
+      "Ajustes del sitio": "Site settings", "Ajustes": "Settings",
+      "Configura el enlace del grupo de WhatsApp que aparece en la página pública.": "Set the WhatsApp group link shown on the public page.",
+      "Enlace del grupo de WhatsApp": "WhatsApp group link",
+      "Acepta enlaces de invitación (chat.whatsapp.com/...) o enlaces por número (wa.me/...). Déjalo vacío para ocultar el botón flotante.": "Accepts invite links (chat.whatsapp.com/...) or number links (wa.me/...). Leave empty to hide the floating button.",
+      "Guardar ajustes": "Save settings", "Ajustes guardados.": "Settings saved.",
+      "No se pudo guardar la configuración:": "Could not save settings:",
+      "No se pudo cargar la configuración:": "Could not load settings:",
+      "El cuadro se publicará cuando se programen los partidos.": "The draw will be published once matches are scheduled.",
+      "Por jugar": "To be played", "Cancelado": "Canceled",
     },
     ruExtra: {
       "Idioma": "Язык", "MIAMI · LIGA DE TENIS": "МАЙАМИ · ТЕННИСНАЯ ЛИГА",
@@ -337,7 +346,16 @@
       "Lista": "Список", "Primera ronda": "Первый раунд", "Unirme al grupo": "Присоединиться к группе",
       "Únete al grupo de WhatsApp de la liga y no te pierdas ningún desafío.": "Присоединяйся к группе WhatsApp лиги и не пропускай вызовы.",
       "Coordina partidos y desafíos al instante en nuestro grupo de WhatsApp.": "Договаривайся о матчах и вызовах мгновенно в нашей группе WhatsApp.",
-      "¡La comunidad te espera! Entra al grupo de WhatsApp de League Tennis.": "Сообщество ждёт тебя! Заходи в группу WhatsApp League Tennis."
+      "¡La comunidad te espera! Entra al grupo de WhatsApp de League Tennis.": "Сообщество ждёт тебя! Заходи в группу WhatsApp League Tennis.",
+      "Ajustes del sitio": "Настройки сайта", "Ajustes": "Настройки",
+      "Configura el enlace del grupo de WhatsApp que aparece en la página pública.": "Настрой ссылку на группу WhatsApp, которая видна на публичной странице.",
+      "Enlace del grupo de WhatsApp": "Ссылка на группу WhatsApp",
+      "Acepta enlaces de invitación (chat.whatsapp.com/...) o enlaces por número (wa.me/...). Déjalo vacío para ocultar el botón flotante.": "Принимает ссылки-приглашения (chat.whatsapp.com/...) или ссылки по номеру (wa.me/...). Оставь пустым, чтобы скрыть плавающую кнопку.",
+      "Guardar ajustes": "Сохранить настройки", "Ajustes guardados.": "Настройки сохранены.",
+      "No se pudo guardar la configuración:": "Не удалось сохранить настройки:",
+      "No se pudo cargar la configuración:": "Не удалось загрузить настройки:",
+      "El cuadro se publicará cuando se programen los partidos.": "Сетка будет опубликована, когда будут назначены матчи.",
+      "Por jugar": "Предстоит", "Cancelado": "Отменён"
     },
     heExtra: {
       "Idioma": "שפה", "MIAMI · LIGA DE TENIS": "מיאמי · ליגת טניס",
@@ -445,7 +463,16 @@
       "Lista": "רשימה", "Primera ronda": "סיבוב ראשון", "Unirme al grupo": "הצטרפות לקבוצה",
       "Únete al grupo de WhatsApp de la liga y no te pierdas ningún desafío.": "הצטרף לקבוצת ה-WhatsApp של הליגה ואל תפספס אף אתגר.",
       "Coordina partidos y desafíos al instante en nuestro grupo de WhatsApp.": "תאם משחקים ואתגרים באופן מיידי בקבוצת ה-WhatsApp שלנו.",
-      "¡La comunidad te espera! Entra al grupo de WhatsApp de League Tennis.": "הקהילה מחכה לך! הצטרף לקבוצת ה-WhatsApp של League Tennis."
+      "¡La comunidad te espera! Entra al grupo de WhatsApp de League Tennis.": "הקהילה מחכה לך! הצטרף לקבוצת ה-WhatsApp של League Tennis.",
+      "Ajustes del sitio": "הגדרות האתר", "Ajustes": "הגדרות",
+      "Configura el enlace del grupo de WhatsApp que aparece en la página pública.": "הגדר את קישור קבוצת ה-WhatsApp שמופיע באתר הציבורי.",
+      "Enlace del grupo de WhatsApp": "קישור לקבוצת ה-WhatsApp",
+      "Acepta enlaces de invitación (chat.whatsapp.com/...) o enlaces por número (wa.me/...). Déjalo vacío para ocultar el botón flotante.": "מקבל קישורי הזמנה (chat.whatsapp.com/...) או קישורים לפי מספר (wa.me/...). השאר ריק כדי להסתיר את הכפתור הצף.",
+      "Guardar ajustes": "שמירת הגדרות", "Ajustes guardados.": "ההגדרות נשמרו.",
+      "No se pudo guardar la configuración:": "לא ניתן לשמור את ההגדרות:",
+      "No se pudo cargar la configuración:": "לא ניתן לטעון את ההגדרות:",
+      "El cuadro se publicará cuando se programen los partidos.": "ההגרלה תפורסם כשהמשחקים יתוזמנו.",
+      "Por jugar": "טרם שוחק", "Cancelado": "בוטל"
     },
     ru: {
       "CAMPEONATOS": "ТУРНИРЫ", "CLASIFICACIÓN": "РЕЙТИНГ", "DESAFÍOS": "ВЫЗОВЫ",

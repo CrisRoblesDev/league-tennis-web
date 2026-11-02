@@ -182,18 +182,25 @@ main { max-width: 1200px; margin: auto; padding: 0 5%; }
 .filters select, .filters input { border: 1px solid #d8dee4; background: var(--white); border-radius: var(--radius); padding: 11px 14px; color: var(--navy); font: inherit; min-width: 150px; font-size: 14px; }
 .filters select:focus, .filters input:focus { outline: 2px solid var(--green); outline-offset: -1px; }
 
-/* RANKING 3D */
-.ranking-head-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+/* MAIN DRAW ESCRITO */.draw-written { margin-top: 14px; }
+.draw-written-title { display: block; font-size: 13px; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 10px; }
+.draw-written-rounds { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(190px, 1fr); gap: 12px; overflow-x: auto; padding-bottom: 6px; }
+.draw-round h4 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+.draw-match { display: grid; gap: 3px; padding: 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--green); border-radius: 10px; background: #fff; font-size: 13px; }
+.draw-match span { overflow-wrap: anywhere; font-weight: 700; }
+.draw-match b { color: var(--green-dark); }
+.draw-match small { color: var(--muted); font-size: 11px; }
+.draw-match.is-completed { border-left-color: var(--green-dark); background: #f6faee; }
+.draw-match.is-cancelled { border-left-color: var(--red); opacity: .65; }
+.draw-pending { margin-top: 12px; }
+
+/* RANKING 3D */.ranking-head-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .ranking-view-toggle { display: inline-flex; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: #fff; }
 .ranking-view-toggle button { border: 0; background: transparent; padding: 8px 18px; border-radius: 999px; font: inherit; font-size: 12px; font-weight: 800; color: var(--muted); cursor: pointer; transition: background .2s, color .2s; }
 .ranking-view-toggle button.active { background: var(--navy); color: #fff; }
 .ranking3d { position: relative; height: 420px; margin: 0 0 20px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--navy); box-shadow: var(--shadow); }
 .ranking3d canvas { display: block; width: 100% !important; height: 100% !important; touch-action: none; cursor: grab; }
 .ranking3d-info { position: absolute; left: 12px; bottom: 12px; max-width: calc(100% - 24px); padding: 8px 12px; border-radius: 8px; background: rgba(255,255,255,.92); color: var(--navy); font-size: 12px; font-weight: 700; }
-.draw3d-box { width: min(980px, 100%); }
-.draw3d-container { position: relative; height: min(62vh, 560px); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--navy); }
-.draw3d-container canvas { display: block; width: 100% !important; height: 100% !important; touch-action: none; cursor: grab; }
-
 /* NOTICE BAR */
 .notice-bar { background: #eef2f5; border: 1px solid #dce2e8; border-radius: 7px; padding: 12px 16px; margin: 0 0 14px; font-size: 12px; color: #526171; }
 

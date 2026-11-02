@@ -3,8 +3,9 @@
 
 const API = ""; // same origin
 const isAdminPage = /\/admin(?:\.html)?\/?$/.test(window.location.pathname);
-// Reemplaza este enlace con la invitación real del grupo de WhatsApp de la liga.
-const WHATSAPP_GROUP_URL = "https://chat.whatsapp.com/";
+// Enlace provisional; el definitivo se configura desde el panel de administración.
+const WHATSAPP_GROUP_URL_FALLBACK = "https://chat.whatsapp.com/";
+let whatsappGroupUrl = "";
 
 const CATEGORY_LABELS = {
   singles: "Singles",
@@ -225,9 +226,24 @@ async function donate(amountCents, recurring) {
 }
 
 function applyWhatsAppLinks() {
+  const url = whatsappGroupUrl || WHATSAPP_GROUP_URL_FALLBACK;
   document.querySelectorAll("[data-whatsapp-link]").forEach(link => {
-    link.href = WHATSAPP_GROUP_URL;
+    link.href = url;
   });
+  const fab = document.querySelector(".whatsapp-fab");
+  if (fab) fab.href = url;
+}
+
+async function loadWhatsAppSettings() {
+  try {
+    const data = await api("/api/settings");
+    whatsappGroupUrl = typeof data.whatsappUrl === "string" ? data.whatsappUrl.trim() : "";
+  } catch {
+    whatsappGroupUrl = "";
+  }
+  applyWhatsAppLinks();
+  const fab = document.querySelector(".whatsapp-fab");
+  if (!whatsappGroupUrl && fab) fab.remove();
 }
 
 async function setupRanking3d() {
@@ -261,34 +277,6 @@ function setRankingView(mode) {
   }
 }
 
-async function openDraw3d(tournamentId) {
-  const tournament = tournaments.find(item => item.id === tournamentId);
-  if (!tournament) return;
-  const container = document.getElementById("draw3dContainer");
-  const title = document.getElementById("draw3dTitle");
-  if (title) title.textContent = tournament.title || `Campeonato · ${tournament.month}`;
-  openModal("draw3dModal");
-  if (container) container.innerHTML = '<p class="muted" style="padding:30px;text-align:center">Cargando cuadro 3D...</p>';
-  let matches = tournament.matches || [];
-  if (!matches.length && (tournament.entries || []).length >= 2) {
-    matches = [];
-    for (let index = 0; index + 1 < tournament.entries.length; index += 2) {
-      matches.push({
-        round: "Primera ronda",
-        playerAName: tournament.entries[index].name,
-        playerBName: tournament.entries[index + 1].name,
-        status: "scheduled"
-      });
-    }
-  }
-  try {
-    const module = await import("./draw3d.js");
-    await module.initDraw3d(container, matches);
-  } catch (error) {
-    if (container) container.innerHTML = `<p class="muted" style="padding:20px">No se pudo cargar el cuadro 3D: ${escapeHtml(error.message)}</p>`;
-  }
-}
-
 const WHATSAPP_PROMOS = [
   "Únete al grupo de WhatsApp de la liga y no te pierdas ningún desafío.",
   "Coordina partidos y desafíos al instante en nuestro grupo de WhatsApp.",
@@ -310,10 +298,10 @@ function syncHeaderLayout() {
 }
 
 function initWhatsAppPromos() {
-  if (isAdminPage) return;
+  if (isAdminPage || !whatsappGroupUrl) return;
   const fab = document.createElement("a");
   fab.className = "whatsapp-fab";
-  fab.href = WHATSAPP_GROUP_URL;
+  fab.href = whatsappGroupUrl;
   fab.target = "_blank";
   fab.rel = "noopener";
   fab.setAttribute("aria-label", "Grupo de WhatsApp");
@@ -326,7 +314,7 @@ function initWhatsAppPromos() {
   bubble.innerHTML = `
     <button type="button" class="whatsapp-bubble-close" aria-label="Cerrar">×</button>
     <p></p>
-    <a class="btn btn-whatsapp btn-sm" href="${WHATSAPP_GROUP_URL}" target="_blank" rel="noopener">Unirme al grupo</a>`;
+    <a class="btn btn-whatsapp btn-sm" href="${whatsappGroupUrl}" target="_blank" rel="noopener">Unirme al grupo</a>`;
   document.body.appendChild(bubble);
 
   let promoIndex = 0;
@@ -388,6 +376,33 @@ function resetAdminUserForm() {
 
 function resetAdminUserCreateForm() {
   document.getElementById("adminUserCreateForm")?.reset();
+}
+
+async function fillAdminSettingsForm() {
+  const form = document.getElementById("adminSettingsForm");
+  if (!form) return;
+  try {
+    const data = await api("/api/admin/settings");
+    form.elements.namedItem("whatsappUrl").value = data.whatsappUrl || "";
+  } catch (error) {
+    showToast(`No se pudo cargar la configuración: ${error.message}`);
+  }
+}
+
+async function saveAdminSettings(event) {
+  event.preventDefault();
+  const form = event.target;
+  try {
+    const data = await api("/api/admin/settings", {
+      method: "POST",
+      body: JSON.stringify({ whatsappUrl: form.elements.namedItem("whatsappUrl").value.trim() })
+    });
+    whatsappGroupUrl = data.whatsappUrl || "";
+    applyWhatsAppLinks();
+    showToast("Ajustes guardados.");
+  } catch (error) {
+    showToast(`No se pudo guardar la configuración: ${error.message}`);
+  }
 }
 
 async function createAdminUser(event) {
@@ -918,22 +933,27 @@ async function loadTournaments() {
   }
 }
 
-function renderTournamentMatches(matches) {
-  if (!matches || !matches.length) return "";
+function renderTournamentMatches(matches, entries = []) {
+  if (!matches || !matches.length) {
+    if (entries.length >= 2) {
+      return '<p class="muted draw-pending">El cuadro se publicará cuando se programen los partidos.</p>';
+    }
+    return "";
+  }
   const rounds = new Map();
   matches.forEach(match => {
     const key = match.round || "Ronda";
     if (!rounds.has(key)) rounds.set(key, []);
     rounds.get(key).push(match);
   });
-  const roundBlocks = [];
-  for (const [round, roundMatches] of rounds) {
-    const lines = roundMatches.map(match =>
-      `${escapeHtml(match.playerAName || match.playerAId)} vs ${escapeHtml(match.playerBName || match.playerBId)}${match.score ? ` · ${escapeHtml(match.score)}` : ""}${match.date ? ` · ${escapeHtml(match.date)}` : ""}${match.status === "cancelled" ? " · Cancelado" : ""}`
-    );
-    roundBlocks.push(`<p><span>${escapeHtml(round)}</span><br>${lines.join("<br>")}</p>`);
-  }
-  return `<div class="tournament-matches"><b>Main draw</b>${roundBlocks.join("")}</div>`;
+  return `<div class="draw-written"><b class="draw-written-title">Main draw</b><div class="draw-written-rounds">${[...rounds.entries()].map(([round, roundMatches]) => `
+    <div class="draw-round"><h4>${escapeHtml(round)}</h4>${roundMatches.map(match => `
+      <div class="draw-match${match.status === "completed" ? " is-completed" : ""}${match.status === "cancelled" ? " is-cancelled" : ""}">
+        <span>${escapeHtml(match.playerAName || match.playerAId || "Por definir")}</span>
+        <span>${escapeHtml(match.playerBName || match.playerBId || "Por definir")}</span>
+        ${match.score ? `<b>${escapeHtml(match.score)}</b>` : `<small>${match.status === "cancelled" ? "Cancelado" : "Por jugar"}</small>`}
+        ${match.date ? `<small>${escapeHtml(match.date)}</small>` : ""}
+      </div>`).join("")}</div>`).join("")}</div></div>`;
 }
 
 function renderTournaments() {
@@ -970,8 +990,7 @@ function renderTournaments() {
       ).join("")}</ul></details>` : ""}
       ${(tournament.category && tournament.category !== "singles") || (tournament.gender && tournament.gender !== "mixto") ?
         `<p class="muted">${escapeHtml(CATEGORY_LABELS[tournament.category || "singles"] || "Singles")}${tournament.gender && tournament.gender !== "mixto" ? ` · ${escapeHtml(GENDER_LABELS[tournament.gender] || tournament.gender)}` : ""}</p>` : ""}
-      ${(tournament.matches || []).length || entries.length >= 2 ? `<button class="btn btn-dark" onclick="openDraw3d('${escapeHtml(tournament.id)}')">Ver cuadro 3D</button>` : ""}
-      ${renderTournamentMatches(tournament.matches)}
+      ${(tournament.matches || []).length || entries.length >= 2 ? renderTournamentMatches(tournament.matches, entries) : ""}
       ${canJoin ? '<button class="btn btn-dark" onclick="joinTournament()">Inscribirse</button>' : ""}
     </article>`;
   }).join("");
@@ -1077,6 +1096,7 @@ async function showAdminPanel() {
       <button type="button" onclick="scrollAdminTo('admin-products')">Tienda</button>
       <button type="button" onclick="scrollAdminTo('admin-orders')">Compras</button>
       <button type="button" onclick="scrollAdminTo('admin-users')">Cuentas</button>
+      <button type="button" onclick="scrollAdminTo('admin-settings')">Ajustes</button>
     </nav>
 
     <section class="admin-section" id="admin-orders"><h3>Compras recientes</h3>
@@ -1282,6 +1302,17 @@ async function showAdminPanel() {
       </table>
     </div>
     </section>
+
+    <section class="admin-section" id="admin-settings"><h3>Ajustes del sitio</h3>
+    <p class="admin-section-help">Configura el enlace del grupo de WhatsApp que aparece en la página pública.</p>
+    <form id="adminSettingsForm" class="admin-form">
+      <label class="full">Enlace del grupo de WhatsApp
+        <input name="whatsappUrl" type="url" placeholder="https://chat.whatsapp.com/... o https://wa.me/...">
+      </label>
+      <p class="full muted">Acepta enlaces de invitación (chat.whatsapp.com/...) o enlaces por número (wa.me/...). Déjalo vacío para ocultar el botón flotante.</p>
+      <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar ajustes</button></div>
+    </form>
+    </section>
   `;
   document.getElementById("adminTournamentForm").addEventListener("submit", saveTournament);
   document.getElementById("adminProductForm").addEventListener("submit", saveProduct);
@@ -1290,9 +1321,11 @@ async function showAdminPanel() {
   document.getElementById("adminPlayerForm").addEventListener("submit", saveAdminPlayer);
   document.getElementById("adminResultForm").addEventListener("submit", saveAdminResult);
   document.getElementById("adminUserSearch").addEventListener("input", filterAdminUsers);
+  document.getElementById("adminSettingsForm").addEventListener("submit", saveAdminSettings);
   resetAdminUserForm();
   resetTournamentForm();
   resetProductForm();
+  fillAdminSettingsForm();
   if (document.getElementById("adminModal")) openModal("adminModal");
 }
 
@@ -1790,29 +1823,13 @@ document.querySelectorAll(".modal").forEach(m => {
 });
 
 function toggleMenu() {
-  const nav = document.getElementById("nav");
-  const opening = !nav.classList.contains("open");
-  nav.classList.toggle("open");
-  if (window.matchMedia("(max-width: 1080px)").matches) moveAuthActionsToMenu(opening);
-}
-
-function moveAuthActionsToMenu(opening) {
-  const nav = document.getElementById("nav");
-  const actions = document.querySelector(".header-actions");
-  if (!nav || !actions) return;
-  if (opening) {
-    if (!nav.contains(actions)) nav.appendChild(actions);
-  } else if (nav.contains(actions)) {
-    nav.parentElement.appendChild(actions);
-  }
+  document.getElementById("nav")?.classList.toggle("open");
 }
 
 function closeNavMenu() {
-  const nav = document.getElementById("nav");
-  if (!nav || !nav.classList.contains("open")) return;
-  nav.classList.remove("open");
-  moveAuthActionsToMenu(false);
+  document.getElementById("nav")?.classList.remove("open");
 }
+
 function scrollToSection(sel) {
   const el = document.querySelector(sel);
   if (el) el.scrollIntoView({ behavior: "smooth" });
@@ -1961,6 +1978,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   syncHeaderLayout();
   HEADER_MOBILE_MEDIA.addEventListener("change", syncHeaderLayout);
   initWhatsAppPromos();
+  loadWhatsAppSettings();
 
   const nav = document.getElementById("nav");
   nav?.addEventListener("click", event => {
@@ -1972,6 +1990,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (!isAdminPage) handlePaymentReturn();
   await checkAuth();
+  if (!isAdminPage) await loadWhatsAppSettings();
   if (isAdminPage) {
     if (!currentUser) {
       window.location.replace("/?admin=login");

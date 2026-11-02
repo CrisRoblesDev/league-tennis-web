@@ -8,6 +8,8 @@ import { onRequestPost as adminUsers } from "../functions/api/admin/users.js";
 import { onRequestPost as uploadImage } from "../functions/api/admin/uploads.js";
 import { onRequestGet as serveUpload } from "../functions/api/uploads/[file].js";
 import { onRequestPost as createPlayerProfile } from "../functions/api/players/index.js";
+import { onRequestGet as publicSettings } from "../functions/api/settings.js";
+import { onRequestGet as readAdminSettings, onRequestPost as saveAdminSettings } from "../functions/api/admin/settings.js";
 
 function createGitHubMock() {
   const files = new Map();
@@ -268,6 +270,39 @@ test("donations, account management, uploads, and player categories work end to 
     const player = await playerCreation.json();
     assert.equal(player.category, "dobles_mixtos");
     assert.equal(player.gender, "mujeres");
+
+    // --- Ajustes del sitio: enlace de WhatsApp ---
+    const invalidSettings = await saveAdminSettings({
+      request: adminRequest("https://league.example/api/admin/settings", "POST", {
+        whatsappUrl: "https://t.me/algo"
+      }),
+      env
+    });
+    assert.equal(invalidSettings.status, 400);
+
+    const savedSettings = await saveAdminSettings({
+      request: adminRequest("https://league.example/api/admin/settings", "POST", {
+        whatsappUrl: "https://chat.whatsapp.com/AbCdEfGhIjK"
+      }),
+      env
+    });
+    assert.equal(savedSettings.status, 200);
+    assert.equal((await savedSettings.json()).whatsappUrl, "https://chat.whatsapp.com/AbCdEfGhIjK");
+
+    const adminSettingsRead = await readAdminSettings({
+      request: adminRequest("https://league.example/api/admin/settings", "GET"),
+      env
+    });
+    assert.equal((await adminSettingsRead.json()).whatsappUrl, "https://chat.whatsapp.com/AbCdEfGhIjK");
+
+    const publicSettingsRead = await publicSettings({ env });
+    assert.equal((await publicSettingsRead.json()).whatsappUrl, "https://chat.whatsapp.com/AbCdEfGhIjK");
+
+    const clearedSettings = await saveAdminSettings({
+      request: adminRequest("https://league.example/api/admin/settings", "POST", { whatsappUrl: "" }),
+      env
+    });
+    assert.equal((await clearedSettings.json()).whatsappUrl, "");
   } finally {
     globalThis.fetch = originalFetch;
   }
