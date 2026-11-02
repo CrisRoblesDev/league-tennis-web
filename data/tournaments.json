@@ -15,7 +15,18 @@
         "created": "2026-11-02T00:55:33.294Z"
       }
     ],
-    "created": "2026-11-01T22:17:53.365Z"
+    "created": "2026-11-01T22:17:53.365Z",
+    "title": "Cup League Tennis Aventura Third edition",
+    "levels": [
+      "3.5",
+      "4.0"
+    ],
+    "startDate": "2026-11-02",
+    "endDate": "2026-12-02",
+    "description": "Modalidad Round Robin",
+    "venue": "Aventura -Sunny Isles Beach",
+    "format": "Round Robin",
+    "updated": "2026-11-02T03:26:40.120Z"
   },
   {
     "id": "tournament-124cbb00-b450-4ebf-ace6-ac6a9343fdf9",
