@@ -25,5 +25,13 @@
     "active": true,
     "description": "Suscripción mensual",
     "interval": "month"
+  },
+  {
+    "id": "prod-62d49cc2-dca2-451a-9d6c-2aa7f919f1cd",
+    "name": "Real tennis the Doubles Game",
+    "price": 1000,
+    "type": "digital",
+    "description": "Learn to play doubles",
+    "active": true
   }
 ]
