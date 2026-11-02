@@ -16,5 +16,27 @@
       }
     ],
     "created": "2026-11-01T22:17:53.365Z"
+  },
+  {
+    "id": "tournament-124cbb00-b450-4ebf-ace6-ac6a9343fdf9",
+    "title": "Friends of Tennis Cup",
+    "month": "2026-11",
+    "description": "Next tournament",
+    "levels": [
+      "2.5",
+      "3.0",
+      "3.5",
+      "4.0",
+      "4.5"
+    ],
+    "startDate": "2026-11-20",
+    "endDate": "2026-12-23",
+    "venue": "Aventura -Sunny Isles Beach",
+    "format": "Eliminación directa · Best of 3",
+    "status": "registration",
+    "entries": [],
+    "matches": [],
+    "createdBy": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
+    "created": "2026-11-02T03:19:21.917Z"
   }
 ]
