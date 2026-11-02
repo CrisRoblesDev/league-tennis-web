@@ -10,11 +10,12 @@
   },
   {
     "id": "book-2",
-    "name": "Entrenamiento inteligente",
+    "name": "25 winning Doubles tactic",
     "price": 1000,
     "type": "digital",
     "active": true,
-    "description": "Guía digital"
+    "description": "Guía digital \nBook on tactics for playing doubles",
+    "interval": "month"
   },
   {
     "id": "member-1",
