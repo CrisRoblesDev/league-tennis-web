@@ -1,8 +1,9 @@
-import { gRead, gWrite, requireAdmin, validateMatchScore, jsonResponse } from "../../../_helpers.js";
+import { gRead, gWrite, requireAdmin, validateMatchScore, jsonResponse, MATCH_CATEGORIES } from "../../../_helpers.js";
 
 const LEVELS = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0"];
 const STATUSES = ["registration", "scheduled", "in_progress", "completed", "cancelled"];
 const MATCH_STATUSES = ["scheduled", "completed", "cancelled"];
+const TOURNAMENT_GENDERS = ["hombres", "mujeres", "mixto"];
 
 function validDate(value) {
   if (value === "") return true;
@@ -64,6 +65,14 @@ export async function onRequestPut({ request, env, params }) {
       }
       tournament[field] = body[field].trim();
     }
+  }
+  if (body.category !== undefined) {
+    if (!MATCH_CATEGORIES.includes(body.category)) return jsonResponse({ error: "Categoría inválida" }, 400);
+    tournament.category = body.category;
+  }
+  if (body.gender !== undefined) {
+    if (!TOURNAMENT_GENDERS.includes(body.gender)) return jsonResponse({ error: "Modalidad inválida" }, 400);
+    tournament.gender = body.gender;
   }
   if (tournament.startDate && tournament.endDate && tournament.startDate > tournament.endDate) {
     return jsonResponse({ error: "La fecha de término debe ser igual o posterior al inicio." }, 400);

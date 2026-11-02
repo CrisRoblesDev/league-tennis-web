@@ -1,5 +1,10 @@
 import { gRead, gWrite, requireAuth, jsonResponse, PRODUCT_CATEGORIES } from "../../_helpers.js";
 
+function validImage(value) {
+  return typeof value === "string" && value.trim().length <= 500 &&
+    (/^\//.test(value.trim()) || /^https:\/\//i.test(value.trim()));
+}
+
 export async function onRequestGet(context) {
   const { env } = context;
   const products = (await gRead(env, "products")).filter(p => p.active);
@@ -25,7 +30,8 @@ export async function onRequestPost(context) {
   }
   if (typeof b.name !== "string" || !b.name.trim() || !Number.isSafeInteger(b.price) || b.price < 1 ||
       !["digital", "subscription"].includes(b.type || "digital") ||
-      (b.category && !PRODUCT_CATEGORIES.includes(b.category))) {
+      (b.category && !PRODUCT_CATEGORIES.includes(b.category)) ||
+      (b.image !== undefined && !validImage(b.image))) {
     return jsonResponse({ error: "Nombre, precio entero positivo, tipo y categoría válidos son requeridos" }, 400);
   }
   const products = await gRead(env, "products");

@@ -20,7 +20,40 @@ export async function onRequestPost(context) {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     return jsonResponse({ error: "Producto inválido" }, 400);
   }
-  if (typeof body.productId !== "string") return jsonResponse({ error: "Producto inválido" }, 400);
+  if (typeof body.productId !== "string" && typeof body.donation !== "object") {
+    return jsonResponse({ error: "Producto inválido" }, 400);
+  }
+
+  const origin = new URL(request.url).origin;
+  const successUrls = (params) => new URLSearchParams({
+    client_reference_id: userId,
+    success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${origin}/?payment=canceled`,
+    "metadata[userId]": userId,
+    ...params
+  });
+
+  if (body.donation && typeof body.donation === "object" && !Array.isArray(body.donation)) {
+    const amount = body.donation.amountCents;
+    const recurring = body.donation.recurring === "month" ? "month" : null;
+    if (!Number.isSafeInteger(amount) || amount < 100 || amount > 1000000) {
+      return jsonResponse({ error: "Monto de donación inválido (mínimo $1 USD)." }, 400);
+    }
+    const params = successUrls({
+      mode: recurring ? "subscription" : "payment",
+      "payment_method_types[]": "card",
+      "line_items[0][price_data][currency]": "usd",
+      "line_items[0][price_data][unit_amount]": String(amount),
+      "line_items[0][price_data][product_data][name]": recurring
+        ? "Donación mensual · League Tennis Aventura"
+        : "Donación · League Tennis Aventura",
+      "line_items[0][quantity]": "1",
+      "metadata[productId]": "donacion",
+      "metadata[amount]": String(amount)
+    });
+    if (recurring) params.set("line_items[0][price_data][recurring][interval]", "month");
+    return createStripeSession(params);
+  }
 
   const [products, users] = await Promise.all([
     gRead(env, "products"),
@@ -36,8 +69,7 @@ export async function onRequestPost(context) {
     return jsonResponse({ error: "Intervalo de suscripción inválido" }, 400);
   }
 
-  const origin = new URL(request.url).origin;
-  const params = new URLSearchParams({
+  const params = successUrls({
     mode: product.type === "subscription" ? "subscription" : "payment",
     "payment_method_types[]": "card",
     "line_items[0][price_data][currency]": "usd",
@@ -45,10 +77,6 @@ export async function onRequestPost(context) {
     "line_items[0][price_data][product_data][name]": product.name,
     "line_items[0][price_data][product_data][description]": product.description || "",
     "line_items[0][quantity]": "1",
-    client_reference_id: userId,
-    success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/?payment=canceled`,
-    "metadata[userId]": userId,
     "metadata[productId]": product.id
   });
 
@@ -58,18 +86,22 @@ export async function onRequestPost(context) {
     params.set("subscription_data[metadata][productId]", product.id);
   }
 
-  const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: params.toString()
-  });
-  const result = await response.json();
-  if (!response.ok) {
-    return jsonResponse({ error: result.error?.message || "Stripe no pudo crear la sesión de pago" }, 502);
+  return createStripeSession(params);
+
+  async function createStripeSession(params) {
+    const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: params.toString()
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      return jsonResponse({ error: result.error?.message || "Stripe no pudo crear la sesión de pago" }, 502);
+    }
+    if (!result.url) return jsonResponse({ error: "Stripe no devolvió la URL de pago" }, 502);
+    return jsonResponse({ url: result.url });
   }
-  if (!result.url) return jsonResponse({ error: "Stripe no devolvió la URL de pago" }, 502);
-  return jsonResponse({ url: result.url });
 }

@@ -3,6 +3,18 @@
 
 const API = ""; // same origin
 const isAdminPage = /\/admin(?:\.html)?\/?$/.test(window.location.pathname);
+// Reemplaza este enlace con la invitación real del grupo de WhatsApp de la liga.
+const WHATSAPP_GROUP_URL = "https://chat.whatsapp.com/";
+
+const CATEGORY_LABELS = {
+  singles: "Singles",
+  dobles: "Dobles",
+  dobles_mixtos: "Dobles Mixtos"
+};
+const GENDER_LABELS = {
+  hombres: "Hombres",
+  mujeres: "Mujeres"
+};
 
 let currentUser = null;
 let players = [];
@@ -118,7 +130,6 @@ async function register(e) {
     showNotice("registerNotice", error.message, true);
   }
 }
-
 async function logout() {
   try {
     await api("/api/auth/logout", { method: "POST" });
@@ -140,8 +151,8 @@ async function loadProducts() {
 }
 
 function renderProducts() {
-  const container = document.getElementById("productsList");
-  if (!container) return;
+  const ropaContainer = document.getElementById("productsRopaList");
+  const librosContainer = document.getElementById("productsLibrosList");
   const membershipPlan = document.getElementById("membershipPlan");
   const membership = products.find(product => product.type === "subscription");
   if (membershipPlan) {
@@ -153,29 +164,30 @@ function renderProducts() {
       <p class="muted small">Pago seguro procesado por Stripe.</p>` :
       '<h3>Planes de membresía</h3><p class="muted">No hay una suscripción disponible en este momento.</p>';
   }
-  if (!products.length) {
-    container.innerHTML = '<p class="muted">No hay productos disponibles en este momento.</p>';
-    return;
+  if (!ropaContainer && !librosContainer) return;
+  const shopProducts = products.filter(product => product.type !== "subscription");
+  const ropa = shopProducts.filter(product =>
+    product.category === "ropa" || (!product.category && product.type !== "digital"));
+  const libros = shopProducts.filter(product =>
+    product.category === "libros" || (!product.category && product.type === "digital"));
+  if (ropaContainer) {
+    ropaContainer.innerHTML = ropa.map(renderProductCard).join("") ||
+      '<p class="muted">No hay productos de ropa y accesorios disponibles en este momento.</p>';
   }
-  container.innerHTML = products.map(p => {
-    if (p.type === "subscription") {
-      return `<article class="card book-card membership-card">
-        <span class="tag">Membresía</span>
-        <h3>${escapeHtml(p.name)}</h3>
-        <p class="muted">${escapeHtml(p.description || "")}</p>
-        <div class="price">$${(p.price / 100).toFixed(2)}<span class="price-period">/${p.interval === "year" ? "año" : "mes"}</span></div>
-        <button class="btn btn-primary" onclick="checkout('${p.id}')">Suscribirse</button>
-      </article>`;
-    }
-    return `<article class="card book-card">
-      ${p.image ? `<div class="book-cover"><img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}"></div>` : `<div class="book-cover">${escapeHtml(p.name).replace(" ", "<br>")}</div>`}
-      <h3>${escapeHtml(p.name)}</h3>
-      ${p.category ? `<span class="tag">${p.category === "libros" ? "Libro digital" : "Ropa y accesorios"}</span>` : ""}
-      <p class="muted">${escapeHtml(p.description || "")}</p>
-      <div class="price">$${(p.price / 100).toFixed(2)}</div>
-      <button class="btn btn-dark" onclick="checkout('${p.id}')">Comprar</button>
-    </article>`;
-  }).join("");
+  if (librosContainer) {
+    librosContainer.innerHTML = libros.map(renderProductCard).join("") ||
+      '<p class="muted">No hay libros disponibles en este momento.</p>';
+  }
+}
+
+function renderProductCard(p) {
+  return `<article class="card book-card">
+    ${p.image ? `<div class="book-cover"><img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy"></div>` : `<div class="book-cover">${escapeHtml(p.name).replace(" ", "<br>")}</div>`}
+    <h3>${escapeHtml(p.name)}</h3>
+    <p class="muted">${escapeHtml(p.description || "")}</p>
+    <div class="price">$${(p.price / 100).toFixed(2)}</div>
+    <button class="btn btn-dark" onclick="checkout('${p.id}')">Comprar</button>
+  </article>`;
 }
 
 async function checkout(productId) {
@@ -195,6 +207,59 @@ async function checkout(productId) {
   }
 }
 
+async function donate(amountCents, recurring) {
+  if (!currentUser) {
+    openModal("loginModal");
+    showToast("Inicia sesión para donar");
+    return;
+  }
+  try {
+    const data = await api("/api/stripe/checkout", {
+      method: "POST",
+      body: JSON.stringify({ donation: { amountCents, recurring: recurring || null } })
+    });
+    window.location.href = data.url;
+  } catch (error) {
+    showToast(`No se pudo iniciar la donación: ${error.message}`);
+  }
+}
+
+function applyWhatsAppLinks() {
+  document.querySelectorAll("[data-whatsapp-link]").forEach(link => {
+    link.href = WHATSAPP_GROUP_URL;
+  });
+}
+
+let ranking3dStarted = false;
+async function setupRanking3d() {
+  const container = document.getElementById("ranking3d");
+  if (!container || ranking3dStarted) return;
+  ranking3dStarted = true;
+  try {
+    const module = await import("./ranking3d.js");
+    window.__ranking3dUpdate = players => module.updateRanking3d(players);
+    await module.initRanking3d(container, players);
+  } catch {
+    container.innerHTML = '<p class="muted" style="padding:20px">La vista 3D no está disponible en este navegador.</p>';
+  }
+}
+
+async function openDraw3d(tournamentId) {
+  const tournament = tournaments.find(item => item.id === tournamentId);
+  if (!tournament) return;
+  const container = document.getElementById("draw3dContainer");
+  const title = document.getElementById("draw3dTitle");
+  if (title) title.textContent = tournament.title || `Campeonato · ${tournament.month}`;
+  openModal("draw3dModal");
+  if (container) container.innerHTML = '<p class="muted" style="padding:30px;text-align:center">Cargando cuadro 3D...</p>';
+  try {
+    const module = await import("./draw3d.js");
+    await module.initDraw3d(container, tournament.matches || []);
+  } catch (error) {
+    if (container) container.innerHTML = `<p class="muted" style="padding:20px">No se pudo cargar el cuadro 3D: ${escapeHtml(error.message)}</p>`;
+  }
+}
+
 function filterAdminUsers() {
   const query = document.getElementById("adminUserSearch").value.trim().toLowerCase();
   document.querySelectorAll("#adminUsersBody tr").forEach(row => {
@@ -208,6 +273,8 @@ function editAdminUser(userId) {
   const form = document.getElementById("adminUserForm");
   form.elements.namedItem("userId").value = user.id;
   form.elements.namedItem("identity").value = `${user.name} · ${user.email}`;
+  form.elements.namedItem("email").value = user.email || "";
+  form.elements.namedItem("password").value = "";
   form.elements.namedItem("role").value = user.role || "user";
   form.elements.namedItem("level").value = user.level || "";
   form.elements.namedItem("zone").value = user.zone || "";
@@ -222,7 +289,34 @@ function resetAdminUserForm() {
   form.reset();
   form.elements.namedItem("userId").value = "";
   form.elements.namedItem("identity").value = "";
+  form.elements.namedItem("password").value = "";
   document.getElementById("adminUserSelection").textContent = "Selecciona un usuario en la tabla para editarlo.";
+}
+
+function resetAdminUserCreateForm() {
+  document.getElementById("adminUserCreateForm")?.reset();
+}
+
+async function createAdminUser(event) {
+  event.preventDefault();
+  const form = event.target;
+  try {
+    await api("/api/admin/users", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "create",
+        name: form.elements.namedItem("name").value,
+        email: form.elements.namedItem("email").value,
+        password: form.elements.namedItem("password").value,
+        role: form.elements.namedItem("role").value
+      })
+    });
+    form.reset();
+    await showAdminPanel();
+    showToast("Cuenta creada.");
+  } catch (error) {
+    showToast(`No se pudo crear la cuenta: ${error.message}`);
+  }
 }
 
 async function saveAdminUser(event) {
@@ -240,6 +334,10 @@ async function saveAdminUser(event) {
     phone: form.elements.namedItem("phone").value.trim() || null,
     membershipActive: form.elements.namedItem("membershipActive").checked
   };
+  const email = form.elements.namedItem("email").value.trim();
+  if (email) updates.email = email;
+  const password = form.elements.namedItem("password").value;
+  if (password) updates.password = password;
   try {
     await api("/api/admin/users", {
       method: "POST",
@@ -266,6 +364,8 @@ function editAdminPlayer(playerId) {
   accountSelect.disabled = true;
   form.elements.namedItem("name").value = player.name;
   form.elements.namedItem("level").value = player.level;
+  form.elements.namedItem("category").value = player.category || "singles";
+  form.elements.namedItem("gender").value = player.gender || "hombres";
   form.elements.namedItem("zone").value = player.zone;
   form.scrollIntoView({ behavior: "smooth", block: "center" });
 }
@@ -290,7 +390,9 @@ async function saveAdminPlayer(event) {
           updates: {
             name: form.elements.namedItem("name").value,
             level: form.elements.namedItem("level").value,
-            zone: form.elements.namedItem("zone").value
+            zone: form.elements.namedItem("zone").value,
+            category: form.elements.namedItem("category").value,
+            gender: form.elements.namedItem("gender").value
           }
         })
       });
@@ -306,7 +408,9 @@ async function saveAdminPlayer(event) {
           userId,
           name: form.elements.namedItem("name").value,
           level: form.elements.namedItem("level").value,
-          zone: form.elements.namedItem("zone").value
+          zone: form.elements.namedItem("zone").value,
+          category: form.elements.namedItem("category").value,
+          gender: form.elements.namedItem("gender").value
         })
       });
     }
@@ -419,6 +523,7 @@ async function submitResult(event) {
       body: JSON.stringify({
         winnerId: form.winnerId.value,
         loserId: form.loserId.value,
+        category: form.elements.namedItem("category").value,
         score: form.score.value,
         playedAt: form.date.value
       })
@@ -600,7 +705,7 @@ function renderRanking() {
   const tbody = document.getElementById("rankingBody");
   if (!tbody) return;
   if (!players.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="muted" style="text-align:center;padding:20px">No hay jugadores todavía. Sé el primero!</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="muted" style="text-align:center;padding:20px">No hay jugadores todavía. Sé el primero!</td></tr>';
     return;
   }
   tbody.innerHTML = players.map((p, i) => {
@@ -609,26 +714,33 @@ function renderRanking() {
       <td><b>${i + 1}</b></td>
       <td><div class="player"><div class="avatar">${escapeHtml(initials)}</div>${escapeHtml(p.name)}</div></td>
       <td>${escapeHtml(p.level)}</td>
+      <td>${escapeHtml(CATEGORY_LABELS[p.category || "singles"] || "Singles")}</td>
+      <td>${escapeHtml(GENDER_LABELS[p.gender || "hombres"] || "Hombres")}</td>
       <td>${escapeHtml(p.zone)}</td>
       <td>${p.matches}</td>
       <td><b>${p.points.toLocaleString()}</b></td>
     </tr>`;
   }).join("");
+  window.__ranking3dUpdate?.(players);
 }
 
 function filterPlayers() {
   const level = document.getElementById("levelFilter")?.value;
   const zone = document.getElementById("zoneFilter")?.value;
+  const category = document.getElementById("categoryFilter")?.value;
+  const gender = document.getElementById("genderFilter")?.value;
   const q = document.getElementById("searchPlayer")?.value.toLowerCase();
   let filtered = players.filter(p =>
     (!level || p.level === level) &&
     (!zone || p.zone === zone) &&
+    (!category || (p.category || "singles") === category) &&
+    (!gender || (p.gender || "hombres") === gender) &&
     (!q || p.name.toLowerCase().includes(q))
   );
   const tbody = document.getElementById("rankingBody");
   if (!tbody) return;
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="muted" style="text-align:center;padding:20px">No hay jugadores con esos filtros.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="muted" style="text-align:center;padding:20px">No hay jugadores con esos filtros.</td></tr>';
     return;
   }
   tbody.innerHTML = filtered.map((p, i) => {
@@ -637,11 +749,14 @@ function filterPlayers() {
       <td><b>${i + 1}</b></td>
       <td><div class="player"><div class="avatar">${escapeHtml(initials)}</div>${escapeHtml(p.name)}</div></td>
       <td>${escapeHtml(p.level)}</td>
+      <td>${escapeHtml(CATEGORY_LABELS[p.category || "singles"] || "Singles")}</td>
+      <td>${escapeHtml(GENDER_LABELS[p.gender || "hombres"] || "Hombres")}</td>
       <td>${escapeHtml(p.zone)}</td>
       <td>${p.matches}</td>
       <td><b>${p.points.toLocaleString()}</b></td>
     </tr>`;
   }).join("");
+  window.__ranking3dUpdate?.(players);
 }
 
 // ============ CREATE PLAYER PROFILE ============
@@ -655,7 +770,9 @@ async function createPlayer(e) {
       body: JSON.stringify({
         name: form.elements.namedItem("name").value,
         level: form.level.value,
-        zone: form.zone.value
+        zone: form.zone.value,
+        category: form.elements.namedItem("category").value,
+        gender: form.elements.namedItem("gender").value
       })
     });
     closeModal("createPlayerModal");
@@ -758,6 +875,9 @@ function renderTournaments() {
       ${entries.length ? `<details><summary>Ver jugadores inscritos</summary><ul class="tournament-entries">${entries.map(entry =>
         `<li>${escapeHtml(entry.name)} <span class="muted">${escapeHtml(entry.level)}</span></li>`
       ).join("")}</ul></details>` : ""}
+      ${(tournament.category && tournament.category !== "singles") || (tournament.gender && tournament.gender !== "mixto") ?
+        `<p class="muted">${escapeHtml(CATEGORY_LABELS[tournament.category || "singles"] || "Singles")}${tournament.gender && tournament.gender !== "mixto" ? ` · ${escapeHtml(GENDER_LABELS[tournament.gender] || tournament.gender)}` : ""}</p>` : ""}
+      ${(tournament.matches || []).length ? `<button class="btn btn-dark" onclick="openDraw3d('${escapeHtml(tournament.id)}')">Ver cuadro 3D</button>` : ""}
       ${renderTournamentMatches(tournament.matches)}
       ${canJoin ? '<button class="btn btn-dark" onclick="joinTournament()">Inscribirse</button>' : ""}
     </article>`;
@@ -902,6 +1022,8 @@ async function showAdminPanel() {
         <div>${levels.map(level => `<label><input type="checkbox" name="levels" value="${level}"><span>${level}</span></label>`).join("")}</div>
       </fieldset>
       <label>Estado del torneo<select name="status"><option value="registration">Inscripciones abiertas</option><option value="scheduled">Programado</option><option value="in_progress">En curso</option><option value="completed">Finalizado</option><option value="cancelled">Cancelado</option></select></label>
+      <label>Categoría<select name="category"><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label>
+      <label>Modalidad<select name="gender"><option value="mixto">Mixto</option><option value="hombres">Hombres</option><option value="mujeres">Mujeres</option></select></label>
       <label>Fecha de inicio<input name="startDate" type="date"></label>
       <label>Fecha de término<input name="endDate" type="date"></label>
       <label>Sede o cancha<input name="venue" maxlength="120" placeholder="Ej. Aventura Tennis Center"></label>
@@ -942,7 +1064,8 @@ async function showAdminPanel() {
       <label>Frecuencia<select name="interval"><option value="month">Mensual</option><option value="year">Anual</option></select></label>
       <label>Categoría<select name="category"><option value="">General</option><option value="libros">Libros digitales</option><option value="ropa">Ropa y accesorios</option></select></label>
       <label class="full">Descripción<textarea name="description" rows="2" maxlength="500"></textarea></label>
-      <label class="full">Imagen (URL)<input name="image" type="url" placeholder="https://..." oninput="previewProductImage(this)"></label>
+      <label class="full">Imagen del producto<input name="imageFile" type="file" accept="image/png,image/jpeg,image/webp" onchange="previewProductImageFile(this)"></label>
+      <input type="hidden" name="image">
       <div class="full"><img id="productImagePreview" alt="" style="display:none; width:100%; max-height:160px; object-fit:cover; border-radius:8px; border:1px solid var(--line);"></div>
       <label class="full"><span><input name="active" type="checkbox" checked> Disponible en la tienda</span></label>
       <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar producto</button><button class="btn btn-secondary" type="button" onclick="resetProductForm()">Limpiar</button></div>
@@ -1005,28 +1128,42 @@ async function showAdminPanel() {
       </select></label>
       <label>Nombre público<input name="name" maxlength="100" required></label>
       <label>Nivel<select name="level" required>${levels.map(level => `<option value="${level}">${level}</option>`).join("")}</select></label>
+      <label>Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label>
+      <label>Modalidad<select name="gender" required><option value="hombres">Hombres</option><option value="mujeres">Mujeres</option></select></label>
       <label class="full">Zona<select name="zone" required><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
       <div class="admin-form-actions full"><button class="btn btn-primary">Guardar perfil</button><button type="button" class="btn btn-secondary" onclick="resetAdminPlayerForm()">Cancelar</button></div>
     </form>
-    <div class="table-wrap"><table><thead><tr><th>Jugador</th><th>Email</th><th>Nivel</th><th>Zona</th><th>Partidos</th><th>Puntos</th><th>Acciones</th></tr></thead>
+    <div class="table-wrap"><table><thead><tr><th>Jugador</th><th>Email</th><th>Nivel</th><th>Categoría</th><th>Modalidad</th><th>Zona</th><th>Partidos</th><th>Puntos</th><th>Acciones</th></tr></thead>
       <tbody>${allPlayers.map(player => `<tr>
         <td>${escapeHtml(player.name)}</td><td>${escapeHtml(player.email || "-")}</td><td>${escapeHtml(player.level)}</td>
+        <td>${escapeHtml(CATEGORY_LABELS[player.category || "singles"] || "Singles")}</td>
+        <td>${escapeHtml(GENDER_LABELS[player.gender || "hombres"] || "Hombres")}</td>
         <td>${escapeHtml(player.zone)}</td><td>${Number(player.matches) || 0}</td><td>${Number(player.points) || 0}</td>
         <td><button class="btn btn-sm btn-dark" onclick="editAdminPlayer('${escapeHtml(player.id)}')">Editar</button>
         <button class="btn btn-sm btn-danger" onclick="deleteAdminPlayer('${escapeHtml(player.id)}')">Eliminar</button></td>
-      </tr>`).join("") || '<tr><td colspan="7">No hay perfiles de jugador.</td></tr>'}</tbody>
+      </tr>`).join("") || '<tr><td colspan="9">No hay perfiles de jugador.</td></tr>'}</tbody>
     </table></div>
     </section>
 
     <section class="admin-section" id="admin-users"><h3>Cuentas registradas</h3>
-    <p class="admin-section-help">Gestiona permisos y membresías. Por seguridad, las contraseñas nunca se muestran.</p>
+    <p class="admin-section-help">Crea cuentas, gestiona emails y contraseñas, permisos y membresías. Por seguridad, las contraseñas nunca se muestran.</p>
     <label class="admin-search">Buscar usuario
       <input id="adminUserSearch" type="search" placeholder="Nombre o email">
     </label>
+    <form id="adminUserCreateForm" class="admin-form">
+      <h4 class="full admin-form-title">Crear cuenta nueva</h4>
+      <label>Nombre<input name="name" maxlength="100" required></label>
+      <label>Email<input name="email" type="email" required></label>
+      <label>Contraseña<input name="password" type="password" minlength="8" maxlength="128" required placeholder="Mínimo 8 caracteres"></label>
+      <label>Rol<select name="role"><option value="user">Usuario</option><option value="admin">Administrador</option></select></label>
+      <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Crear cuenta</button><button class="btn btn-secondary" type="button" onclick="resetAdminUserCreateForm()">Limpiar</button></div>
+    </form>
     <form id="adminUserForm" class="admin-form">
       <input type="hidden" name="userId">
       <p class="full muted" id="adminUserSelection">Selecciona un usuario en la tabla para editarlo.</p>
       <label>Usuario<input name="identity" readonly></label>
+      <label>Email<input name="email" type="email"></label>
+      <label>Nueva contraseña<input name="password" type="password" minlength="8" maxlength="128" placeholder="Dejar vacío para no cambiar"></label>
       <label>Rol<select name="role"><option value="user">Usuario</option><option value="admin">Administrador</option></select></label>
       <label>Nivel<select name="level"><option value="">Sin nivel</option>${levels.map(level => `<option value="${level}">${level}</option>`).join("")}</select></label>
       <label>Zona<select name="zone"><option value="">Sin zona</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
@@ -1056,6 +1193,7 @@ async function showAdminPanel() {
   document.getElementById("adminTournamentForm").addEventListener("submit", saveTournament);
   document.getElementById("adminProductForm").addEventListener("submit", saveProduct);
   document.getElementById("adminUserForm").addEventListener("submit", saveAdminUser);
+  document.getElementById("adminUserCreateForm").addEventListener("submit", createAdminUser);
   document.getElementById("adminPlayerForm").addEventListener("submit", saveAdminPlayer);
   document.getElementById("adminResultForm").addEventListener("submit", saveAdminResult);
   document.getElementById("adminUserSearch").addEventListener("input", filterAdminUsers);
@@ -1131,6 +1269,8 @@ function editTournament(tournamentId) {
   form.elements.namedItem("title").value = tournament.title || "";
   form.elements.namedItem("month").value = tournament.month || "";
   form.elements.namedItem("status").value = tournament.status || "registration";
+  form.elements.namedItem("category").value = tournament.category || "singles";
+  form.elements.namedItem("gender").value = tournament.gender || "mixto";
   form.elements.namedItem("startDate").value = tournament.startDate || "";
   form.elements.namedItem("endDate").value = tournament.endDate || "";
   form.elements.namedItem("venue").value = tournament.venue || "";
@@ -1175,6 +1315,8 @@ async function saveTournament(event) {
     month: form.elements.namedItem("month").value,
     levels: Array.from(form.querySelectorAll('input[name="levels"]:checked'), input => input.value),
     status: form.elements.namedItem("status").value,
+    category: form.elements.namedItem("category").value,
+    gender: form.elements.namedItem("gender").value,
     startDate: form.elements.namedItem("startDate").value,
     endDate: form.elements.namedItem("endDate").value,
     venue: form.elements.namedItem("venue").value,
@@ -1305,16 +1447,58 @@ function editProduct(productId) {
   const imageInput = form.elements.namedItem("image");
   imageInput.value = product.image || "";
   const preview = document.getElementById("productImagePreview");
-  if (preview) preview.style.display = imageInput.value ? "block" : "none";
+  if (preview) {
+    preview.style.display = imageInput.value ? "block" : "none";
+    if (imageInput.value) preview.src = imageInput.value;
+  }
   form.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function previewProductImage(input) {
+function previewProductImageFile(input) {
   const preview = document.getElementById("productImagePreview");
+  const file = input.files && input.files[0];
   if (!preview) return;
-  const url = input.value ? input.value.trim() : "";
-  preview.style.display = url ? "block" : "none";
-  if (url) preview.src = url;
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    preview.src = reader.result;
+    preview.style.display = "block";
+  };
+  reader.readAsDataURL(file);
+}
+
+async function compressProductImage(file) {
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("No se pudo leer la imagen."));
+    reader.readAsDataURL(file);
+  });
+  const image = await new Promise((resolve, reject) => {
+    const element = new Image();
+    element.onload = () => resolve(element);
+    element.onerror = () => reject(new Error("Formato de imagen no soportado."));
+    element.src = dataUrl;
+  });
+  const maxSize = 800;
+  const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(image.width * scale));
+  canvas.height = Math.max(1, Math.round(image.height * scale));
+  canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.82);
+}
+
+async function uploadProductImage(form) {
+  const fileInput = form.elements.namedItem("imageFile");
+  const file = fileInput?.files?.[0];
+  if (!file) return form.elements.namedItem("image").value.trim();
+  const compressed = await compressProductImage(file);
+  const uploaded = await api("/api/admin/uploads", {
+    method: "POST",
+    body: JSON.stringify({ image: compressed, filename: file.name })
+  });
+  return uploaded.url;
 }
 
 function resetProductForm() {
@@ -1326,15 +1510,20 @@ function resetProductForm() {
   if (preview) preview.style.display = "none";
   form.elements.namedItem("category").value = "";
   form.elements.namedItem("active").checked = true;
-}
-
-async function saveProduct(event) {
+}async function saveProduct(event) {
   event.preventDefault();
   const form = event.target;
   const amount = Number(form.elements.namedItem("price").value);
   const price = Math.round(amount * 100);
   if (!Number.isFinite(amount) || amount <= 0 || !Number.isSafeInteger(price)) {
     showToast("Ingresa un precio válido en dólares.");
+    return;
+  }
+  let imageUrl;
+  try {
+    imageUrl = await uploadProductImage(form);
+  } catch (error) {
+    showToast(`No se pudo subir la imagen: ${error.message}`);
     return;
   }
   const body = {
@@ -1344,7 +1533,7 @@ async function saveProduct(event) {
     interval: form.elements.namedItem("interval").value,
     category: form.elements.namedItem("category").value,
     description: form.elements.namedItem("description").value,
-    image: form.elements.namedItem("image").value.trim(),
+    image: imageUrl,
     active: form.elements.namedItem("active").checked
   };
   const id = form.elements.namedItem("id").value;
@@ -1673,7 +1862,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("playerForm")?.addEventListener("submit", createPlayer);
   document.getElementById("levelFilter")?.addEventListener("change", filterPlayers);
   document.getElementById("zoneFilter")?.addEventListener("change", filterPlayers);
+  document.getElementById("categoryFilter")?.addEventListener("change", filterPlayers);
+  document.getElementById("genderFilter")?.addEventListener("change", filterPlayers);
   document.getElementById("searchPlayer")?.addEventListener("input", filterPlayers);
+  applyWhatsAppLinks();
+  setupRanking3d();
 
   const nav = document.getElementById("nav");
   nav?.addEventListener("click", event => {

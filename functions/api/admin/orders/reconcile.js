@@ -53,7 +53,16 @@ export async function onRequestPost({ request, env }) {
             !Number.isSafeInteger(session.amount_total) || session.amount_total < 0 ||
             typeof session.currency !== "string") continue;
 
-        const product = productsById.get(productId);
+        let productName;
+        if (productId === "donacion") {
+          const expected = Number(session.metadata?.amount);
+          if (!Number.isSafeInteger(expected) || session.amount_total !== expected) continue;
+          productName = session.mode === "subscription" ? "Donación mensual" : "Donación";
+        } else {
+          const product = productsById.get(productId);
+          if (!product) continue;
+          productName = product.name;
+        }
         const created = Number.isSafeInteger(session.created)
           ? new Date(session.created * 1000).toISOString()
           : new Date().toISOString();
@@ -61,7 +70,7 @@ export async function onRequestPost({ request, env }) {
           id: `ord-${crypto.randomUUID()}`,
           userId: ownerId,
           productId,
-          productName: product?.name || "Producto de Stripe",
+          productName,
           amount: session.amount_total,
           currency: session.currency,
           status: "paid",

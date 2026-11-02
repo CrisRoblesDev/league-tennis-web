@@ -1,4 +1,4 @@
-import { gRead, gWrite, rankPlayers, requireAdmin, jsonResponse } from "../../_helpers.js";
+import { gRead, gWrite, rankPlayers, requireAdmin, jsonResponse, MATCH_CATEGORIES, MODALITIES } from "../../_helpers.js";
 
 const LEVELS = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0"];
 const ZONES = [
@@ -61,6 +61,8 @@ export async function onRequestPost({ request, env }) {
     name: body.name.trim(),
     level: body.level,
     zone: body.zone,
+    category: MATCH_CATEGORIES.includes(body.category) ? body.category : "singles",
+    gender: MODALITIES.includes(body.gender) ? body.gender : "hombres",
     matches: 0,
     points: 0,
     created: new Date().toISOString()
@@ -104,6 +106,14 @@ export async function onRequestPatch({ request, env }) {
   if (updates.zone !== undefined) {
     if (!ZONES.includes(updates.zone)) return jsonResponse({ error: "Zona inválida." }, 400);
     player.zone = updates.zone;
+  }
+  if (updates.category !== undefined) {
+    if (!MATCH_CATEGORIES.includes(updates.category)) return jsonResponse({ error: "Categoría inválida." }, 400);
+    player.category = updates.category;
+  }
+  if (updates.gender !== undefined) {
+    if (!MODALITIES.includes(updates.gender)) return jsonResponse({ error: "Modalidad inválida." }, 400);
+    player.gender = updates.gender;
   }
   const user = users.find(item => item.id === player.userId);
   if (user) {

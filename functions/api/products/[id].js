@@ -1,5 +1,10 @@
 import { gRead, gWrite, requireAuth, jsonResponse, PRODUCT_CATEGORIES } from "../../_helpers.js";
 
+function validImage(value) {
+  return typeof value === "string" && value.trim().length <= 500 &&
+    (/^\//.test(value.trim()) || /^https:\/\//i.test(value.trim()));
+}
+
 export async function onRequestPut(context) {
   const { request, env, params } = context;
   const userId = await requireAuth(request, env);
@@ -52,7 +57,7 @@ export async function onRequestPut(context) {
     products[idx].active = updates.active;
   }
   if (updates.image !== undefined) {
-    if (typeof updates.image !== "string") return jsonResponse({ error: "Imagen inválida" }, 400);
+    if (!validImage(updates.image)) return jsonResponse({ error: "Imagen inválida" }, 400);
     products[idx].image = updates.image.trim() || null;
   }
   await gWrite(env, "products", products);

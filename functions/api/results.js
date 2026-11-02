@@ -1,4 +1,4 @@
-import { gRead, gWrite, requireAuth, validateMatchScore, jsonResponse } from "../_helpers.js";
+import { gRead, gWrite, requireAuth, validateMatchScore, jsonResponse, MATCH_CATEGORIES } from "../_helpers.js";
 
 export async function onRequestGet(context) {
   const { env } = context;
@@ -65,6 +65,7 @@ export async function onRequestPost(context) {
     id: `result-${crypto.randomUUID()}`,
     winnerId: winner.id,
     loserId: loser.id,
+    category: MATCH_CATEGORIES.includes(body.category) ? body.category : (winner.category || "singles"),
     score,
     playedAt: typeof body.playedAt === "string" ? body.playedAt : new Date().toISOString(),
     reportedBy: userId,

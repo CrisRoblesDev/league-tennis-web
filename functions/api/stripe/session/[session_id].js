@@ -38,8 +38,50 @@ export async function onRequestGet(context) {
       gRead(env, "subscriptions")
     ]);
     const productId = session.metadata?.productId;
-    const product = products.find(item => item.id === productId);
     const user = users.find(item => item.id === userId);
+
+    if (productId === "donacion") {
+      const expected = Number(session.metadata?.amount);
+      if (!Number.isSafeInteger(expected) || session.amount_total !== expected || session.currency !== "usd") {
+        return jsonResponse({ error: "Los datos del pago no coinciden con la donación" }, 409);
+      }
+      if (!orders.some(order => order.stripeSessionId === session.id)) {
+        orders.push({
+          id: `ord-${crypto.randomUUID()}`,
+          userId,
+          productId: "donacion",
+          productName: session.mode === "subscription" ? "Donación mensual" : "Donación",
+          amount: session.amount_total,
+          currency: session.currency,
+          status: "paid",
+          stripeSessionId: session.id,
+          created: new Date().toISOString()
+        });
+        await gWrite(env, "orders", orders);
+      }
+      if (session.mode === "subscription" && session.subscription) {
+        const subscription = await stripeGet(
+          `https://api.stripe.com/v1/subscriptions/${encodeURIComponent(session.subscription)}`,
+          env.STRIPE_SECRET_KEY
+        );
+        if (["active", "trialing"].includes(subscription.status) &&
+            !subscriptions.some(item => item.stripeSubscriptionId === subscription.id)) {
+          subscriptions.push({
+            id: `sub-${crypto.randomUUID()}`,
+            userId,
+            productId: "donacion",
+            stripeSessionId: session.id,
+            stripeSubscriptionId: subscription.id,
+            status: subscription.status,
+            created: new Date().toISOString()
+          });
+          await gWrite(env, "subscriptions", subscriptions);
+        }
+      }
+      return jsonResponse({ status: "paid" });
+    }
+
+    const product = products.find(item => item.id === productId);
     if (!product || !user) return jsonResponse({ error: "No se pudo asociar el pago a un producto y usuario" }, 409);
 
     const expectedMode = product.type === "subscription" ? "subscription" : "payment";

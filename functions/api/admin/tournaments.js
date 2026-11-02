@@ -1,7 +1,8 @@
-import { gRead, gWrite, requireAdmin, jsonResponse } from "../../_helpers.js";
+import { gRead, gWrite, requireAdmin, jsonResponse, MATCH_CATEGORIES } from "../../_helpers.js";
 
 const LEVELS = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0"];
 const STATUSES = ["registration", "scheduled", "in_progress", "completed", "cancelled"];
+const TOURNAMENT_GENDERS = ["hombres", "mujeres", "mixto"];
 
 function validDate(value) {
   if (value === "") return true;
@@ -31,6 +32,12 @@ function validateTournament(body) {
     if (body[field] !== undefined && (typeof body[field] !== "string" || body[field].length > 500)) {
       return `El campo ${field} no es válido.`;
     }
+  }
+  if (body.category !== undefined && !MATCH_CATEGORIES.includes(body.category)) {
+    return "La categoría del torneo no es válida.";
+  }
+  if (body.gender !== undefined && !TOURNAMENT_GENDERS.includes(body.gender)) {
+    return "La modalidad del torneo no es válida.";
   }
   return null;
 }
@@ -98,6 +105,8 @@ export async function onRequestPost({ request, env }) {
     endDate: body.endDate === undefined ? "" : body.endDate,
     venue: (body.venue || "").trim(),
     format: (body.format || "Eliminación directa · Best of 3").trim(),
+    category: MATCH_CATEGORIES.includes(body.category) ? body.category : "singles",
+    gender: TOURNAMENT_GENDERS.includes(body.gender) ? body.gender : "mixto",
     status: body.status,
     entries: [],
     matches: [],

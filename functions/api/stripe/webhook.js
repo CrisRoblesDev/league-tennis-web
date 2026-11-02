@@ -59,10 +59,13 @@ async function updateSubscription(env, stripeSubscription) {
   }
   await gWrite(env, "subscriptions", subscriptions);
 
+  // Las donaciones recurrentes no activan la membresía de la liga.
+  if (productId === "donacion") return;
+
   const user = users.find(item => item.id === userId);
   if (user) {
     user.membershipActive = subscriptions.some(item =>
-      item.userId === userId && ["active", "trialing"].includes(item.status)
+      item.userId === userId && ["active", "trialing"].includes(item.status) && item.productId !== "donacion"
     );
     await gWrite(env, "users", users);
   }
@@ -92,6 +95,36 @@ export async function onRequestPost({ request, env }) {
       if (session.payment_status === "paid") {
         const userId = session.metadata?.userId || session.client_reference_id;
         const productId = session.metadata?.productId;
+
+        if (productId === "donacion") {
+          const expected = Number(session.metadata?.amount);
+          if (!Number.isSafeInteger(expected) || session.amount_total !== expected || session.currency !== "usd") {
+            return jsonResponse({ error: "La donación no coincide con el monto registrado" }, 400);
+          }
+          if (!orders.some(order => order.stripeSessionId === session.id)) {
+            orders.push({
+              id: `ord-${crypto.randomUUID()}`,
+              userId,
+              productId: "donacion",
+              productName: session.mode === "subscription" ? "Donación mensual" : "Donación",
+              amount: session.amount_total,
+              currency: session.currency,
+              status: "paid",
+              stripeSessionId: session.id,
+              created: new Date().toISOString()
+            });
+            await gWrite(env, "orders", orders);
+          }
+          if (session.mode === "subscription" && session.subscription) {
+            await updateSubscription(env, {
+              id: session.subscription,
+              metadata: { userId, productId: "donacion" },
+              status: "active"
+            });
+          }
+          return jsonResponse({ received: true });
+        }
+
         const [products, users, orders] = await Promise.all([
           gRead(env, "products"),
           gRead(env, "users"),

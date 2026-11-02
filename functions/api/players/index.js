@@ -1,4 +1,4 @@
-import { gRead, gWrite, rankPlayers, requireAuth, jsonResponse } from "../../_helpers.js";
+import { gRead, gWrite, rankPlayers, requireAuth, jsonResponse, MATCH_CATEGORIES, MODALITIES } from "../../_helpers.js";
 
 export async function onRequestGet(context) {
   const { env } = context;
@@ -32,12 +32,16 @@ export async function onRequestPost(context) {
   if ((b.level && !levels.includes(b.level)) || (b.zone && !zones.includes(b.zone))) {
     return jsonResponse({ error: "Nivel o zona inválidos" }, 400);
   }
+  const category = MATCH_CATEGORIES.includes(b.category) ? b.category : "singles";
+  const gender = MODALITIES.includes(b.gender) ? b.gender : "hombres";
   players.push({
     id: `player-${crypto.randomUUID()}`,
     userId,
     name: typeof b.name === "string" && b.name.trim() ? b.name.trim().slice(0, 100) : user.name,
     level: b.level || user.level || "3.0",
     zone: b.zone || user.zone || "Aventura / Sunny Isles",
+    category,
+    gender,
     matches: 0,
     points: 0,
     created: new Date().toISOString()

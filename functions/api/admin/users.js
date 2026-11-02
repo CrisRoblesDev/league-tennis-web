@@ -1,4 +1,4 @@
-import { gRead, gWrite, requireAdmin, jsonResponse } from "../../_helpers.js";
+import { gRead, gWrite, hashPw, requireAdmin, jsonResponse } from "../../_helpers.js";
 
 const LEVELS = ["", "2.5", "3.0", "3.5", "4.0", "4.5", "5.0"];
 const ZONES = [
@@ -8,6 +8,7 @@ const ZONES = [
   "Downtown / Brickell",
   "Kendall / Doral"
 ];
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -33,11 +34,52 @@ export async function onRequestPost(context) {
   if (!b || typeof b !== "object" || Array.isArray(b)) {
     return jsonResponse({ error: "Actualizaciones inválidas" }, 400);
   }
+
+  if (b.action === "create") {
+    const name = typeof b.name === "string" ? b.name.trim() : "";
+    const email = typeof b.email === "string" ? b.email.trim().toLowerCase() : "";
+    const password = typeof b.password === "string" ? b.password : "";
+    const role = b.role === "admin" ? "admin" : "user";
+    if (!name || name.length > 100 || !EMAIL_PATTERN.test(email) ||
+        password.length < 8 || password.length > 128) {
+      return jsonResponse({ error: "Nombre, email válido y contraseña de 8 a 128 caracteres son requeridos." }, 400);
+    }
+    if (users.some(item => item.email.toLowerCase() === email)) {
+      return jsonResponse({ error: "Ya existe una cuenta con ese email." }, 409);
+    }
+    const created = {
+      id: `user-${crypto.randomUUID()}`,
+      name,
+      email,
+      password: await hashPw(password),
+      role,
+      created: new Date().toISOString()
+    };
+    users.push(created);
+    await gWrite(env, "users", users);
+    const { password: _ignored, ...safeUser } = created;
+    return jsonResponse({ ok: true, user: safeUser }, 201);
+  }
+
   const target = users.find(u => u.id === b.userId);
   if (!target) return jsonResponse({ error: "Usuario no encontrado" }, 404);
   const updates = b.updates;
   if (!updates || typeof updates !== "object" || Array.isArray(updates)) {
     return jsonResponse({ error: "Actualizaciones inválidas" }, 400);
+  }
+  if (updates.email !== undefined) {
+    const email = typeof updates.email === "string" ? updates.email.trim().toLowerCase() : "";
+    if (!EMAIL_PATTERN.test(email)) return jsonResponse({ error: "Email inválido" }, 400);
+    if (users.some(item => item.id !== target.id && item.email.toLowerCase() === email)) {
+      return jsonResponse({ error: "Ese email ya está en uso por otra cuenta." }, 409);
+    }
+    target.email = email;
+  }
+  if (updates.password !== undefined) {
+    if (typeof updates.password !== "string" || updates.password.length < 8 || updates.password.length > 128) {
+      return jsonResponse({ error: "La contraseña debe tener entre 8 y 128 caracteres." }, 400);
+    }
+    target.password = await hashPw(updates.password);
   }
   if (updates.role !== undefined) {
     if (!["admin", "user"].includes(updates.role)) return jsonResponse({ error: "Rol inválido" }, 400);

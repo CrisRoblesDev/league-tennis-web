@@ -3,6 +3,8 @@
 export const GH_API = "https://api.github.com";
 
 export const PRODUCT_CATEGORIES = ["", "libros", "ropa"];
+export const MATCH_CATEGORIES = ["singles", "dobles", "dobles_mixtos"];
+export const MODALITIES = ["hombres", "mujeres"];
 
 const FILES = {
   users: "users.json",
@@ -51,6 +53,11 @@ function githubFileUrl(env, fileKey) {
   if (!file) throw new Error(`Unknown data file: ${fileKey}`);
   const branch = encodeURIComponent(env.GITHUB_BRANCH || "main");
   return `${GH_API}/repos/${encodeURIComponent(env.GITHUB_OWNER)}/${encodeURIComponent(env.GITHUB_REPO)}/contents/data/${file}?ref=${branch}`;
+}
+
+function githubContentsUrl(env, repoPath) {
+  const branch = encodeURIComponent(env.GITHUB_BRANCH || "main");
+  return `${GH_API}/repos/${encodeURIComponent(env.GITHUB_OWNER)}/${encodeURIComponent(env.GITHUB_REPO)}/contents/${repoPath}?ref=${branch}`;
 }
 
 function decodeContent(content) {
@@ -118,6 +125,45 @@ export async function gWrite(env, fileKey, data) {
     })
   });
   if (!response.ok) await githubError(response, "write");
+}
+
+export async function gWriteRaw(env, repoPath, base64Content, message) {
+  assertGitHubConfig(env);
+  if (typeof repoPath !== "string" || !/^[A-Za-z0-9][A-Za-z0-9/._-]*$/.test(repoPath) || repoPath.includes("..")) {
+    throw new Error("Ruta de archivo inválida");
+  }
+  const url = githubContentsUrl(env, repoPath).replace(/\?ref=.*$/, "");
+  const branch = env.GITHUB_BRANCH || "main";
+  const lookup = await fetch(`${url}?ref=${encodeURIComponent(branch)}`, { headers: ghHeaders(env) });
+  let sha;
+  if (lookup.ok) {
+    sha = (await lookup.json()).sha;
+  } else if (lookup.status !== 404) {
+    await githubError(lookup, "read before write");
+  }
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: ghHeaders(env),
+    body: JSON.stringify({
+      message: message || `update ${repoPath}`,
+      content: base64Content,
+      branch,
+      ...(sha ? { sha } : {})
+    })
+  });
+  if (!response.ok) await githubError(response, "write");
+}
+
+export async function gReadRaw(env, repoPath) {
+  assertGitHubConfig(env);
+  if (typeof repoPath !== "string" || !/^[A-Za-z0-9][A-Za-z0-9/._-]*$/.test(repoPath) || repoPath.includes("..")) {
+    throw new Error("Ruta de archivo inválida");
+  }
+  const response = await fetch(githubContentsUrl(env, repoPath), { headers: ghHeaders(env) });
+  if (response.status === 404) return null;
+  if (!response.ok) await githubError(response, "read");
+  const json = await response.json();
+  return { base64: String(json.content || "").replace(/\s/g, ""), size: json.size };
 }
 
 function toBase64Url(bytes) {

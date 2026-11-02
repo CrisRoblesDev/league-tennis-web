@@ -53,6 +53,9 @@ body { font-family: 'Inter', 'Helvetica Neue', system-ui, Arial, sans-serif; bac
 .btn-dark:hover { background: var(--navy2); }
 .btn-sm { padding: 8px 14px; font-size: 12px; }
 .btn-full { width: 100%; }
+.btn-whatsapp { display: inline-flex; align-items: center; gap: 7px; background: #25d366; color: #08340f; }
+.btn-whatsapp:hover { background: #3ee07c; }
+.btn-whatsapp svg { flex: 0 0 auto; }
 
 /* HERO */
 .hero { padding: 80px 5% 70px; background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 100%); color: var(--white); display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 40px; align-items: center; position: relative; overflow: hidden; }
@@ -163,6 +166,14 @@ main { max-width: 1200px; margin: auto; padding: 0 5%; }
 .filters { display: flex; gap: 12px; flex-wrap: wrap; margin: 18px 0; }
 .filters select, .filters input { border: 1px solid #d8dee4; background: var(--white); border-radius: var(--radius); padding: 11px 14px; color: var(--navy); font: inherit; min-width: 150px; font-size: 14px; }
 .filters select:focus, .filters input:focus { outline: 2px solid var(--green); outline-offset: -1px; }
+
+/* RANKING 3D */
+.ranking3d { position: relative; height: 380px; margin: 0 0 20px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--navy); box-shadow: var(--shadow); }
+.ranking3d canvas { display: block; width: 100% !important; height: 100% !important; touch-action: none; cursor: grab; }
+.ranking3d-info { position: absolute; left: 12px; bottom: 12px; max-width: calc(100% - 24px); padding: 8px 12px; border-radius: 8px; background: rgba(255,255,255,.92); color: var(--navy); font-size: 12px; font-weight: 700; }
+.draw3d-box { width: min(980px, 100%); }
+.draw3d-container { position: relative; height: min(62vh, 560px); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--navy); }
+.draw3d-container canvas { display: block; width: 100% !important; height: 100% !important; touch-action: none; cursor: grab; }
 
 /* NOTICE BAR */
 .notice-bar { background: #eef2f5; border: 1px solid #dce2e8; border-radius: 7px; padding: 12px 16px; margin: 0 0 14px; font-size: 12px; color: #526171; }
@@ -309,6 +320,7 @@ form select[multiple] { min-height: 120px; }
   .step { padding: 14px; }
   .filters { flex-direction: column; gap: 8px; }
   .filters select, .filters input { min-width: 0; width: 100%; }
+  .ranking3d { height: 300px; }
   form { grid-template-columns: 1fr; gap: 10px; }
   form .full { grid-column: auto; }
   .admin-match-form .full { grid-column: auto; }
