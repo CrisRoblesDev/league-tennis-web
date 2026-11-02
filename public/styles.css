@@ -291,6 +291,8 @@ form select[multiple] { min-height: 120px; }
   .brand-name { font-size: 12px; }
   .header-actions .btn { padding: 6px 8px; font-size: 10px; white-space: nowrap; }
   .brand-sub { display: none; }
+  .brand-logo { width: 44px; height: 44px; flex-basis: 44px; }
+  .language-picker { min-width: 80px; padding: 6px 20px 6px 8px; font-size: 11px; }
   .btn-sm { padding: 6px 10px; font-size: 11px; }
   .section { margin: 36px 0; }
   .section h2 { font-size: 22px; }
