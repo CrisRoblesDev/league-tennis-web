@@ -190,6 +190,21 @@ main { max-width: 1200px; margin: auto; padding: 0 5%; }
 .draw-match.is-cancelled { border-left-color: var(--red); opacity: .65; }
 .draw-pending { margin-top: 12px; }
 
+/* CUADRO ELIMINATORIO Y LIGA */
+.bracket-rounds { display: flex; gap: 18px; overflow-x: auto; padding: 4px 2px 10px; }
+.bracket-round { display: flex; flex-direction: column; justify-content: space-around; gap: 14px; min-width: 190px; flex: 0 0 auto; }
+.bracket-round h4 { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; text-align: center; margin-bottom: 2px; }
+.bracket-match { display: grid; gap: 2px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 9px; background: #fff; font-size: 12.5px; box-shadow: 0 2px 8px rgba(16,36,58,.05); }
+.bracket-match span { overflow-wrap: anywhere; font-weight: 700; color: #526171; }
+.bracket-match span.is-winner { color: var(--green-dark); }
+.bracket-match span.is-winner::before { content: "✓ "; }
+.bracket-match b { color: var(--navy); font-size: 11.5px; }
+.bracket-match small { color: var(--muted); font-size: 10.5px; }
+.bracket-match.is-completed { border-color: #c9dd9d; background: #f8fbf2; }
+.bracket-match.is-cancelled { opacity: .6; }
+.league-schedule { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+.league-round h4 { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
+
 /* RANKING 3D */.ranking-head-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .ranking-view-toggle { display: inline-flex; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: #fff; }
 .ranking-view-toggle button { border: 0; background: transparent; padding: 8px 18px; border-radius: 999px; font: inherit; font-size: 12px; font-weight: 800; color: var(--muted); cursor: pointer; transition: background .2s, color .2s; }
@@ -291,6 +306,10 @@ form .full { grid-column: 1 / -1; }
 .admin-nav button:hover { background: #edf3df; border-color: #c9dd9d; }
 .admin-nav button.active { background: var(--navy); border-color: var(--navy); color: #fff; }
 .admin-module[hidden] { display: none; }
+.admin-layout { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 22px; align-items: start; }
+.admin-layout .admin-nav { position: sticky; top: 84px; flex-direction: column; align-items: stretch; gap: 6px; overflow: visible; border: 1px solid var(--line); border-radius: 14px; padding: 10px; background: #fff; }
+.admin-layout .admin-nav button { justify-content: flex-start; width: 100%; border-radius: 10px; padding: 11px 14px; font-size: 13px; }
+.admin-modules { min-width: 0; }
 .admin-nav button:hover { background: var(--green); color: var(--navy); }
 .admin-nav button.active { background: var(--green); color: var(--navy); }
 .admin-section { scroll-margin-top: 60px; margin: 20px 0 28px; }
@@ -320,6 +339,10 @@ form select[multiple] { min-height: 120px; }
   .nav a span { display: none; }
 }
 @media (max-width: 900px) {
+  .admin-layout { display: block; }
+  .admin-layout .admin-nav { position: sticky; top: 0; flex-direction: row; align-items: center; gap: 8px; overflow-x: auto; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 10px 0; scrollbar-width: none; -ms-overflow-style: none; }
+  .admin-layout .admin-nav::-webkit-scrollbar { display: none; }
+  .admin-layout .admin-nav button { width: auto; flex: 0 0 auto; border-radius: 999px; padding: 9px 16px; font-size: 12px; }
   .nav a { padding: 7px 10px; font-size: 11px; gap: 5px; }
   .nav a svg { width: 17px; height: 17px; }
   .grid-3 { grid-template-columns: repeat(2, 1fr); gap: 14px; }

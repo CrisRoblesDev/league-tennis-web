@@ -7,8 +7,7 @@ import { onRequestGet as verifyCheckout } from "../functions/api/stripe/session/
 import { onRequestPost as reconcileAdminOrders } from "../functions/api/admin/orders/reconcile.js";
 import { onRequestGet as listAdminOrders } from "../functions/api/admin/orders.js";
 import { onRequestPost as createTournament, onRequestGet as listAdminTournaments } from "../functions/api/admin/tournaments.js";
-import { onRequestPut as updateTournament } from "../functions/api/admin/tournaments/[id].js";
-import { onRequestPatch as moderateResult } from "../functions/api/admin/results.js";
+import { onRequestPut as updateTournament } from "../functions/api/admin/tournaments/[id].js";import { onRequestPatch as moderateResult } from "../functions/api/admin/results.js";
 import { onRequestGet as listPublicTournaments } from "../functions/api/tournament/index.js";
 import { onRequestPost as updateAdminUser } from "../functions/api/admin/users.js";
 import {
@@ -326,6 +325,77 @@ test("registration, login, Stripe checkout, and payment reconciliation use the c
     });
     assert.equal(completedMatchResponse.status, 200);
     assert.equal((await completedMatchResponse.json()).tournament.matches.length, 1);
+
+    // Generación automática de cuadro eliminatorio y avance de ganadores
+    github.files.set("players.json", JSON.stringify([
+      { id: "player-a", userId: "user-a", name: "Player A", level: "3.5", zone: "Aventura / Sunny Isles" },
+      { id: "player-b", userId: "user-b", name: "Player B", level: "3.5", zone: "Aventura / Sunny Isles" },
+      { id: "player-c", userId: "user-c", name: "Player C", level: "3.5", zone: "Aventura / Sunny Isles" },
+      { id: "player-d", userId: "user-d", name: "Player D", level: "3.5", zone: "Aventura / Sunny Isles" }
+    ]));
+    const storedForDraw = JSON.parse(github.files.get("tournaments.json"));
+    storedForDraw[0].entries = [
+      { playerId: "player-a" }, { playerId: "player-b" },
+      { playerId: "player-c" }, { playerId: "player-d" }
+    ];
+    storedForDraw[0].matches = [];
+    github.files.set("tournaments.json", JSON.stringify(storedForDraw));
+    const drawResponse = await updateTournament({
+      request: adminRequest(`https://league.example/api/admin/tournaments/${tournament.id}`, "PUT", {
+        generateDraw: true
+      }),
+      env,
+      params: { id: tournament.id }
+    });
+    assert.equal(drawResponse.status, 200);
+    const draw = (await drawResponse.json()).tournament;
+    assert.equal(draw.formatType, "knockout");
+    assert.equal(draw.matches.length, 3); // 2 semifinales + 1 final
+    const semifinals = draw.matches.filter(match => match.round === "Semifinales");
+    const final = draw.matches.find(match => match.round === "Final");
+    assert.equal(semifinals.length, 2);
+    assert.ok(semifinals.every(match => match.playerAId && match.playerBId));
+    assert.equal(final.playerAId, null);
+    assert.equal(semifinals[0].nextMatchId, final.id);
+
+    // Completar una semifinal avanza al ganador a la final
+    const firstSemifinal = semifinals[0];
+    const advanceResponse = await updateTournament({
+      request: adminRequest(`https://league.example/api/admin/tournaments/${tournament.id}`, "PUT", {
+        match: {
+          id: firstSemifinal.id,
+          playerAId: firstSemifinal.playerAId,
+          playerBId: firstSemifinal.playerBId,
+          round: "Semifinales",
+          status: "completed",
+          winnerId: firstSemifinal.playerAId,
+          score: "6-4, 6-4"
+        }
+      }),
+      env,
+      params: { id: tournament.id }
+    });
+    assert.equal(advanceResponse.status, 200);
+    const advanced = (await advanceResponse.json()).tournament;
+    const finalAfterAdvance = advanced.matches.find(match => match.id === final.id);
+    assert.equal(finalAfterAdvance.playerAId, firstSemifinal.playerAId);
+
+    // Restaurar estado para las pruebas siguientes
+    const restored = JSON.parse(github.files.get("tournaments.json"));
+    restored[0].entries = [{ playerId: "player-a" }, { playerId: "player-b" }];
+    restored[0].matches = [{
+      id: "match-restored",
+      round: "Final",
+      playerAId: "player-a",
+      playerBId: "player-b",
+      date: "2026-07-12",
+      court: "Court 1",
+      status: "completed",
+      score: "4-6, 6-4, 7-10",
+      winnerId: "player-b"
+    }];
+    github.files.set("tournaments.json", JSON.stringify(restored));
+
     const removeMatchedEntry = await updateTournament({
       request: adminRequest(`https://league.example/api/admin/tournaments/${tournament.id}`, "PUT", {
         removeEntryPlayerId: "player-a"

@@ -929,27 +929,50 @@ async function loadTournaments() {
   }
 }
 
-function renderTournamentMatches(matches, entries = []) {
+function renderTournamentMatches(matches, entries = [], formatType = "knockout") {
   if (!matches || !matches.length) {
     if (entries.length >= 2) {
       return '<p class="muted draw-pending">El cuadro se publicará cuando se programen los partidos.</p>';
     }
     return "";
   }
-  const rounds = new Map();
+  if (formatType === "league") {
+    const rounds = new Map();
+    matches.forEach(match => {
+      const key = match.round || "Jornada";
+      if (!rounds.has(key)) rounds.set(key, []);
+      rounds.get(key).push(match);
+    });
+    return `<div class="league-schedule"><b class="draw-written-title">Calendario · todos contra todos</b>${[...rounds.entries()].map(([round, roundMatches]) => `
+      <div class="league-round"><h4>${escapeHtml(round)}</h4>${roundMatches.map(match => `
+        <div class="draw-match${match.status === "completed" ? " is-completed" : ""}${match.status === "cancelled" ? " is-cancelled" : ""}">
+          <span>${escapeHtml(match.playerAName || match.playerAId || "Por definir")}</span>
+          <span>${escapeHtml(match.playerBName || match.playerBId || "Por definir")}</span>
+          ${match.score ? `<b>${escapeHtml(match.score)}</b>` : `<small>${match.status === "cancelled" ? "Cancelado" : "Por jugar"}</small>`}
+          ${match.date ? `<small>${escapeHtml(match.date)}</small>` : ""}
+        </div>`).join("")}</div>`).join("")}</div>`;
+  }
+
+  const rounds = [];
   matches.forEach(match => {
-    const key = match.round || "Ronda";
-    if (!rounds.has(key)) rounds.set(key, []);
-    rounds.get(key).push(match);
+    const round = match.round || "Ronda";
+    let bucket = rounds.find(item => item.name === round);
+    if (!bucket) {
+      bucket = { name: round, matches: [] };
+      rounds.push(bucket);
+    }
+    bucket.matches.push(match);
   });
-  return `<div class="draw-written"><b class="draw-written-title">Main draw</b><div class="draw-written-rounds">${[...rounds.entries()].map(([round, roundMatches]) => `
-    <div class="draw-round"><h4>${escapeHtml(round)}</h4>${roundMatches.map(match => `
-      <div class="draw-match${match.status === "completed" ? " is-completed" : ""}${match.status === "cancelled" ? " is-cancelled" : ""}">
-        <span>${escapeHtml(match.playerAName || match.playerAId || "Por definir")}</span>
-        <span>${escapeHtml(match.playerBName || match.playerBId || "Por definir")}</span>
-        ${match.score ? `<b>${escapeHtml(match.score)}</b>` : `<small>${match.status === "cancelled" ? "Cancelado" : "Por jugar"}</small>`}
-        ${match.date ? `<small>${escapeHtml(match.date)}</small>` : ""}
-      </div>`).join("")}</div>`).join("")}</div></div>`;
+  return `<div class="bracket"><b class="draw-written-title">Cuadro eliminatorio</b><div class="bracket-rounds">${rounds.map(round => `
+    <div class="bracket-round"><h4>${escapeHtml(round.name)}</h4>${round.matches.map(match => {
+      const winnerA = match.status === "completed" && match.winnerId && match.winnerId === match.playerAId;
+      const winnerB = match.status === "completed" && match.winnerId && match.winnerId === match.playerBId;
+      return `<div class="bracket-match${match.status === "completed" ? " is-completed" : ""}${match.status === "cancelled" ? " is-cancelled" : ""}">
+        <span class="${winnerA ? "is-winner" : ""}">${escapeHtml(match.playerAName || "Por definir")}</span>
+        <span class="${winnerB ? "is-winner" : ""}">${escapeHtml(match.playerBName || "Por definir")}</span>
+        ${match.score ? `<b>${escapeHtml(match.score)}</b>` : `<small>${match.status === "cancelled" ? "Cancelado" : match.date ? escapeHtml(match.date) : "Por jugar"}</small>`}
+      </div>`;
+    }).join("")}</div>`).join("")}</div></div>`;
 }
 
 function renderTournaments() {
@@ -986,7 +1009,7 @@ function renderTournaments() {
       ).join("")}</ul></details>` : ""}
       ${(tournament.category && tournament.category !== "singles") || (tournament.gender && tournament.gender !== "mixto") ?
         `<p class="muted">${escapeHtml(CATEGORY_LABELS[tournament.category || "singles"] || "Singles")}${tournament.gender && tournament.gender !== "mixto" ? ` · ${escapeHtml(GENDER_LABELS[tournament.gender] || tournament.gender)}` : ""}</p>` : ""}
-      ${(tournament.matches || []).length || entries.length >= 2 ? renderTournamentMatches(tournament.matches, entries) : ""}
+      ${(tournament.matches || []).length || entries.length >= 2 ? renderTournamentMatches(tournament.matches, entries, tournament.formatType || "knockout") : ""}
       ${canJoin ? '<button class="btn btn-dark" onclick="joinTournament()">Inscribirse</button>' : ""}
     </article>`;
   }).join("");
@@ -1084,6 +1107,7 @@ async function showAdminPanel() {
       <div class="stat-card"><div class="stat-number">${pendingResults.length}</div><div class="stat-label">Resultados por revisar</div></div>
     </div>
 
+    <div class="admin-layout">
     <nav class="admin-nav" aria-label="Módulos de administración">
       <button type="button" data-module-btn="tournaments" onclick="setAdminModule('tournaments')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/></svg>Torneos</button>
       <button type="button" data-module-btn="players" onclick="setAdminModule('players')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Jugadores</button>
@@ -1131,12 +1155,12 @@ async function showAdminPanel() {
         <div>${levels.map(level => `<label><input type="checkbox" name="levels" value="${level}"><span>${level}</span></label>`).join("")}</div>
       </fieldset>
       <label>Estado del torneo<select name="status"><option value="registration">Inscripciones abiertas</option><option value="scheduled">Programado</option><option value="in_progress">En curso</option><option value="completed">Finalizado</option><option value="cancelled">Cancelado</option></select></label>
+      <label>Tipo de competición<select name="formatType"><option value="knockout">Eliminación directa (cuadro)</option><option value="league">Liga · todos contra todos</option></select></label>
       <label>Categoría<select name="category"><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label>
       <label>Modalidad<select name="gender"><option value="mixto">Mixto</option><option value="hombres">Hombres</option><option value="mujeres">Mujeres</option></select></label>
       <label>Fecha de inicio<input name="startDate" type="date"></label>
       <label>Fecha de término<input name="endDate" type="date"></label>
       <label>Sede o cancha<input name="venue" maxlength="120" placeholder="Ej. Aventura Tennis Center"></label>
-      <label>Formato del torneo<input name="format" maxlength="120" value="Eliminación directa · Best of 3"></label>
       <label class="full">Descripción<textarea name="description" rows="2" maxlength="500"></textarea></label>
       <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar torneo</button><button class="btn btn-secondary" type="button" onclick="resetTournamentForm()">Limpiar formulario</button></div>
     </form>
@@ -1309,6 +1333,8 @@ async function showAdminPanel() {
       <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar ajustes</button></div>
     </form>
     </section>
+    </div>
+    </div>
   `;
   document.getElementById("adminTournamentForm").addEventListener("submit", saveTournament);
   document.getElementById("adminProductForm").addEventListener("submit", saveProduct);
@@ -1334,7 +1360,9 @@ function setAdminModule(moduleId) {
   document.querySelectorAll("[data-module-btn]").forEach(button => {
     button.classList.toggle("active", button.dataset.moduleBtn === moduleId);
   });
-  document.querySelector(".admin-nav")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (window.innerWidth <= 900) {
+    document.querySelector(".admin-nav")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
 async function syncAdminOrders() {
@@ -1362,6 +1390,8 @@ function renderAdminTournament(tournament) {
       <button class="btn btn-sm btn-secondary" onclick="deleteTournament('${escapeHtml(tournament.id)}')">Eliminar</button></div>
     </div>
     <p class="muted">${escapeHtml(tournament.month)} · ${entrants.length} inscritos · ${escapeHtml(tournament.venue || "Sede por definir")}</p>
+    <p class="muted">${escapeHtml(tournament.formatType === "league" ? "Liga · todos contra todos" : "Eliminación directa (cuadro)")}</p>
+    ${entrants.length >= 2 ? `<button class="btn btn-sm btn-primary admin-generate-btn" onclick="generateTournamentDraw('${escapeHtml(tournament.id)}')">${(tournament.matches || []).some(match => match.auto) ? "Regenerar cuadro automáticamente" : "Generar cuadro automáticamente"}</button>` : ""}
     <ul class="admin-entrant-list">${entrants.map(entry => `<li>
       <span>${escapeHtml(entry.name)} <small>${escapeHtml(entry.level || "")}</small></span>
       <button class="btn btn-sm btn-danger" onclick="removeTournamentEntry('${escapeHtml(tournament.id)}','${escapeHtml(entry.playerId)}')">Retirar</button>
@@ -1403,12 +1433,12 @@ function editTournament(tournamentId) {
   form.elements.namedItem("title").value = tournament.title || "";
   form.elements.namedItem("month").value = tournament.month || "";
   form.elements.namedItem("status").value = tournament.status || "registration";
+  form.elements.namedItem("formatType").value = tournament.formatType || "knockout";
   form.elements.namedItem("category").value = tournament.category || "singles";
   form.elements.namedItem("gender").value = tournament.gender || "mixto";
   form.elements.namedItem("startDate").value = tournament.startDate || "";
   form.elements.namedItem("endDate").value = tournament.endDate || "";
   form.elements.namedItem("venue").value = tournament.venue || "";
-  form.elements.namedItem("format").value = tournament.format || "";
   form.elements.namedItem("description").value = tournament.description || "";
   form.querySelectorAll('input[name="levels"]').forEach(input => {
     input.checked = (tournament.levels || []).includes(input.value);
@@ -1438,23 +1468,25 @@ function resetTournamentForm() {
   form.reset();
   form.elements.namedItem("id").value = "";
   form.elements.namedItem("month").value = new Date().toISOString().slice(0, 7);
-  form.elements.namedItem("format").value = "Eliminación directa · Best of 3";
+  form.elements.namedItem("formatType").value = "knockout";
 }
 
 async function saveTournament(event) {
   event.preventDefault();
   const form = event.target;
+  const formatType = form.elements.namedItem("formatType").value;
   const body = {
     title: form.elements.namedItem("title").value,
     month: form.elements.namedItem("month").value,
     levels: Array.from(form.querySelectorAll('input[name="levels"]:checked'), input => input.value),
     status: form.elements.namedItem("status").value,
+    formatType,
+    format: formatType === "league" ? "Liga · todos contra todos" : "Eliminación directa · Best of 3",
     category: form.elements.namedItem("category").value,
     gender: form.elements.namedItem("gender").value,
     startDate: form.elements.namedItem("startDate").value,
     endDate: form.elements.namedItem("endDate").value,
     venue: form.elements.namedItem("venue").value,
-    format: form.elements.namedItem("format").value,
     description: form.elements.namedItem("description").value
   };
   if (!body.levels.length) {
@@ -1485,6 +1517,20 @@ async function deleteTournament(tournamentId) {
     showToast("Torneo eliminado");
   } catch (error) {
     showToast(`No se pudo eliminar: ${error.message}`);
+  }
+}
+
+async function generateTournamentDraw(tournamentId) {
+  if (!window.confirm("Se reemplazarán los partidos actuales por el cuadro/calendario generado con los inscritos. ¿Continuar?")) return;
+  try {
+    await api(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}`, {
+      method: "PUT",
+      body: JSON.stringify({ generateDraw: true })
+    });
+    await Promise.all([loadTournaments(), showAdminPanel()]);
+    showToast("Cuadro generado. Al registrar resultados, los ganadores avanzan solos.");
+  } catch (error) {
+    showToast(`No se pudo generar el cuadro: ${error.message}`);
   }
 }
 

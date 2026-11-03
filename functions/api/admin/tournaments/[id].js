@@ -4,6 +4,99 @@ const LEVELS = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0"];
 const STATUSES = ["registration", "scheduled", "in_progress", "completed", "cancelled"];
 const MATCH_STATUSES = ["scheduled", "completed", "cancelled"];
 const TOURNAMENT_GENDERS = ["hombres", "mujeres", "mixto"];
+const FORMAT_TYPES = ["knockout", "league"];
+
+function roundName(totalRounds, roundIndex) {
+  const remaining = totalRounds - roundIndex;
+  if (remaining === 1) return "Final";
+  if (remaining === 2) return "Semifinales";
+  if (remaining === 3) return "Cuartos de final";
+  if (remaining === 4) return "Octavos de final";
+  return `Ronda ${roundIndex + 1}`;
+}
+
+function buildKnockoutDraw(playerIds) {
+  const size = Math.max(2, 2 ** Math.ceil(Math.log2(Math.max(playerIds.length, 2))));
+  const slots = [...playerIds];
+  while (slots.length < size) slots.push(null);
+  // Mezcla aleatoria para el cuadro inicial
+  for (let index = slots.length - 1; index > 0; index--) {
+    const swap = Math.floor(Math.random() * (index + 1));
+    [slots[index], slots[swap]] = [slots[swap], slots[index]];
+  }
+  const totalRounds = Math.log2(size);
+  const matches = [];
+  let previousRound = null;
+  for (let roundIndex = 0; roundIndex < totalRounds; roundIndex++) {
+    const count = size / (2 ** (roundIndex + 1));
+    const currentRound = [];
+    for (let index = 0; index < count; index++) {
+      const match = {
+        id: `match-${crypto.randomUUID()}`,
+        round: roundName(totalRounds, roundIndex),
+        playerAId: roundIndex === 0 ? slots[index * 2] : null,
+        playerBId: roundIndex === 0 ? slots[index * 2 + 1] : null,
+        date: "",
+        court: "",
+        status: "scheduled",
+        score: "",
+        winnerId: null,
+        auto: true
+      };
+      currentRound.push(match);
+      matches.push(match);
+    }
+    if (previousRound) {
+      previousRound.forEach((match, index) => {
+        match.nextMatchId = currentRound[Math.floor(index / 2)].id;
+        match.nextSlot = index % 2 === 0 ? "A" : "B";
+      });
+    }
+    previousRound = currentRound;
+  }
+  return matches;
+}
+
+function buildLeagueSchedule(playerIds) {
+  const ids = [...playerIds];
+  if (ids.length % 2 === 1) ids.push(null);
+  const rounds = ids.length - 1;
+  const matches = [];
+  let rotation = [...ids];
+  for (let roundIndex = 0; roundIndex < rounds; roundIndex++) {
+    for (let index = 0; index < ids.length / 2; index++) {
+      const playerA = rotation[index];
+      const playerB = rotation[rotation.length - 1 - index];
+      if (playerA === null || playerB === null) continue;
+      matches.push({
+        id: `match-${crypto.randomUUID()}`,
+        round: `Jornada ${roundIndex + 1}`,
+        playerAId: roundIndex % 2 === 0 ? playerA : playerB,
+        playerBId: roundIndex % 2 === 0 ? playerB : playerA,
+        date: "",
+        court: "",
+        status: "scheduled",
+        score: "",
+        winnerId: null,
+        auto: true
+      });
+    }
+    const fixed = rotation[0];
+    const rest = rotation.slice(1);
+    rest.unshift(rest.pop());
+    rotation = [fixed, ...rest];
+  }
+  return matches;
+}
+
+function advanceWinner(tournament, completedMatch) {
+  if (tournament.formatType !== "knockout" || !completedMatch.nextMatchId || !completedMatch.winnerId) return;
+  const next = (tournament.matches || []).find(match => match.id === completedMatch.nextMatchId);
+  if (!next) return;
+  if (completedMatch.nextSlot === "B") next.playerBId = completedMatch.winnerId;
+  else next.playerAId = completedMatch.winnerId;
+  next.updated = new Date().toISOString();
+}
 
 function validDate(value) {
   if (value === "") return true;
@@ -74,6 +167,20 @@ export async function onRequestPut({ request, env, params }) {
     if (!TOURNAMENT_GENDERS.includes(body.gender)) return jsonResponse({ error: "Modalidad inválida" }, 400);
     tournament.gender = body.gender;
   }
+  if (body.formatType !== undefined) {
+    if (!FORMAT_TYPES.includes(body.formatType)) return jsonResponse({ error: "Tipo de competición inválido" }, 400);
+    tournament.formatType = body.formatType;
+  }
+  if (body.generateDraw === true) {
+    const entries = (tournament.entries || []).map(entry => entry.playerId);
+    if (entries.length < 2) {
+      return jsonResponse({ error: "Se necesitan al menos 2 jugadores inscritos para generar el cuadro." }, 409);
+    }
+    tournament.formatType ||= "knockout";
+    tournament.matches = tournament.formatType === "league"
+      ? buildLeagueSchedule(entries)
+      : buildKnockoutDraw(entries);
+  }
   if (tournament.startDate && tournament.endDate && tournament.startDate > tournament.endDate) {
     return jsonResponse({ error: "La fecha de término debe ser igual o posterior al inicio." }, 400);
   }
@@ -124,11 +231,12 @@ export async function onRequestPut({ request, env, params }) {
   }
   if (body.match !== undefined) {
     const match = body.match;
+    const isPlaceholder = match.playerAId === null && match.playerBId === null;
     if (!match || typeof match !== "object" ||
-        typeof match.playerAId !== "string" || typeof match.playerBId !== "string" ||
-        match.playerAId === match.playerBId ||
-        !tournament.entries?.some(entry => entry.playerId === match.playerAId) ||
-        !tournament.entries?.some(entry => entry.playerId === match.playerBId) ||
+        (!isPlaceholder && (typeof match.playerAId !== "string" || typeof match.playerBId !== "string" ||
+          match.playerAId === match.playerBId ||
+          !tournament.entries?.some(entry => entry.playerId === match.playerAId) ||
+          !tournament.entries?.some(entry => entry.playerId === match.playerBId))) ||
         typeof match.round !== "string" || !match.round.trim() ||
         !validDate(match.date || "") ||
         !MATCH_STATUSES.includes(match.status || "scheduled")) {
@@ -147,16 +255,23 @@ export async function onRequestPut({ request, env, params }) {
     const matchRecord = {
       id: matchIndex >= 0 ? tournament.matches[matchIndex].id : `match-${crypto.randomUUID()}`,
       round: match.round.trim().slice(0, 80),
-      playerAId: match.playerAId,
-      playerBId: match.playerBId,
+      playerAId: isPlaceholder ? null : match.playerAId,
+      playerBId: isPlaceholder ? null : match.playerBId,
       date: match.date || "",
       court: typeof match.court === "string" ? match.court.trim().slice(0, 120) : "",
       status: match.status || "scheduled",
       score,
       winnerId: match.status === "completed" ? match.winnerId : null
     };
+    const existing = matchIndex >= 0 ? tournament.matches[matchIndex] : null;
+    if (existing) {
+      matchRecord.nextMatchId = existing.nextMatchId;
+      matchRecord.nextSlot = existing.nextSlot;
+      matchRecord.auto = existing.auto;
+    }
     if (matchIndex >= 0) tournament.matches[matchIndex] = matchRecord;
     else tournament.matches.push(matchRecord);
+    if (matchRecord.status === "completed") advanceWinner(tournament, matchRecord);
   }
 
   tournament.updated = new Date().toISOString();

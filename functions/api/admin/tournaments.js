@@ -3,6 +3,7 @@ import { gRead, gWrite, requireAdmin, jsonResponse, MATCH_CATEGORIES } from "../
 const LEVELS = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0"];
 const STATUSES = ["registration", "scheduled", "in_progress", "completed", "cancelled"];
 const TOURNAMENT_GENDERS = ["hombres", "mujeres", "mixto"];
+const FORMAT_TYPES = ["knockout", "league"];
 
 function validDate(value) {
   if (value === "") return true;
@@ -38,6 +39,9 @@ function validateTournament(body) {
   }
   if (body.gender !== undefined && !TOURNAMENT_GENDERS.includes(body.gender)) {
     return "La modalidad del torneo no es válida.";
+  }
+  if (body.formatType !== undefined && !FORMAT_TYPES.includes(body.formatType)) {
+    return "El tipo de competición no es válido.";
   }
   return null;
 }
@@ -107,6 +111,7 @@ export async function onRequestPost({ request, env }) {
     format: (body.format || "Eliminación directa · Best of 3").trim(),
     category: MATCH_CATEGORIES.includes(body.category) ? body.category : "singles",
     gender: TOURNAMENT_GENDERS.includes(body.gender) ? body.gender : "mixto",
+    formatType: FORMAT_TYPES.includes(body.formatType) ? body.formatType : "knockout",
     status: body.status,
     entries: [],
     matches: [],
