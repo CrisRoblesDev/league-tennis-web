@@ -1125,6 +1125,91 @@ async function createPlayer(e) {
   }
 }
 
+// ============ PUBLIC TOURNAMENTS ============
+async function loadTournaments() {
+  try {
+    const data = await api("/api/tournament");
+    tournaments = data.tournaments || [];
+    renderTournaments();
+    const featured = tournaments.find(item => item.month === new Date().toISOString().slice(0, 7)) ||
+      tournaments.find(item => ["registration", "scheduled", "in_progress"].includes(item.status)) ||
+      tournaments[0];
+    if (featured) {
+      const title = document.getElementById("heroTournamentTitle");
+      const date = document.getElementById("heroTournamentDate");
+      const summary = document.getElementById("heroTournamentSummary");
+      if (title) title.textContent = featured.title || `Campeonato · ${featured.month}`;
+      if (date) date.textContent = featured.startDate ? formatLocalDate(new Date(`${featured.startDate}T00:00:00`)) : featured.month;
+      if (summary) summary.textContent = featured.description || `${(featured.entries || []).length} inscritos · ${featured.format || "Formato por anunciar"}`;
+    }
+  } catch (error) {
+    showToast(`No se pudieron cargar los torneos: ${error.message}`);
+  }
+}
+
+function renderTournamentMatches(matches, entries = [], formatType = "knockout") {
+  if (!matches || !matches.length) {
+    if (entries.length >= 2) {
+      return '<p class="muted draw-pending">El cuadro se publicará cuando se programen los partidos.</p>';
+    }
+    return "";
+  }
+  const rounds = new Map();
+  matches.forEach(match => {
+    const key = match.round || "Ronda";
+    if (!rounds.has(key)) rounds.set(key, []);
+    rounds.get(key).push(match);
+  });
+  return `<div class="draw-written"><b class="draw-written-title">Main draw</b><div class="draw-written-rounds">${[...rounds.entries()].map(([round, roundMatches]) => `
+    <div class="draw-round"><h4>${escapeHtml(round)}</h4>${roundMatches.map(match => `
+      <div class="draw-match${match.status === "completed" ? " is-completed" : ""}${match.status === "cancelled" ? " is-cancelled" : ""}">
+        <span>${escapeHtml(match.playerAName || match.playerAId || "Por definir")}</span>
+        <span>${escapeHtml(match.playerBName || match.playerBId || "Por definir")}</span>
+        ${match.score ? `<b>${escapeHtml(match.score)}</b>` : `<small>${match.status === "cancelled" ? "Cancelado" : "Por jugar"}</small>`}
+        ${match.date ? `<small>${escapeHtml(match.date)}</small>` : ""}
+      </div>`).join("")}</div>`).join("")}</div></div>`;
+}
+
+function renderTournaments() {
+  const container = document.getElementById("tournamentsList");
+  if (!container) return;
+  if (!tournaments.length) {
+    container.innerHTML = '<article class="card"><span class="tag">Próximamente</span><h3>Calendario de torneos</h3><p class="muted">Los próximos torneos se publicarán aquí.</p></article>';
+    return;
+  }
+  const statusLabels = {
+    registration: "Inscripciones abiertas",
+    scheduled: "Programado",
+    in_progress: "En curso",
+    completed: "Finalizado",
+    cancelled: "Cancelado"
+  };
+  container.innerHTML = tournaments.map(tournament => {
+    const entries = tournament.entries || [];
+    const status = statusLabels[tournament.status] || "Estado por confirmar";
+    const dates = [tournament.startDate, tournament.endDate].filter(Boolean).join(" – ");
+    const month = tournament.month || "";
+    const canJoin = tournament.status === "registration" &&
+      month === new Date().toISOString().slice(0, 7);
+    return `<article class="card tournament-card">
+      <span class="tag ${tournament.status === "registration" ? "tag-blue" : ""}">${escapeHtml(status)}</span>
+      <h3>${escapeHtml(tournament.title || `Campeonato · ${month}`)}</h3>
+      <p class="muted">${escapeHtml(tournament.description || "")}</p>
+      <p><b>${escapeHtml(month)}</b>${dates ? ` · ${escapeHtml(dates)}` : ""}</p>
+      ${tournament.venue ? `<p class="muted">Cancha: ${escapeHtml(tournament.venue)}</p>` : ""}
+      <p class="muted">${escapeHtml(tournament.format || "Formato por anunciar")}</p>
+      <p><b>${entries.length}</b> inscritos${tournament.levels?.length ? ` · Niveles ${escapeHtml(tournament.levels.join(", "))}` : ""}</p>
+      ${entries.length ? `<details><summary>Ver jugadores inscritos</summary><ul class="tournament-entries">${entries.map(entry =>
+        `<li>${escapeHtml(entry.name)} <span class="muted">${escapeHtml(entry.level)}</span></li>`
+      ).join("")}</ul></details>` : ""}
+      ${(tournament.category && tournament.category !== "singles") || (tournament.gender && tournament.gender !== "mixto") ?
+        `<p class="muted">${escapeHtml(CATEGORY_LABELS[tournament.category || "singles"] || "Singles")}${tournament.gender && tournament.gender !== "mixto" ? ` · ${escapeHtml(GENDER_LABELS[tournament.gender] || tournament.gender)}` : ""}</p>` : ""}
+      ${(tournament.matches || []).length || entries.length >= 2 ? renderTournamentMatches(tournament.matches, entries) : ""}
+      ${canJoin ? '<button class="btn btn-dark" onclick="joinTournament()">Inscribirse</button>' : ""}
+    </article>`;
+  }).join("");
+}
+
 // ============ TOURNAMENT ============
 async function joinTournament() {
   if (!currentUser) { openModal("loginModal"); return; }
@@ -1152,6 +1237,17 @@ async function withdrawTournament() {
 // ========================================
 // TORNEOS - MODERNIZACIÓN COMPLETA
 // ========================================
+
+function setAdminModule(moduleId) {
+  currentAdminModule = moduleId;
+  document.querySelectorAll(".admin-module").forEach(section => {
+    section.hidden = section.dataset.module !== moduleId;
+  });
+  document.querySelectorAll("[data-module-btn]").forEach(button => {
+    button.classList.toggle("active", button.dataset.moduleBtn === moduleId);
+  });
+  document.querySelector(".admin-nav")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 // ========================================
 // PANEL DE ADMINISTRACIÓN - ORQUESTADOR
@@ -1621,6 +1717,10 @@ function truncate(value, max) {
 }
 
 // ---------------- Modales de torneo ----------------
+
+function openTournamentWizard() {
+  openModal("tournamentWizardModal");
+}
 
 async function openTournamentFormModal(tournamentId) {
   resetTournamentForm();
