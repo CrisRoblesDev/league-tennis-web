@@ -43,5 +43,23 @@
       <div class="admin-loading">Cargando el centro de administración...</div>
     </div>
   </main>
+  <div class="modal" id="adminUserEditModal">
+    <div class="modal-box">
+      <div class="modal-head"><h2>Editar usuario</h2><button class="close" type="button" onclick="closeModal('adminUserEditModal')">×</button></div>
+      <form id="adminUserForm" class="admin-form">
+        <input type="hidden" name="userId">
+        <p class="full muted" id="adminUserSelection">Selecciona un usuario en la tabla para editarlo.</p>
+        <label>Usuario<input name="identity" readonly></label>
+        <label>Email<input name="email" type="email"></label>
+        <label>Nueva contraseña<input name="password" type="password" minlength="8" maxlength="128" placeholder="Dejar vacío para no cambiar"></label>
+        <label>Rol<select name="role"><option value="user">Usuario</option><option value="admin">Administrador</option></select></label>
+        <label>Nivel<select name="level"><option value="">Sin nivel</option><option value="2.5">2.5</option><option value="3.0">3.0</option><option value="3.5">3.5</option><option value="4.0">4.0</option><option value="4.5">4.5</option><option value="5.0">5.0</option></select></label>
+        <label>Zona<select name="zone"><option value="">Sin zona</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
+        <label>Teléfono<input name="phone" type="tel" placeholder="Ej. +1 305 555 0123"></label>
+        <label class="full"><span><input name="membershipActive" type="checkbox"> Membresía activa</span></label>
+        <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar usuario</button><button class="btn btn-secondary" type="button" onclick="resetAdminUserForm()">Cancelar</button></div>
+      </form>
+    </div>
+  </div>
 </body>
 </html>

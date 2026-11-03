@@ -40,6 +40,7 @@ export async function onRequestPost(context) {
   users.push(user);
   await gWrite(env, "users", users);
 
+  const needsPhone = !user.phone;
   return setSessionResp({
     userId: user.id,
     user: {
@@ -50,7 +51,11 @@ export async function onRequestPost(context) {
       level: user.level,
       zone: user.zone,
       phone: user.phone || "",
-      membershipActive: user.membershipActive
+      membershipActive: user.membershipActive,
+      needsPhone,
+      requiresPhone: needsPhone,
+      phoneRequired: needsPhone,
+      mustRegisterPhone: needsPhone
     }
   }, env, request);
 }

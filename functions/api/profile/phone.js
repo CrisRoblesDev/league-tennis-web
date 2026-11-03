@@ -1,0 +1,1 @@
+export { onRequestGet, onRequestPost } from "../../auth/phone.js";

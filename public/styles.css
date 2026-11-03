@@ -680,3 +680,16 @@ html[dir="rtl"] .admin-record-head { direction: rtl; }
   .admin-page .admin-shell { padding-left: 12px; padding-right: 12px; }
   table th, table td { padding: 8px 10px; font-size: 12px; }
 }
+/* Admin users modern module */
+.admin-user-toolbar { display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin:12px 0 18px; }
+.admin-user-toolbar .admin-search { flex:1 1 280px; margin:0; }
+.admin-filter { display:flex; flex-direction:column; gap:4px; font-size:13px; font-weight:600; color:var(--navy); }
+.admin-filter select { min-width:150px; }
+.admin-users-table-wrap { box-shadow:0 8px 24px rgba(16,36,58,.06); }
+.admin-users-table { width:100%; border-collapse:separate; border-spacing:0; }
+.admin-users-table thead th { position:sticky; top:0; background:var(--navy); color:#fff; font-size:13px; text-transform:uppercase; letter-spacing:.04em; }
+.admin-users-table tbody tr { transition:background .15s ease; }
+.admin-users-table tbody tr:hover { background:rgba(16,36,58,.04); }
+.admin-users-table tbody tr[hidden] { display:none; }
+.admin-user-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.tag-green { background:#e7f4e4; color:#2f6b2f; }

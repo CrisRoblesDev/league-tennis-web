@@ -10,6 +10,36 @@ const ZONES = [
 ];
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function getTargetUserId(request, body) {
+  try {
+    const url = new URL(request.url);
+    const fromQuery = url.searchParams.get("userId") || url.searchParams.get("id") || url.searchParams.get("user");
+    if (fromQuery) return fromQuery;
+  } catch {}
+  if (body && typeof body === "object") {
+    return body.userId || body.id || body.targetUserId || body.deleteUserId || body.user || null;
+  }
+  return null;
+}
+
+async function deleteAdminUser(request, env, body) {
+  const { user, userId } = await requireAdmin(request, env);
+  if (!userId) return jsonResponse({ error: "No autenticado" }, 401);
+  if (!user) return jsonResponse({ error: "No autorizado" }, 403);
+  const targetId = getTargetUserId(request, body);
+  if (!targetId) return jsonResponse({ error: "Usuario no encontrado" }, 400);
+  const users = await gRead(env, "users");
+  const target = users.find(item => item.id === targetId);
+  if (!target) return jsonResponse({ error: "Usuario no encontrado" }, 404);
+  if (target.id === userId) return jsonResponse({ error: "No puedes eliminar tu propia cuenta." }, 409);
+  if (target.role === "admin" && users.filter(item => item.role === "admin").length <= 1) {
+    return jsonResponse({ error: "Debe existir al menos un administrador." }, 409);
+  }
+  const remaining = users.filter(item => item.id !== targetId);
+  await gWrite(env, "users", remaining);
+  return jsonResponse({ ok: true, deleted: true, userId: targetId });
+}
+
 export async function onRequestGet(context) {
   const { request, env } = context;
   const { user, userId } = await requireAdmin(request, env);
@@ -17,6 +47,13 @@ export async function onRequestGet(context) {
   if (!user) return jsonResponse({ error: "No autorizado" }, 403);
   const users = await gRead(env, "users");
   return jsonResponse(users.map(({ password, ...user }) => user));
+}
+
+export async function onRequestDelete(context) {
+  const { request, env } = context;
+  let body = null;
+  try { body = await request.json(); } catch {}
+  return deleteAdminUser(request, env, body);
 }
 
 export async function onRequestPost(context) {
@@ -33,6 +70,10 @@ export async function onRequestPost(context) {
   }
   if (!b || typeof b !== "object" || Array.isArray(b)) {
     return jsonResponse({ error: "Actualizaciones inválidas" }, 400);
+  }
+
+  if (b.action === "delete" || b.action === "remove" || b.action === "deleteUser" || b.delete === true || b.remove === true) {
+    return deleteAdminUser(request, env, b);
   }
 
   if (b.action === "create") {

@@ -56,6 +56,7 @@ async function checkAuth() {
     showToast(error.message);
   } finally {
     updateAuthUI();
+    promptPhoneIfNeeded();
   }
 }
 
@@ -96,6 +97,7 @@ async function login(e) {
     currentUser = data.user;
     closeModal("loginModal");
     updateAuthUI();
+    promptPhoneIfNeeded();
     await loadPlayers();
     showToast("Bienvenido, " + data.user.name);
     if (paymentNoticeState?.sessionId) {
@@ -127,6 +129,7 @@ async function register(e) {
     currentUser = data.user;
     closeModal("registerModal");
     updateAuthUI();
+    promptPhoneIfNeeded();
     await loadPlayers();
     showToast("Cuenta creada. Bienvenido!");
   } catch (error) {
@@ -172,7 +175,56 @@ async function recoverPassword(event) {
   }
 }
 
-// ============ PRODUCTS & STRIPE ============
+function ensurePhoneRequiredModal() {
+  if (document.getElementById("phoneRequiredModal")) return;
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  modal.id = "phoneRequiredModal";
+  modal.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-head"><h2>Registra tu teléfono</h2></div>
+      <p>Para recuperar tu contraseña necesitamos tu número de celular. Regístralo ahora; solo te lo pediremos una vez.</p>
+      <form id="phoneRequiredForm" class="admin-form">
+        <label class="full">Teléfono<input name="phone" type="tel" required placeholder="Ej. +1 305 555 0123"></label>
+        <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar teléfono</button></div>
+      </form>
+      <p id="phoneRequiredNotice" class="notice"></p>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function saveRequiredPhone(event) {
+  event.preventDefault();
+  const form = event.target;
+  const phone = form.elements.namedItem("phone").value.trim();
+  const notice = document.getElementById("phoneRequiredNotice");
+  try {
+    const data = await api("/api/auth/phone", {
+      method: "POST",
+      body: JSON.stringify({ phone })
+    });
+    currentUser = data.user || currentUser;
+    if (currentUser) currentUser.phone = phone;
+    closeModal("phoneRequiredModal");
+    updateAuthUI();
+    showToast("Teléfono registrado correctamente.");
+  } catch (error) {
+    if (notice) showNotice("phoneRequiredNotice", error.message, true);
+  }
+}
+
+function promptPhoneIfNeeded() {
+  if (!currentUser || currentUser.phone) return;
+  ensurePhoneRequiredModal();
+  const form = document.getElementById("phoneRequiredForm");
+  if (form && !form.dataset.bound) {
+    form.addEventListener("submit", saveRequiredPhone);
+    form.dataset.bound = "1";
+  }
+  openModal("phoneRequiredModal");
+}
+
+// ============ PRODUCTS & STRIPE ============`
 async function loadProducts() {
   try {
     products = await api("/api/products");
@@ -402,9 +454,16 @@ function initWhatsAppPromos() {
 }
 
 function filterAdminUsers() {
-  const query = document.getElementById("adminUserSearch").value.trim().toLowerCase();
+  const query = (document.getElementById("adminUserSearch")?.value || "").trim().toLowerCase();
+  const roleFilter = document.getElementById("adminUserRoleFilter")?.value || "all";
+  const phoneFilter = document.getElementById("adminUserPhoneFilter")?.value || "all";
   document.querySelectorAll("#adminUsersBody tr").forEach(row => {
-    row.hidden = !row.textContent.toLowerCase().includes(query);
+    const matchesQuery = !query || row.textContent.toLowerCase().includes(query);
+    const matchesRole = roleFilter === "all" || row.dataset.role === roleFilter;
+    const matchesPhone = phoneFilter === "all" ||
+      (phoneFilter === "with" && row.dataset.hasPhone === "true") ||
+      (phoneFilter === "without" && row.dataset.hasPhone === "false");
+    row.hidden = !(matchesQuery && matchesRole && matchesPhone);
   });
 }
 
@@ -412,6 +471,7 @@ function editAdminUser(userId) {
   const user = adminUsers.find(item => item.id === userId);
   if (!user) return;
   const form = document.getElementById("adminUserForm");
+  if (!form) return;
   form.elements.namedItem("userId").value = user.id;
   form.elements.namedItem("identity").value = `${user.name} · ${user.email}`;
   form.elements.namedItem("email").value = user.email || "";
@@ -422,16 +482,34 @@ function editAdminUser(userId) {
   form.elements.namedItem("phone").value = user.phone || "";
   form.elements.namedItem("membershipActive").checked = user.membershipActive === true;
   document.getElementById("adminUserSelection").textContent = `Editando: ${user.name}`;
-  form.scrollIntoView({ behavior: "smooth", block: "center" });
+  openModal("adminUserEditModal");
+}
+
+async function deleteAdminUser(userId) {
+  const user = adminUsers.find(item => item.id === userId);
+  if (!user) return;
+  if (!window.confirm(`¿Eliminar la cuenta de ${user.name}? Esta acción no se puede deshacer.`)) return;
+  try {
+    await api("/api/admin/users", {
+      method: "POST",
+      body: JSON.stringify({ action: "delete", userId })
+    });
+    await showAdminPanel();
+    showToast("Usuario eliminado.");
+  } catch (error) {
+    showToast(`No se pudo eliminar: ${error.message}`);
+  }
 }
 
 function resetAdminUserForm() {
   const form = document.getElementById("adminUserForm");
+  if (!form) return;
   form.reset();
   form.elements.namedItem("userId").value = "";
   form.elements.namedItem("identity").value = "";
   form.elements.namedItem("password").value = "";
   document.getElementById("adminUserSelection").textContent = "Selecciona un usuario en la tabla para editarlo.";
+  closeModal("adminUserEditModal");
 }
 
 function resetAdminUserCreateForm() {
@@ -595,6 +673,7 @@ async function saveAdminUser(event) {
       method: "POST",
       body: JSON.stringify({ userId, updates })
     });
+    closeModal("adminUserEditModal");
     await showAdminPanel();
     showToast("Usuario actualizado.");
   } catch (error) {
@@ -1555,9 +1634,25 @@ async function showAdminPanel() {
 
     <section class="admin-section admin-module" data-module="users" hidden><h3>Cuentas registradas</h3>
     <p class="admin-section-help">Crea cuentas, gestiona emails y contraseñas, permisos y membresías. Por seguridad, las contraseñas nunca se muestran.</p>
-    <label class="admin-search">Buscar usuario
-      <input id="adminUserSearch" type="search" placeholder="Nombre o email">
-    </label>
+    <div class="admin-user-toolbar">
+      <label class="admin-search">Buscar usuario
+        <input id="adminUserSearch" type="search" placeholder="Nombre, email o teléfono">
+      </label>
+      <label class="admin-filter">Rol
+        <select id="adminUserRoleFilter">
+          <option value="all">Todos</option>
+          <option value="admin">Administradores</option>
+          <option value="user">Jugadores</option>
+        </select>
+      </label>
+      <label class="admin-filter">Teléfono
+        <select id="adminUserPhoneFilter">
+          <option value="all">Todos</option>
+          <option value="with">Con teléfono</option>
+          <option value="without">Sin teléfono</option>
+        </select>
+      </label>
+    </div>
     <form id="adminUserCreateForm" class="admin-form">
       <h4 class="full admin-form-title">Crear cuenta nueva</h4>
       <label>Nombre<input name="name" maxlength="100" required></label>
@@ -1566,33 +1661,23 @@ async function showAdminPanel() {
       <label>Rol<select name="role"><option value="user">Usuario</option><option value="admin">Administrador</option></select></label>
       <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Crear cuenta</button><button class="btn btn-secondary" type="button" onclick="resetAdminUserCreateForm()">Limpiar</button></div>
     </form>
-    <form id="adminUserForm" class="admin-form">
-      <input type="hidden" name="userId">
-      <p class="full muted" id="adminUserSelection">Selecciona un usuario en la tabla para editarlo.</p>
-      <label>Usuario<input name="identity" readonly></label>
-      <label>Email<input name="email" type="email"></label>
-      <label>Nueva contraseña<input name="password" type="password" minlength="8" maxlength="128" placeholder="Dejar vacío para no cambiar"></label>
-      <label>Rol<select name="role"><option value="user">Usuario</option><option value="admin">Administrador</option></select></label>
-      <label>Nivel<select name="level"><option value="">Sin nivel</option>${levels.map(level => `<option value="${level}">${level}</option>`).join("")}</select></label>
-      <label>Zona<select name="zone"><option value="">Sin zona</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
-      <label>Teléfono<input name="phone" type="tel" placeholder="Ej. +1 305 555 0123"></label>
-      <label class="full"><span><input name="membershipActive" type="checkbox"> Membresía activa</span></label>
-      <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar usuario</button><button class="btn btn-secondary" type="button" onclick="resetAdminUserForm()">Cancelar</button></div>
-    </form>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Rol</th><th>Nivel</th><th>Zona</th><th>Membresía</th><th>Acciones</th></tr></thead>
+    <div class="table-wrap admin-users-table-wrap">
+      <table class="admin-users-table">
+        <thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr></thead>
         <tbody id="adminUsersBody">
-          ${users.map(u => `<tr>
-            <td>${escapeHtml(u.name)}</td>
+          ${users.map(u => `<tr data-user-id="${escapeHtml(u.id)}" data-role="${escapeHtml(u.role || "user")}" data-has-phone="${u.phone ? "true" : "false"}" data-membership="${u.membershipActive ? "true" : "false"}">
+            <td><strong>${escapeHtml(u.name)}</strong></td>
             <td>${escapeHtml(u.email)}</td>
-            <td>${escapeHtml(u.phone || "-")}</td>
-            <td><span class="tag ${u.role === "admin" ? "tag-blue" : ""}">${u.role === "admin" ? "Administrador" : "Jugador"}</span></td>
-            <td>${escapeHtml(u.level || "-")}</td>
-            <td>${escapeHtml(u.zone || "-")}</td>
-            <td>${u.membershipActive ? "Activa" : "-"}</td>
-            <td><button class="btn btn-sm btn-dark" onclick="editAdminUser('${escapeHtml(u.id)}')">Editar</button></td>
-          </tr>`).join("")}
+            <td>${escapeHtml(u.phone || "Sin registrar")}</td>
+            <td>
+              <span class="tag ${u.role === "admin" ? "tag-blue" : ""}">${u.role === "admin" ? "Administrador" : "Jugador"}</span>
+              ${u.membershipActive ? '<span class="tag tag-green">Activa</span>' : ''}
+            </td>
+            <td class="admin-user-actions">
+              <button class="btn btn-sm btn-dark" type="button" onclick="editAdminUser('${escapeHtml(u.id)}')">Editar</button>
+              <button class="btn btn-sm btn-danger" type="button" onclick="deleteAdminUser('${escapeHtml(u.id)}')">Eliminar</button>
+            </td>
+          </tr>`).join("") || '<tr><td colspan="5" class="muted">No hay cuentas registradas.</td></tr>'}
         </tbody>
       </table>
     </div>
@@ -1626,11 +1711,12 @@ async function showAdminPanel() {
   `;
   document.getElementById("adminTournamentForm").addEventListener("submit", saveTournament);
   document.getElementById("adminProductForm").addEventListener("submit", saveProduct);
-  document.getElementById("adminUserForm").addEventListener("submit", saveAdminUser);
   document.getElementById("adminUserCreateForm").addEventListener("submit", createAdminUser);
+  document.getElementById("adminUserSearch")?.addEventListener("input", filterAdminUsers);
+  document.getElementById("adminUserRoleFilter")?.addEventListener("change", filterAdminUsers);
+  document.getElementById("adminUserPhoneFilter")?.addEventListener("change", filterAdminUsers);
   document.getElementById("adminPlayerForm").addEventListener("submit", saveAdminPlayer);
   document.getElementById("adminResultForm").addEventListener("submit", saveAdminResult);
-  document.getElementById("adminUserSearch").addEventListener("input", filterAdminUsers);
   document.getElementById("adminSettingsForm").addEventListener("submit", saveAdminSettings);
   document.getElementById("adminRankingForm").addEventListener("submit", saveAdminRanking);
   resetAdminUserForm();
@@ -2320,6 +2406,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("categoryFilter")?.addEventListener("change", filterPlayers);
   document.getElementById("genderFilter")?.addEventListener("change", filterPlayers);
   document.getElementById("searchPlayer")?.addEventListener("input", filterPlayers);
+  document.getElementById("adminUserForm")?.addEventListener("submit", saveAdminUser);
   syncHeaderLayout();
   HEADER_MOBILE_MEDIA.addEventListener("change", syncHeaderLayout);
   initWhatsAppPromos();
