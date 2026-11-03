@@ -104,7 +104,32 @@ export async function onRequestPost({ request, env }) {
   const error = validateTournament(body);
   if (error) return jsonResponse({ error }, 400);
 
-  const tournaments = await gRead(env, "tournaments");
+  const [tournaments, players] = await Promise.all([
+    gRead(env, "tournaments"),
+    gRead(env, "players")
+  ]);
+  const playerById = new Map(players.map(player => [player.id, player]));
+  const entries = [];
+  if (body.entries !== undefined) {
+    if (!Array.isArray(body.entries)) {
+      return jsonResponse({ error: "Lista de inscripciones inválida" }, 400);
+    }
+    const seen = new Set();
+    for (const raw of body.entries) {
+      const playerId = typeof raw === "string" ? raw : (raw && typeof raw === "object" ? raw.playerId : null);
+      if (typeof playerId !== "string") {
+        return jsonResponse({ error: "Participante inválido en las inscripciones" }, 400);
+      }
+      if (seen.has(playerId)) continue;
+      const player = playerById.get(playerId);
+      if (!player) {
+        return jsonResponse({ error: "Uno de los participantes no existe en la liga" }, 400);
+      }
+      seen.add(playerId);
+      entries.push({ playerId: player.id, userId: player.userId, created: new Date().toISOString() });
+    }
+  }
+
   const tournament = {
     id: `tournament-${crypto.randomUUID()}`,
     title: body.title.trim(),
@@ -120,7 +145,7 @@ export async function onRequestPost({ request, env }) {
     formatType: FORMAT_TYPES.includes(body.formatType) ? body.formatType : "knockout",
     maxParticipants: body.maxParticipants ? Number(body.maxParticipants) : null,
     status: body.status,
-    entries: [],
+    entries,
     matches: [],
     createdBy: userId,
     created: new Date().toISOString()

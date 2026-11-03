@@ -1,4 +1,4 @@
-import { gRead, gWrite, requireAdmin, validateMatchScore, jsonResponse } from "../../_helpers.js";
+import { gRead, gWrite, requireAdmin, validateMatchScore, jsonResponse, awardRankingPoint } from "../../_helpers.js";
 
 export async function onRequestPatch({ request, env }) {
   const { user, userId } = await requireAdmin(request, env);
@@ -58,6 +58,9 @@ export async function onRequestPatch({ request, env }) {
   result.moderatedBy = userId;
   result.moderatedAt = new Date().toISOString();
   await gWrite(env, "challenges", results);
+  if (result.status === "confirmed") {
+    await awardRankingPoint(env, result);
+  }
   return jsonResponse({ ok: true, status: result.status });
 }
 

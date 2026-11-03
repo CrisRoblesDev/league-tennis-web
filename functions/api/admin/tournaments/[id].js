@@ -35,6 +35,41 @@ function distributeByes(players, bracketSize) {
   return seeding;
 }
 
+// Calendario de liga dentro de grupos personalizados (wizard por etapas).
+function buildGroupMatches(groups) {
+  const matches = [];
+  groups.forEach(group => {
+    let groupPlayers = [...group.entryPlayerIds];
+    if (groupPlayers.length % 2 === 1) groupPlayers.push(null);
+    const totalRounds = groupPlayers.length - 1;
+    const rotation = [...groupPlayers];
+    for (let roundIndex = 0; roundIndex < totalRounds; roundIndex++) {
+      for (let index = 0; index < groupPlayers.length / 2; index++) {
+        const playerA = rotation[index];
+        const playerB = rotation[rotation.length - 1 - index];
+        if (playerA === null || playerB === null) continue;
+        matches.push({
+          id: `match-${crypto.randomUUID()}`,
+          round: `${group.name} · Jornada ${roundIndex + 1}`,
+          playerAId: playerA,
+          playerBId: playerB,
+          date: "",
+          court: "",
+          status: "scheduled",
+          score: "",
+          winnerId: null,
+          auto: true
+        });
+      }
+      const fixed = rotation[0];
+      const rest = rotation.slice(1);
+      rest.unshift(rest.pop());
+      rotation.splice(0, rotation.length, fixed, ...rest);
+    }
+  });
+  return matches;
+}
+
 function buildKnockoutDraw(playerIds) {
   const size = computeBracketSize(playerIds.length);
   const shuffled = [...playerIds].sort(() => Math.random() - 0.5);
@@ -245,37 +280,41 @@ export async function onRequestPut({ request, env, params }) {
       name: `Grupo ${String.fromCharCode(65 + index)}`,
       entryPlayerIds: group
     }));
-    const matches = [];
-    groups.forEach((group, groupIndex) => {
-      group = [...group];
-      if (group.length % 2 === 1) group.push(null);
-      const rounds = group.length - 1;
-      const rotation = [...group];
-      for (let roundIndex = 0; roundIndex < rounds; roundIndex++) {
-        for (let index = 0; index < group.length / 2; index++) {
-          const playerA = rotation[index];
-          const playerB = rotation[rotation.length - 1 - index];
-          if (playerA === null || playerB === null) continue;
-          matches.push({
-            id: `match-${crypto.randomUUID()}`,
-            round: `Grupo ${String.fromCharCode(65 + groupIndex)} · Jornada ${roundIndex + 1}`,
-            playerAId: playerA,
-            playerBId: playerB,
-            date: "",
-            court: "",
-            status: "scheduled",
-            score: "",
-            winnerId: null,
-            auto: true
-          });
-        }
-        const fixed = rotation[0];
-        const rest = rotation.slice(1);
-        rest.unshift(rest.pop());
-        rotation.splice(0, rotation.length, fixed, ...rest);
+    tournament.matches = buildGroupMatches(tournament.groups);
+  }
+  if (body.groups !== undefined) {
+    // Grupos personalizados (creador de Main Draw por etapas): conserva los
+    // grupos definidos y genera el calendario de liga dentro de cada uno.
+    if (!Array.isArray(body.groups) || !body.groups.length) {
+      return jsonResponse({ error: "Grupos inválidos." }, 400);
+    }
+    const entryIds = new Set((tournament.entries || []).map(entry => entry.playerId));
+    const used = new Set();
+    const customGroups = [];
+    for (const raw of body.groups) {
+      if (!raw || typeof raw !== "object" || Array.isArray(raw) ||
+          typeof raw.name !== "string" || !Array.isArray(raw.entryPlayerIds)) {
+        return jsonResponse({ error: "Grupo inválido." }, 400);
       }
-    });
-    tournament.matches = matches;
+      const ids = [];
+      for (const playerId of raw.entryPlayerIds) {
+        if (typeof playerId !== "string" || !entryIds.has(playerId) || used.has(playerId)) continue;
+        used.add(playerId);
+        ids.push(playerId);
+      }
+      if (ids.length < 2) continue;
+      if (ids.length > 64) {
+        return jsonResponse({ error: "Un grupo no puede tener más de 64 jugadores." }, 400);
+      }
+      customGroups.push({ name: raw.name.trim().slice(0, 60) || "Grupo", entryPlayerIds: ids });
+    }
+    if (!customGroups.length) {
+      return jsonResponse({ error: "Los grupos necesitan al menos 2 jugadores inscritos cada uno." }, 400);
+    }
+    tournament.formatType = "league";
+    tournament.groupCount = customGroups.length;
+    tournament.groups = customGroups;
+    tournament.matches = buildGroupMatches(customGroups);
   }
   if (tournament.startDate && tournament.endDate && tournament.startDate > tournament.endDate) {
     return jsonResponse({ error: "La fecha de término debe ser igual o posterior al inicio." }, 400);

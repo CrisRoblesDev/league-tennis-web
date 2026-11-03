@@ -1,4 +1,4 @@
-import { gRead, gWrite, requireAuth, validateMatchScore, jsonResponse, MATCH_CATEGORIES } from "../_helpers.js";
+import { gRead, gWrite, requireAuth, validateMatchScore, jsonResponse, MATCH_CATEGORIES, awardRankingPoint } from "../_helpers.js";
 
 export async function onRequestGet(context) {
   const { env } = context;
@@ -115,5 +115,8 @@ export async function onRequestPatch(context) {
   result.respondedBy = userId;
   result.respondedAt = new Date().toISOString();
   await gWrite(env, "challenges", results);
+  if (result.status === "confirmed") {
+    await awardRankingPoint(env, result);
+  }
   return jsonResponse({ ok: true, status: result.status });
 }

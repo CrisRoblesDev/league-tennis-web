@@ -1045,6 +1045,16 @@ async function submitChallenge(event) {
   }
 }
 
+// Ranking real: ordena por puntos (desc) para que la tabla y el podio 3D
+// reflejen la misma clasificación que el ranking.
+function sortByRanking(list) {
+  return [...list].sort((a, b) =>
+    ((b.points || 0) - (a.points || 0)) ||
+    ((b.matches || 0) - (a.matches || 0)) ||
+    String(a.name).localeCompare(String(b.name))
+  );
+}
+
 function renderRanking() {
   const tbody = document.getElementById("rankingBody");
   if (!tbody) return;
@@ -1052,7 +1062,8 @@ function renderRanking() {
     tbody.innerHTML = '<tr><td colspan="8" class="muted" style="text-align:center;padding:20px">No hay jugadores todavía. Sé el primero!</td></tr>';
     return;
   }
-  tbody.innerHTML = players.map((p, i) => {
+  const ranked = sortByRanking(players);
+  tbody.innerHTML = ranked.map((p, i) => {
     const initials = p.name.split(" ").map(x => x[0]).join("").slice(0, 2);
     return `<tr>
       <td><b>${i + 1}</b></td>
@@ -1061,11 +1072,11 @@ function renderRanking() {
       <td>${escapeHtml(CATEGORY_LABELS[p.category || "singles"] || "Singles")}</td>
       <td>${escapeHtml(GENDER_LABELS[p.gender || "hombres"] || "Hombres")}</td>
       <td>${escapeHtml(p.zone)}</td>
-      <td>${p.matches}</td>
-      <td><b>${p.points.toLocaleString()}</b></td>
+      <td>${p.matches || 0}</td>
+      <td><b>${(p.points || 0).toLocaleString()}</b></td>
     </tr>`;
   }).join("");
-  window.__ranking3dUpdate?.(players);
+  window.__ranking3dUpdate?.(ranked);
 }
 
 function filterPlayers() {
@@ -1074,17 +1085,18 @@ function filterPlayers() {
   const category = document.getElementById("categoryFilter")?.value;
   const gender = document.getElementById("genderFilter")?.value;
   const q = document.getElementById("searchPlayer")?.value.toLowerCase();
-  let filtered = players.filter(p =>
+  const filtered = sortByRanking(players.filter(p =>
     (!level || p.level === level) &&
     (!zone || p.zone === zone) &&
     (!category || (p.category || "singles") === category) &&
     (!gender || (p.gender || "hombres") === gender) &&
     (!q || p.name.toLowerCase().includes(q))
-  );
+  ));
   const tbody = document.getElementById("rankingBody");
   if (!tbody) return;
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="8" class="muted" style="text-align:center;padding:20px">No hay jugadores con esos filtros.</td></tr>';
+    window.__ranking3dUpdate?.([]);
     return;
   }
   tbody.innerHTML = filtered.map((p, i) => {
@@ -1096,11 +1108,11 @@ function filterPlayers() {
       <td>${escapeHtml(CATEGORY_LABELS[p.category || "singles"] || "Singles")}</td>
       <td>${escapeHtml(GENDER_LABELS[p.gender || "hombres"] || "Hombres")}</td>
       <td>${escapeHtml(p.zone)}</td>
-      <td>${p.matches}</td>
-      <td><b>${p.points.toLocaleString()}</b></td>
+      <td>${p.matches || 0}</td>
+      <td><b>${(p.points || 0).toLocaleString()}</b></td>
     </tr>`;
   }).join("");
-  window.__ranking3dUpdate?.(players);
+  window.__ranking3dUpdate?.(filtered);
 }
 
 // ============ CREATE PLAYER PROFILE ============
@@ -1740,9 +1752,488 @@ function truncate(value, max) {
 
 // ---------------- Modales de torneo ----------------
 
-function openTournamentWizard() {
+// ========================================
+// TORNEOS - CREADOR DE MAIN DRAW POR ETAPAS
+// ========================================
+
+// ---------- Estado del wizard ----------
+let wizardState = {
+  step: 1,
+  tournament: { title: "", month: "", status: "registration", formatType: "knockout", category: "singles", gender: "mixto", startDate: "", endDate: "", maxParticipants: null, venue: "", description: "", levels: [] },
+  groups: [],           // [{ name: "Grupo A", players: [playerId, ...] }]
+  unassignedPlayerIds: [],
+  matches: []
+};
+
+const WIZARD_STEPS = [
+  { id: 1, label: "Datos del torneo" },
+  { id: 2, label: "Grupos / Stages" },
+  { id: 3, label: "Participantes" },
+  { id: 4, label: "Main Draw" }
+];
+
+// ---------- Render del wizard ----------
+function openTournamentWizard(tournamentId) {
+  wizardState = {
+    step: 1,
+    tournament: { title: "", month: new Date().toISOString().slice(0,7), status: "registration", formatType: "knockout", category: "singles", gender: "mixto", startDate: "", endDate: "", maxParticipants: null, venue: "", description: "", levels: [] },
+    groups: [],
+    unassignedPlayerIds: [],
+    matches: []
+  };
+  if (tournamentId) {
+    const t = adminTournaments.find(item => item.id === tournamentId);
+    if (t) {
+      wizardState.tournament = { ...t };
+      const entryIds = (t.entries || []).map(e => e.playerId);
+      const groups = (t.groups || []).map(g => ({ name: g.name, players: [...(g.entryPlayerIds || g.players || [])] }));
+      if (!groups.length && entryIds.length) {
+        // Sin grupos guardados: precarga un grupo con los inscritos actuales
+        // para que el wizard no los pierda al guardar.
+        groups.push({ name: "Grupo A", players: entryIds });
+      }
+      wizardState.groups = groups;
+      wizardState.unassignedPlayerIds = entryIds;
+    }
+  }
+  renderWizard();
   openModal("tournamentWizardModal");
 }
+
+// Crea grupos por defecto si aún no existen (evita errores al asignar).
+function ensureWizardGroups() {
+  if (wizardState.groups.length) return;
+  const count = Math.min(16, Math.max(1, Number(document.getElementById("wizardGroupCount")?.value) || 2));
+  wizardState.groups = Array.from({ length: count }, (_, i) => ({
+    name: `Grupo ${String.fromCharCode(65 + i)}`,
+    players: []
+  }));
+}
+
+function renderWizard() {
+  const content = document.getElementById("wizardContent");
+  if (!content) return;
+  const step = WIZARD_STEPS[wizardState.step - 1];
+
+  // Barra de pasos
+  const stepsHtml = WIZARD_STEPS.map((s, i) => {
+    const status = i < wizardState.step - 1 ? "is-completed" : (i === wizardState.step - 1 ? "is-active" : "");
+    return `<div class="wizard-step ${status}" onclick="wizardState.step = ${s.id}; renderWizard();">
+      <div class="step-number">${i + 1}</div>
+      ${escapeHtml(s.label)}
+    </div>`;
+  }).join("");
+
+  let panelHtml = "";
+  switch (wizardState.step) {
+    case 1: panelHtml = renderWizardStep1(); break;
+    case 2: panelHtml = renderWizardStep2(); break;
+    case 3: panelHtml = renderWizardStep3(); break;
+    case 4: panelHtml = renderWizardStep4(); break;
+  }
+
+  const prevDisabled = wizardState.step === 1 ? "disabled" : "";
+  const nextDisabled = wizardState.step === 4 ? "disabled" : "";
+  const isLast = wizardState.step === 4;
+
+  content.innerHTML = `
+    <div class="tournament-wizard">
+      <div class="wizard-steps">${stepsHtml}</div>
+      <div class="wizard-panel is-active">
+        <h3>${escapeHtml(step.label)}</h3>
+        <p class="wizard-subtitle">${wizardState.step === 1 ? "Define la identidad del torneo." : wizardState.step === 2 ? "Organiza grupos y asigna jugadores a cada stage." : wizardState.step === 3 ? "Selecciona y asigna participantes." : "Genera y visualiza el Main Draw antes de guardar."}</p>
+        ${panelHtml}
+      </div>
+      <div class="wizard-nav">
+        <button class="btn btn-secondary btn-sm" ${prevDisabled} onclick="wizardState.step = Math.max(1, wizardState.step - 1); renderWizard();">← Anterior</button>
+        ${isLast
+          ? `<button class="btn btn-primary" onclick="saveWizardTournament()">Guardar torneo y Main Draw</button>`
+          : `<button class="btn btn-primary btn-sm" ${nextDisabled} onclick="wizardState.step = Math.min(4, wizardState.step + 1); renderWizard();">Siguiente →</button>`
+        }
+      </div>
+    </div>
+  `;
+}
+
+// ---------- Paso 1: Datos ----------
+function renderWizardStep1() {
+  const t = wizardState.tournament;
+  return `
+    <div class="tournament-data-grid" id="wizardTournamentForm">
+      <label>Nombre del torneo<input name="title" value="${escapeHtml(t.title)}" maxlength="120" placeholder="Ej. Copa de noviembre"></label>
+      <label>Mes del torneo<input name="month" type="month" value="${escapeHtml(t.month)}"></label>
+      <label>Estado del torneo<select name="status"><option value="registration" ${t.status === "registration" ? "selected" : ""}>Inscripciones abiertas</option><option value="scheduled" ${t.status === "scheduled" ? "selected" : ""}>Programado</option><option value="in_progress" ${t.status === "in_progress" ? "selected" : ""}>En curso</option><option value="completed" ${t.status === "completed" ? "selected" : ""}>Finalizado</option><option value="cancelled" ${t.status === "cancelled" ? "selected" : ""}>Cancelado</option></select></label>
+      <label>Tipo de competición<select name="formatType"><option value="knockout" ${t.formatType === "knockout" ? "selected" : ""}>Eliminación directa (cuadro)</option><option value="league" ${t.formatType === "league" ? "selected" : ""}>Liga · todos contra todos</option></select></label>
+      <label>Categoría<select name="category"><option value="singles" ${t.category === "singles" ? "selected" : ""}>Singles</option><option value="dobles" ${t.category === "dobles" ? "selected" : ""}>Dobles</option><option value="dobles_mixtos" ${t.category === "dobles_mixtos" ? "selected" : ""}>Dobles Mixtos</option></select></label>
+      <label>Modalidad<select name="gender"><option value="mixto" ${t.gender === "mixto" ? "selected" : ""}>Mixto</option><option value="hombres" ${t.gender === "hombres" ? "selected" : ""}>Hombres</option><option value="mujeres" ${t.gender === "mujeres" ? "selected" : ""}>Mujeres</option></select></label>
+      <label>Fecha de inicio<input name="startDate" type="date" value="${escapeHtml(t.startDate)}"></label>
+      <label>Fecha de término<input name="endDate" type="date" value="${escapeHtml(t.endDate)}"></label>
+      <label>Cantidad de participantes<input name="maxParticipants" type="number" min="2" max="256" value="${t.maxParticipants || ""}" placeholder="Ej. 16"></label>
+      <label>Sede o cancha<input name="venue" value="${escapeHtml(t.venue)}" maxlength="120" placeholder="Ej. Aventura Tennis Center"></label>
+      <label class="full">Descripción<textarea name="description" rows="2" maxlength="500">${escapeHtml(t.description)}</textarea></label>
+      <fieldset class="admin-level-select full">
+        <legend>Niveles participantes</legend>
+        <p>Selecciona uno o más niveles de juego.</p>
+        <div class="levels-grid">
+          ${["2.5","3.0","3.5","4.0","4.5","5.0"].map(l => `<label><input type="checkbox" name="levels" value="${l}" ${(t.levels || []).includes(l) ? "checked" : ""}><span>${l}</span></label>`).join("")}
+        </div>
+      </fieldset>
+    </div>
+  `;
+}
+
+// ---------- Paso 2: Grupos / Stages ----------
+function renderWizardStep2() {
+  ensureWizardGroups();
+  const groupCount = wizardState.groups.length || 2;
+  const allPlayers = players.map(p => ({ id: p.id, name: p.name, level: p.level }));
+  const assignedIds = new Set(wizardState.groups.flatMap(g => g.players));
+  const unassigned = allPlayers.filter(p => !assignedIds.has(p.id));
+  wizardState.unassignedPlayerIds = unassigned.map(p => p.id);
+
+  return `
+    <div class="group-count-control">
+      <label>Número de grupos<input type="number" id="wizardGroupCount" min="1" max="16" value="${groupCount}"></label>
+      <button class="btn btn-dark btn-sm" onclick="wizardRegenerateGroups()">Aplicar grupos</button>
+    </div>
+    <div class="groups-container">
+      ${wizardState.groups.map((g, gi) => `
+        <div class="group-stage-card">
+          <div class="group-stage-head">
+            <span class="group-stage-name">${escapeHtml(g.name)}</span>
+            <div class="group-stage-actions">
+              <button class="btn btn-sm btn-danger" onclick="wizardRemoveGroup(${gi})">Eliminar grupo</button>
+            </div>
+          </div>
+          <div class="group-players">
+            ${g.players.map(pid => {
+              const p = allPlayers.find(x => x.id === pid);
+              return `<span class="group-player-chip">${escapeHtml(p?.name || pid)}<span class="remove" onclick="wizardRemovePlayerFromGroup(${gi}, '${escapeHtml(pid)}')">×</span></span>`;
+            }).join("") || '<span class="muted">Sin jugadores</span>'}
+          </div>
+        </div>
+      `).join("") || ""}
+    </div>
+    <div class="available-players">
+      <h4>Jugadores disponibles (${unassigned.length})</h4>
+      <div class="available-players-list">
+        ${unassigned.map(p => `<button class="available-player-btn" onclick="wizardAddPlayerToGroup('${escapeHtml(p.id)}')">${escapeHtml(p.name)} <small>${escapeHtml(p.level || "")}</small></button>`).join("") || '<span class="muted">Todos asignados</span>'}
+      </div>
+    </div>
+  `;
+}
+
+function wizardRegenerateGroups() {
+  const count = Math.max(1, Math.min(16, Number(document.getElementById("wizardGroupCount")?.value) || 1));
+  const allPlayers = players.map(p => p.id);
+  const assigned = new Set(wizardState.groups.flatMap(g => g.players));
+  const free = allPlayers.filter(p => !assigned.has(p));
+  const shuffled = [...free].sort(() => Math.random() - 0.5);
+  const groups = Array.from({ length: count }, (_, i) => ({ name: `Grupo ${String.fromCharCode(65 + i)}`, players: [] }));
+  shuffled.forEach((pid, i) => groups[i % count].players.push(pid));
+  wizardState.groups = groups;
+  renderWizard();
+}
+
+function wizardRemoveGroup(index) {
+  wizardState.groups.splice(index, 1);
+  renderWizard();
+}
+
+function wizardAddPlayerToGroup(playerId) {
+  ensureWizardGroups();
+  // Agregar al grupo con menos jugadores (sin reordenar los grupos)
+  let target = null;
+  for (const group of wizardState.groups) {
+    if (group.players.includes(playerId)) { target = null; break; }
+    if (!target || group.players.length < target.players.length) target = group;
+  }
+  if (target) target.players.push(playerId);
+  renderWizard();
+}
+
+function wizardRemovePlayerFromGroup(groupIndex, playerId) {
+  const g = wizardState.groups[groupIndex];
+  if (g) g.players = g.players.filter(p => p !== playerId);
+  renderWizard();
+}
+
+// ---------- Paso 3: Participantes ----------
+function renderWizardStep3() {
+  const assignedIds = new Set(wizardState.groups.flatMap(g => g.players));
+  const unassigned = players.filter(p => !assignedIds.has(p.id));
+  const assigned = players.filter(p => assignedIds.has(p.id));
+
+  return `
+    <div class="participants-container">
+      <div class="unassigned-players">
+        <h4>Sin asignar (${unassigned.length})</h4>
+        <div class="player-list">
+          ${unassigned.map(p => `<div class="player-item" onclick="wizardTogglePlayer('${escapeHtml(p.id)}')">
+            <div class="player-info">${escapeHtml(p.name)}</div>
+            <div class="player-level">${escapeHtml(p.level || "")}</div>
+            <button class="btn btn-sm btn-dark" onclick="event.stopPropagation(); wizardTogglePlayer('${escapeHtml(p.id)}')">Asignar</button>
+          </div>`).join("") || '<span class="muted">Sin jugadores disponibles</span>'}
+        </div>
+      </div>
+      <div class="assigned-players">
+        <h4>Asignados a grupos (${assigned.length})</h4>
+        <div class="player-list">
+          ${assigned.map(p => `<div class="player-item is-assigned" onclick="wizardTogglePlayer('${escapeHtml(p.id)}')">
+            <div class="player-info">${escapeHtml(p.name)}</div>
+            <div class="player-level">${escapeHtml(p.level || "")}</div>
+            <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); wizardTogglePlayer('${escapeHtml(p.id)}')">Quitar</button>
+          </div>`).join("") || '<span class="muted">Sin asignados</span>'}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function wizardTogglePlayer(playerId) {
+  const assignedIds = new Set(wizardState.groups.flatMap(g => g.players));
+  if (assignedIds.has(playerId)) {
+    // Quitar de su grupo
+    wizardState.groups.forEach(g => { g.players = g.players.filter(p => p !== playerId); });
+  } else {
+    // Agregar al grupo con menos jugadores (sin reordenar los grupos)
+    ensureWizardGroups();
+    let target = null;
+    for (const group of wizardState.groups) {
+      if (!target || group.players.length < target.players.length) target = group;
+    }
+    if (target && !target.players.includes(playerId)) target.players.push(playerId);
+  }
+  renderWizard();
+}
+
+// ---------- Helpers de cuadro (cliente) ----------
+function roundName(totalRounds, roundIndex) {
+  const remaining = totalRounds - roundIndex;
+  if (remaining === 1) return "Final";
+  if (remaining === 2) return "Semifinales";
+  if (remaining === 3) return "Cuartos de final";
+  if (remaining === 4) return "Octavos de final";
+  return `Ronda ${roundIndex + 1}`;
+}
+
+function computeBracketSize(nPlayers) {
+  if (nPlayers < 2) return 0;
+  let size = 1;
+  while (size < nPlayers) size *= 2;
+  return size;
+}
+
+function distributeByes(playerIds, bracketSize) {
+  const nByes = bracketSize - playerIds.length;
+  const seeding = [];
+  for (let i = 0; i < nByes; i++) {
+    seeding.push(playerIds[i], null);
+  }
+  for (let i = nByes; i < playerIds.length; i++) {
+    seeding.push(playerIds[i]);
+  }
+  return seeding;
+}
+
+// ---------- Paso 4: Main Draw Visual ----------
+function renderWizardStep4() {
+  const t = wizardState.tournament;
+  const totalPlayers = wizardState.groups.reduce((sum, g) => sum + g.players.length, 0);
+  const isKnockout = t.formatType === "knockout";
+
+  // Generar preview de partidos si Knockout
+  let previewHtml = "";
+  if (isKnockout && totalPlayers < 2) {
+    wizardState.matches = [];
+    previewHtml = '<p class="muted">Asigna al menos 2 participantes en los pasos 2 y 3 para ver el cuadro.</p>';
+  } else if (isKnockout) {
+    const playerIds = wizardState.groups.flatMap(g => g.players);
+    const size = computeBracketSize(playerIds.length);
+    const shuffled = [...playerIds].sort(() => Math.random() - 0.5);
+    const seeding = distributeByes(shuffled, size);
+    const rounds = Math.log2(size);
+    const roundsData = [];
+    for (let r = 0; r < rounds; r++) {
+      const count = size / (2 ** (r + 1));
+      const roundMatches = [];
+      for (let m = 0; m < count; m++) {
+        const a = seeding[m * 2];
+        const b = seeding[m * 2 + 1];
+        roundMatches.push({
+          round: roundName(rounds, r),
+          playerAId: a || null,
+          playerBId: b || null,
+          status: (!a || !b) ? "completed" : "scheduled",
+          winnerId: (!a && b) ? b : (!b && a) ? a : null,
+          score: (!a && b) || (!b && a) ? "BYE" : ""
+        });
+      }
+      roundsData.push({ name: roundName(rounds, r), matches: roundMatches });
+    }
+    wizardState.matches = roundsData.flatMap(rd => rd.matches);
+
+    previewHtml = `<div class="draw-visual-container">
+      <div class="draw-canvas-visual">
+        ${roundsData.map((rd, ri) => `
+          <div class="draw-stage">
+            <div class="draw-stage-head"><span class="draw-stage-name">${escapeHtml(rd.name)}</span></div>
+            <div class="draw-round">
+              ${rd.matches.map((m, mi) => `
+                <div class="draw-match-visual">
+                  ${renderDrawSlot(m.playerAId, m.status === "completed" && m.winnerId === m.playerAId)}
+                  <span class="draw-vs">vs</span>
+                  ${renderDrawSlot(m.playerBId, m.status === "completed" && m.winnerId === m.playerBId)}
+                  ${mi < rd.matches.length - 1 ? `<div class="draw-connector"></div>` : ""}
+                </div>
+                ${mi < rd.matches.length - 1 ? `<div class="draw-line-h"></div>` : ""}
+              `).join("")}
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>`;
+  } else {
+    // Liga/grupos: mostrar tabla de grupos
+    previewHtml = `<div class="draw-visual-container">
+      ${wizardState.groups.map(g => `
+        <div class="draw-stage">
+          <div class="draw-stage-head"><span class="draw-stage-name">${escapeHtml(g.name)} (${g.players.length} jugadores)</span></div>
+          <div class="player-list">
+            ${g.players.map(pid => {
+              const p = players.find(x => x.id === pid);
+              return `<div class="player-item"><div class="player-info">${escapeHtml(p?.name || pid)}</div><div class="player-level">${escapeHtml(p?.level || "")}</div></div>`;
+            }).join("")}
+          </div>
+        </div>
+      `).join("")}
+    </div>`;
+  }
+
+  return `
+    <div class="wizard-summary">
+      <h4>Resumen del torneo</h4>
+      <div class="wizard-summary-grid">
+        <div class="wizard-summary-item"><span class="label">Nombre</span><span class="value">${escapeHtml(t.title || "-")}</span></div>
+        <div class="wizard-summary-item"><span class="label">Mes</span><span class="value">${escapeHtml(t.month)}</span></div>
+        <div class="wizard-summary-item"><span class="label">Formato</span><span class="value">${t.formatType === "league" ? "Liga" : "Eliminación"}</span></div>
+        <div class="wizard-summary-item"><span class="label">Grupos</span><span class="value">${wizardState.groups.length}</span></div>
+        <div class="wizard-summary-item"><span class="label">Participantes</span><span class="value">${totalPlayers}</span></div>
+      </div>
+    </div>
+    <div class="main-draw-preview">
+      <h4 style="margin:0 0 10px; font-size:13px; color:#6b7280; text-transform:uppercase; letter-spacing:.05em;">Previsualización del Main Draw</h4>
+      ${previewHtml}
+    </div>
+  `;
+}
+
+function renderDrawSlot(playerId, isWinner) {
+  const p = players.find(x => x.id === playerId);
+  if (!playerId) return `<div class="draw-slot">Bye</div>`;
+  const cls = `draw-slot${isWinner ? " is-winner" : ""} is-filled`;
+  return `<div class="${cls}">${escapeHtml(p?.name || "Jugador")}${p?.level ? `<br><small>${escapeHtml(p.level)}</small>` : ""}</div>`;
+}
+
+// ---------- Guardar ----------
+async function saveWizardTournament() {
+  const form = document.getElementById("wizardTournamentForm");
+  if (!form) return;
+  const t = wizardState.tournament;
+  const field = name => form.elements.namedItem(name);
+  t.title = (field("title")?.value || "").trim();
+  t.month = field("month")?.value || "";
+  t.status = field("status")?.value || "registration";
+  t.formatType = field("formatType")?.value || "knockout";
+  t.category = field("category")?.value || "singles";
+  t.gender = field("gender")?.value || "mixto";
+  t.startDate = field("startDate")?.value || "";
+  t.endDate = field("endDate")?.value || "";
+  t.maxParticipants = field("maxParticipants")?.value || null;
+  t.venue = (field("venue")?.value || "").trim();
+  t.description = (field("description")?.value || "").trim();
+  t.levels = Array.from(form.querySelectorAll('input[name="levels"]:checked'), i => i.value);
+
+  if (!t.title) { showToast("El nombre del torneo es requerido."); return; }
+  if (!t.month) { showToast("Selecciona el mes del torneo."); return; }
+  if (!t.levels.length) { showToast("Selecciona al menos un nivel."); return; }
+
+  const entryIds = [...new Set(wizardState.groups.flatMap(g => g.players))].filter(Boolean);
+  if (!entryIds.length) { showToast("Asigna al menos un participante en los pasos 2 o 3."); return; }
+  if (t.formatType === "knockout" && entryIds.length < 2) {
+    showToast("Se necesitan al menos 2 participantes para el cuadro eliminatorio.");
+    return;
+  }
+
+  const groups = wizardState.groups
+    .filter(g => g.players.length)
+    .map(g => ({ name: g.name, entryPlayerIds: [...new Set(g.players)] }));
+  const existingId = t.id || "";
+
+  try {
+    let hasMatches = false;
+    if (existingId) {
+      // Editar: actualizar datos y sincronizar participantes.
+      const payload = {
+        title: t.title, month: t.month, status: t.status, formatType: t.formatType,
+        category: t.category, gender: t.gender, startDate: t.startDate, endDate: t.endDate,
+        maxParticipants: t.maxParticipants, venue: t.venue, description: t.description, levels: t.levels
+      };
+      const upd = await api(`/api/admin/tournaments/${encodeURIComponent(existingId)}`, {
+        method: "PUT",
+        body: JSON.stringify(payload)
+      });
+      const current = upd.tournament || {};
+      hasMatches = (current.matches || []).length > 0;
+      const currentIds = (current.entries || []).map(e => e.playerId);
+      for (const pid of entryIds.filter(id => !currentIds.includes(id))) {
+        await api(`/api/admin/tournaments/${encodeURIComponent(existingId)}`, {
+          method: "PUT",
+          body: JSON.stringify({ addEntryPlayerId: pid })
+        });
+      }
+      for (const pid of currentIds.filter(id => !entryIds.includes(id))) {
+        try {
+          await api(`/api/admin/tournaments/${encodeURIComponent(existingId)}`, {
+            method: "PUT",
+            body: JSON.stringify({ removeEntryPlayerId: pid })
+          });
+        } catch {
+          // El jugador ya tiene partidos: se conserva en el cuadro.
+        }
+      }
+    } else {
+      // Crear: el servidor guarda las inscripciones que asignaste en el wizard.
+      const created = await api("/api/admin/tournaments", {
+        method: "POST",
+        body: JSON.stringify({ ...t, entries: entryIds })
+      });
+      const createdId = created.tournament?.id;
+      if (!createdId) throw new Error("El servidor no devolvió el torneo creado.");
+      t.id = createdId;
+    }
+
+    // Conectar el Main Draw: el servidor genera el cuadro con avance automático.
+    const regenerate = !hasMatches || window.confirm(
+      "Se regenerará el cuadro con los participantes actuales y se reemplazarán los partidos. ¿Continuar?"
+    );
+    if (regenerate) {
+      const useCustomGroups = t.formatType === "league" && groups.length >= 1 && groups.every(g => g.entryPlayerIds.length >= 2);
+      await api(`/api/admin/tournaments/${encodeURIComponent(t.id)}`, {
+        method: "PUT",
+        body: JSON.stringify(useCustomGroups ? { groups } : { generateDraw: true })
+      });
+    }
+
+    closeModal("tournamentWizardModal");
+    await loadTournaments();
+    await showAdminPanel();
+    showToast(existingId ? "Torneo actualizado." : "Torneo creado con su Main Draw conectado.");
+  } catch (error) {
+    showToast(`No se pudo guardar: ${error.message}`);
+  }
+}
+
 
 async function openTournamentFormModal(tournamentId) {
   resetTournamentForm();
@@ -1761,20 +2252,24 @@ async function openTournamentManage(tournamentId) {
   if (title) title.textContent = "Cargando torneo...";
   if (!content) return;
   let tournament;
+  let data = null;
   try {
-    const res = await api(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}`);
-    const data = await res.json();
-    tournament = data.tournament;
+    data = await api(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}`);
+    tournament = data?.tournament;
   } catch (error) {
     content.innerHTML = `<div class="manage-summary"><p class="muted">No se pudo cargar el torneo: ${escapeHtml(error.message)}</p></div>`;
     openModal("tournamentManageModal");
     return;
   }
-  if (!tournament) return;
+  if (!tournament) {
+    content.innerHTML = '<div class="manage-summary"><p class="muted">Torneo no encontrado.</p></div>';
+    openModal("tournamentManageModal");
+    return;
+  }
   if (title) title.textContent = `Gestionar · ${tournament.title || tournament.month}`;
   const entrants = tournament.entries || [];
   const matches = tournament.matches || [];
-  const standings = data.standings || null;
+  const standings = data?.standings || null;
   const availablePlayers = players.filter(player =>
     !(tournament.entries || []).some(entry => entry.playerId === player.id) &&
     (tournament.levels || []).includes(player.level)

@@ -52,7 +52,7 @@ test("ranking awards points only for confirmed results", () => {
   ]);
 
   assert.deepEqual(ranked.map(player => [player.id, player.points, player.matches]), [
-    ["p1", 100, 1],
+    ["p1", 1, 1],
     ["p2", 0, 1]
   ]);
   assert.deepEqual(players.map(player => player.points), [0, 0]);

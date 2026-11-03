@@ -323,11 +323,34 @@ export function rankPlayers(players, results) {
     const winner = byId.get(result.winnerId);
     const loser = byId.get(result.loserId);
     if (!winner || !loser) continue;
-    winner.points += 100;
+    winner.points += 1;
     winner.matches += 1;
     loser.matches += 1;
   }
   return ranked.sort((left, right) => right.points - left.points);
+}
+
+// Suma 1 punto al ganador en el Ranking 2026 cada vez que se confirma un
+// resultado. Así la tabla pública queda conectada a los resultados reales.
+export async function awardRankingPoint(env, result) {
+  if (!result || result.status !== "confirmed") return;
+  const [ranking, players] = await Promise.all([
+    gRead(env, "ranking2026"),
+    gRead(env, "players")
+  ]);
+  const winner = players.find(player => player.id === result.winnerId);
+  if (!winner) return;
+  const list = Array.isArray(ranking) ? ranking : [];
+  const key = String(winner.name || "").trim().toLowerCase();
+  const entry = list.find(item =>
+    item && typeof item.player === "string" && item.player.trim().toLowerCase() === key
+  );
+  if (entry) {
+    entry.points = (Number.isFinite(entry.points) ? entry.points : 0) + 1;
+  } else {
+    list.push({ player: winner.name, points: 1 });
+  }
+  await gWrite(env, "ranking2026", list);
 }
 
 function isCompleteSet(first, second) {
