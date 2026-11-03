@@ -1183,14 +1183,24 @@ function renderTournamentMatches(matches, entries = [], formatType = "knockout")
           const allDone = groupMatches.length > 0 && groupMatches.every(match => match.status === "completed");
           const leader = standings[0];
           const winnerBanner = allDone && leader ? `<div class="group-winner-banner"><span class="gw-trophy" aria-hidden="true">🏆</span> Ganador del grupo: <b>${escapeHtml(leader.player)}</b></div>` : "";
-          const standingsBlock = standings.length ? `<div class="group-standings"><span class="standings-label">Clasificación del grupo</span>${standings.map((row, index) => `
+          const standingsBlock = standings.length ? `<div class="group-standings"><span class="standings-label">Clasificación</span>${standings.map((row, index) => `
             <div class="standings-row${index === 0 ? " is-leader" : ""}">
               <b class="st-pos">${index + 1}</b>
               <span class="st-name">${escapeHtml(row.player)}</span>
               <span class="st-record">${row.won}-${row.lost}</span>
               <span class="st-sets">Sets ${row.setsDiff > 0 ? "+" : ""}${row.setsDiff}</span>
             </div>`).join("")}</div>` : "";
-          return `${winnerBanner}${standingsBlock}`;
+          return `${winnerBanner}<div class="group-body"><div class="group-weeks">${[...weeks.entries()].sort((a, b) => a[0] - b[0]).map(([week, weekMatches]) => `
+          <div class="group-week"><span class="week-label">Semana ${week}</span>${weekMatches.map(match => {
+            const winnerA = match.status === "completed" && match.winnerId && match.winnerId === match.playerAId;
+            const winnerB = match.status === "completed" && match.winnerId && match.winnerId === match.playerBId;
+            return `<div class="group-match${match.status === "completed" ? " is-completed" : ""}${match.status === "cancelled" ? " is-cancelled" : ""}">
+              <span class="gm-player${winnerA ? " is-winner" : ""}">${escapeHtml(match.playerAName || "Por definir")}</span>
+              <span class="gm-vs">vs</span>
+              <span class="gm-player${winnerB ? " is-winner" : ""}">${escapeHtml(match.playerBName || "Por definir")}</span>
+              ${match.score ? `<b class="gm-score">${escapeHtml(match.score)}</b>` : `<small class="gm-state">${match.status === "cancelled" ? "Cancelado" : "Por jugar"}</small>`}
+            </div>`;
+          }).join("")}</div>`).join("")}</div>${standingsBlock}</div>`;
         })()}
         <div class="group-roster">${roster.map((name, index) =>
           `<span class="roster-chip"><b>${index + 1}</b>${escapeHtml(name)}</span>`
