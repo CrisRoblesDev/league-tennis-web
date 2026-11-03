@@ -93,6 +93,15 @@
       <div id="tournamentManageContent"></div>
     </div>
   </div>
+  <div class="modal" id="drawModal">
+    <div class="modal-box" style="width:min(95vw,1100px); max-height:92vh; overflow-y:auto; padding:0;">
+      <div class="modal-head" style="padding:20px 28px; border-bottom:1px solid #eef0f2;">
+        <h2 id="drawModalTitle" style="margin:0; font-size:1.35rem;">Main Draw</h2>
+        <button class="close" type="button" onclick="closeModal('drawModal')" style="background:none; border:none; font-size:24px; cursor:pointer; color:#6b7280;">×</button>
+      </div>
+      <div id="drawModalContainer" style="padding:20px 28px 28px;"></div>
+    </div>
+  </div>
   <div class="modal" id="adminUserCreateModal">
     <div class="modal-box">
       <div class="modal-head"><h2>Crear usuario</h2><button class="close" type="button" onclick="closeModal('adminUserCreateModal')">×</button></div>

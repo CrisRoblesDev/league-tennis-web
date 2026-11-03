@@ -1154,372 +1154,485 @@ async function withdrawTournament() {
 // ========================================
 
 // ========================================
-// TORNEOS - CREADOR DE MAIN DRAW POR ETAPAS
+// PANEL DE ADMINISTRACIÓN - ORQUESTADOR
 // ========================================
-
-// ---------- Estado del wizard ----------
-let wizardState = {
-  step: 1,
-  tournament: { title: "", month: "", status: "registration", formatType: "knockout", category: "singles", gender: "mixto", startDate: "", endDate: "", maxParticipants: null, venue: "", description: "", levels: [] },
-  groups: [],           // [{ name: "Grupo A", players: [playerId, ...] }]
-  unassignedPlayerIds: [],
-  matches: []
-};
-
-const WIZARD_STEPS = [
-  { id: 1, label: "Datos del torneo" },
-  { id: 2, label: "Grupos / Stages" },
-  { id: 3, label: "Participantes" },
-  { id: 4, label: "Main Draw" }
-];
-
-// ---------- Render del wizard ----------
-function openTournamentWizard(tournamentId) {
-  wizardState = {
-    step: 1,
-    tournament: { title: "", month: new Date().toISOString().slice(0,7), status: "registration", formatType: "knockout", category: "singles", gender: "mixto", startDate: "", endDate: "", maxParticipants: null, venue: "", description: "", levels: [] },
-    groups: [],
-    unassignedPlayerIds: [],
-    matches: []
-  };
-  if (tournamentId) {
-    const t = adminTournaments.find(item => item.id === tournamentId);
-    if (t) {
-      wizardState.tournament = { ...t };
-      wizardState.groups = (t.groups || []).map(g => ({ name: g.name, players: [...(g.entryPlayerIds || g.players || [])] }));
-      wizardState.unassignedPlayerIds = (t.entries || []).map(e => e.playerId);
-    }
-  }
-  renderWizard();
-  openModal("tournamentWizardModal");
-}
-
-function renderWizard() {
-  const content = document.getElementById("wizardContent");
-  if (!content) return;
-  const step = WIZARD_STEPS[wizardState.step - 1];
-
-  // Barra de pasos
-  const stepsHtml = WIZARD_STEPS.map((s, i) => {
-    const status = i < wizardState.step - 1 ? "is-completed" : (i === wizardState.step - 1 ? "is-active" : "");
-    return `<div class="wizard-step ${status}" onclick="wizardState.step = ${s.id}; renderWizard();">
-      <div class="step-number">${i + 1}</div>
-      ${escapeHtml(s.label)}
-    </div>`;
-  }).join("");
-
-  let panelHtml = "";
-  switch (wizardState.step) {
-    case 1: panelHtml = renderWizardStep1(); break;
-    case 2: panelHtml = renderWizardStep2(); break;
-    case 3: panelHtml = renderWizardStep3(); break;
-    case 4: panelHtml = renderWizardStep4(); break;
-  }
-
-  const prevDisabled = wizardState.step === 1 ? "disabled" : "";
-  const nextDisabled = wizardState.step === 4 ? "disabled" : "";
-  const isLast = wizardState.step === 4;
-
-  content.innerHTML = `
-    <div class="tournament-wizard">
-      <div class="wizard-steps">${stepsHtml}</div>
-      <div class="wizard-panel is-active">
-        <h3>${escapeHtml(step.label)}</h3>
-        <p class="wizard-subtitle">${wizardState.step === 1 ? "Define la identidad del torneo." : wizardState.step === 2 ? "Organiza grupos y asigna jugadores a cada stage." : wizardState.step === 3 ? "Selecciona y asigna participantes." : "Genera y visualiza el Main Draw antes de guardar."}</p>
-        ${panelHtml}
-      </div>
-      <div class="wizard-nav">
-        <button class="btn btn-secondary btn-sm" ${prevDisabled} onclick="wizardState.step = Math.max(1, wizardState.step - 1); renderWizard();">← Anterior</button>
-        ${isLast
-          ? `<button class="btn btn-primary" onclick="saveWizardTournament()">Guardar torneo y Main Draw</button>`
-          : `<button class="btn btn-primary btn-sm" ${nextDisabled} onclick="wizardState.step = Math.min(4, wizardState.step + 1); renderWizard();">Siguiente →</button>`
-        }
-      </div>
-    </div>
-  `;
-}
-
-// ---------- Paso 1: Datos ----------
-function renderWizardStep1() {
-  const t = wizardState.tournament;
-  return `
-    <div class="tournament-data-grid">
-      <label>Nombre del torneo<input name="title" value="${escapeHtml(t.title)}" maxlength="120" placeholder="Ej. Copa de noviembre"></label>
-      <label>Mes del torneo<input name="month" type="month" value="${escapeHtml(t.month)}"></label>
-      <label>Estado del torneo<select name="status"><option value="registration" ${t.status === "registration" ? "selected" : ""}>Inscripciones abiertas</option><option value="scheduled" ${t.status === "scheduled" ? "selected" : ""}>Programado</option><option value="in_progress" ${t.status === "in_progress" ? "selected" : ""}>En curso</option><option value="completed" ${t.status === "completed" ? "selected" : ""}>Finalizado</option><option value="cancelled" ${t.status === "cancelled" ? "selected" : ""}>Cancelado</option></select></label>
-      <label>Tipo de competición<select name="formatType"><option value="knockout" ${t.formatType === "knockout" ? "selected" : ""}>Eliminación directa (cuadro)</option><option value="league" ${t.formatType === "league" ? "selected" : ""}>Liga · todos contra todos</option></select></label>
-      <label>Categoría<select name="category"><option value="singles" ${t.category === "singles" ? "selected" : ""}>Singles</option><option value="dobles" ${t.category === "dobles" ? "selected" : ""}>Dobles</option><option value="dobles_mixtos" ${t.category === "dobles_mixtos" ? "selected" : ""}>Dobles Mixtos</option></select></label>
-      <label>Modalidad<select name="gender"><option value="mixto" ${t.gender === "mixto" ? "selected" : ""}>Mixto</option><option value="hombres" ${t.gender === "hombres" ? "selected" : ""}>Hombres</option><option value="mujeres" ${t.gender === "mujeres" ? "selected" : ""}>Mujeres</option></select></label>
-      <label>Fecha de inicio<input name="startDate" type="date" value="${escapeHtml(t.startDate)}"></label>
-      <label>Fecha de término<input name="endDate" type="date" value="${escapeHtml(t.endDate)}"></label>
-      <label>Cantidad de participantes<input name="maxParticipants" type="number" min="2" max="256" value="${t.maxParticipants || ""}" placeholder="Ej. 16"></label>
-      <label>Sede o cancha<input name="venue" value="${escapeHtml(t.venue)}" maxlength="120" placeholder="Ej. Aventura Tennis Center"></label>
-      <label class="full">Descripción<textarea name="description" rows="2" maxlength="500">${escapeHtml(t.description)}</textarea></label>
-      <fieldset class="admin-level-select full">
-        <legend>Niveles participantes</legend>
-        <p>Selecciona uno o más niveles de juego.</p>
-        <div class="levels-grid">
-          ${["2.5","3.0","3.5","4.0","4.5","5.0"].map(l => `<label><input type="checkbox" name="levels" value="${l}" ${t.levels.includes(l) ? "checked" : ""}><span>${l}</span></label>`).join("")}
-        </div>
-      </fieldset>
-    </div>
-  `;
-}
-
-// ---------- Paso 2: Grupos / Stages ----------
-function renderWizardStep2() {
-  const groupCount = wizardState.groups.length || 2;
-  const allPlayers = players.map(p => ({ id: p.id, name: p.name, level: p.level }));
-  const assignedIds = new Set(wizardState.groups.flatMap(g => g.players));
-  const unassigned = allPlayers.filter(p => !assignedIds.has(p.id));
-  wizardState.unassignedPlayerIds = unassigned.map(p => p.id);
-
-  return `
-    <div class="group-count-control">
-      <label>Número de grupos<input type="number" id="wizardGroupCount" min="1" max="16" value="${groupCount}"></label>
-      <button class="btn btn-dark btn-sm" onclick="wizardRegenerateGroups()">Aplicar grupos</button>
-    </div>
-    <div class="groups-container">
-      ${wizardState.groups.map((g, gi) => `
-        <div class="group-stage-card">
-          <div class="group-stage-head">
-            <span class="group-stage-name">${escapeHtml(g.name)}</span>
-            <div class="group-stage-actions">
-              <button class="btn btn-sm btn-danger" onclick="wizardRemoveGroup(${gi})">Eliminar grupo</button>
-            </div>
-          </div>
-          <div class="group-players">
-            ${g.players.map(pid => {
-              const p = allPlayers.find(x => x.id === pid);
-              return `<span class="group-player-chip">${escapeHtml(p?.name || pid)}<span class="remove" onclick="wizardRemovePlayerFromGroup(${gi}, '${escapeHtml(pid)}')">×</span></span>`;
-            }).join("") || '<span class="muted">Sin jugadores</span>'}
-          </div>
-        </div>
-      `).join("") || ""}
-    </div>
-    <div class="available-players">
-      <h4>Jugadores disponibles (${unassigned.length})</h4>
-      <div class="available-players-list">
-        ${unassigned.map(p => `<button class="available-player-btn" onclick="wizardAddPlayerToGroup('${escapeHtml(p.id)}')">${escapeHtml(p.name)} <small>${escapeHtml(p.level || "")}</small></button>`).join("") || '<span class="muted">Todos asignados</span>'}
-      </div>
-    </div>
-  `;
-}
-
-function wizardRegenerateGroups() {
-  const count = Math.max(1, Math.min(16, Number(document.getElementById("wizardGroupCount")?.value) || 1));
-  const allPlayers = players.map(p => p.id);
-  const assigned = new Set(wizardState.groups.flatMap(g => g.players));
-  const free = allPlayers.filter(p => !assigned.has(p));
-  const shuffled = [...free].sort(() => Math.random() - 0.5);
-  const groups = Array.from({ length: count }, (_, i) => ({ name: `Grupo ${String.fromCharCode(65 + i)}`, players: [] }));
-  shuffled.forEach((pid, i) => groups[i % count].players.push(pid));
-  wizardState.groups = groups;
-  renderWizard();
-}
-
-function wizardRemoveGroup(index) {
-  wizardState.groups.splice(index, 1);
-  renderWizard();
-}
-
-function wizardAddPlayerToGroup(playerId) {
-  // Agregar al grupo con menos jugadores
-  wizardState.groups.sort((a, b) => a.players.length - b.players.length);
-  if (!wizardState.groups[0].players.includes(playerId)) {
-    wizardState.groups[0].players.push(playerId);
-  }
-  renderWizard();
-}
-
-function wizardRemovePlayerFromGroup(groupIndex, playerId) {
-  const g = wizardState.groups[groupIndex];
-  if (g) g.players = g.players.filter(p => p !== playerId);
-  renderWizard();
-}
-
-// ---------- Paso 3: Participantes ----------
-function renderWizardStep3() {
-  const assignedIds = new Set(wizardState.groups.flatMap(g => g.players));
-  const unassigned = players.filter(p => !assignedIds.has(p.id));
-  const assigned = players.filter(p => assignedIds.has(p.id));
-
-  return `
-    <div class="participants-container">
-      <div class="unassigned-players">
-        <h4>Sin asignar (${unassigned.length})</h4>
-        <div class="player-list">
-          ${unassigned.map(p => `<div class="player-item" onclick="wizardTogglePlayer('${escapeHtml(p.id)}')">
-            <div class="player-info">${escapeHtml(p.name)}</div>
-            <div class="player-level">${escapeHtml(p.level || "")}</div>
-            <button class="btn btn-sm btn-dark" onclick="event.stopPropagation(); wizardTogglePlayer('${escapeHtml(p.id)}')">Asignar</button>
-          </div>`).join("") || '<span class="muted">Sin jugadores disponibles</span>'}
-        </div>
-      </div>
-      <div class="assigned-players">
-        <h4>Asignados a grupos (${assigned.length})</h4>
-        <div class="player-list">
-          ${assigned.map(p => `<div class="player-item is-assigned" onclick="wizardTogglePlayer('${escapeHtml(p.id)}')">
-            <div class="player-info">${escapeHtml(p.name)}</div>
-            <div class="player-level">${escapeHtml(p.level || "")}</div>
-            <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); wizardTogglePlayer('${escapeHtml(p.id)}')">Quitar</button>
-          </div>`).join("") || '<span class="muted">Sin asignados</span>'}
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function wizardTogglePlayer(playerId) {
-  const assignedIds = new Set(wizardState.groups.flatMap(g => g.players));
-  if (assignedIds.has(playerId)) {
-    // Quitar de su grupo
-    wizardState.groups.forEach(g => { g.players = g.players.filter(p => p !== playerId); });
-  } else {
-    // Agregar al grupo con menos jugadores
-    wizardState.groups.sort((a, b) => a.players.length - b.players.length);
-    if (!wizardState.groups[0].players.includes(playerId)) wizardState.groups[0].players.push(playerId);
-  }
-  renderWizard();
-}
-
-// ---------- Paso 4: Main Draw Visual ----------
-function renderWizardStep4() {
-  const t = wizardState.tournament;
-  const totalPlayers = wizardState.groups.reduce((sum, g) => sum + g.players.length, 0);
-  const isKnockout = t.formatType === "knockout";
-
-  // Generar preview de partidos si Knockout
-  let previewHtml = "";
-  if (isKnockout) {
-    const playerIds = wizardState.groups.flatMap(g => g.players);
-    const size = computeBracketSize(playerIds.length);
-    const shuffled = [...playerIds].sort(() => Math.random() - 0.5);
-    const seeding = distributeByes(shuffled, size);
-    const rounds = Math.log2(size);
-    const roundsData = [];
-    for (let r = 0; r < rounds; r++) {
-      const count = size / (2 ** (r + 1));
-      const roundMatches = [];
-      for (let m = 0; m < count; m++) {
-        const a = seeding[m * 2];
-        const b = seeding[m * 2 + 1];
-        roundMatches.push({
-          round: roundName(rounds, r),
-          playerAId: a || null,
-          playerBId: b || null,
-          status: (!a || !b) ? "completed" : "scheduled",
-          winnerId: (!a && b) ? b : (!b && a) ? a : null,
-          score: (!a && b) || (!b && a) ? "BYE" : ""
-        });
-      }
-      roundsData.push({ name: roundName(rounds, r), matches: roundMatches });
-    }
-    wizardState.matches = roundsData.flatMap(rd => rd.matches);
-
-    previewHtml = `<div class="draw-visual-container">
-      <div class="draw-canvas-visual">
-        ${roundsData.map((rd, ri) => `
-          <div class="draw-stage">
-            <div class="draw-stage-head"><span class="draw-stage-name">${escapeHtml(rd.name)}</span></div>
-            <div class="draw-round">
-              ${rd.matches.map((m, mi) => `
-                <div class="draw-match-visual">
-                  ${renderDrawSlot(m.playerAId, m.status === "completed" && m.winnerId === m.playerAId)}
-                  <span class="draw-vs">vs</span>
-                  ${renderDrawSlot(m.playerBId, m.status === "completed" && m.winnerId === m.playerBId)}
-                  ${mi < rd.matches.length - 1 ? `<div class="draw-connector"></div>` : ""}
-                </div>
-                ${mi < rd.matches.length - 1 ? `<div class="draw-line-h"></div>` : ""}
-              `).join("")}
-            </div>
-          </div>
-        `).join("")}
-      </div>
-    </div>`;
-  } else {
-    // Liga/grupos: mostrar tabla de grupos
-    previewHtml = `<div class="draw-visual-container">
-      ${wizardState.groups.map(g => `
-        <div class="draw-stage">
-          <div class="draw-stage-head"><span class="draw-stage-name">${escapeHtml(g.name)} (${g.players.length} jugadores)</span></div>
-          <div class="player-list">
-            ${g.players.map(pid => {
-              const p = players.find(x => x.id === pid);
-              return `<div class="player-item"><div class="player-info">${escapeHtml(p?.name || pid)}</div><div class="player-level">${escapeHtml(p?.level || "")}</div></div>`;
-            }).join("")}
-          </div>
-        </div>
-      `).join("")}
-    </div>`;
-  }
-
-  return `
-    <div class="wizard-summary">
-      <h4>Resumen del torneo</h4>
-      <div class="wizard-summary-grid">
-        <div class="wizard-summary-item"><span class="label">Nombre</span><span class="value">${escapeHtml(t.title || "-")}</span></div>
-        <div class="wizard-summary-item"><span class="label">Mes</span><span class="value">${escapeHtml(t.month)}</span></div>
-        <div class="wizard-summary-item"><span class="label">Formato</span><span class="value">${t.formatType === "league" ? "Liga" : "Eliminación"}</span></div>
-        <div class="wizard-summary-item"><span class="label">Grupos</span><span class="value">${wizardState.groups.length}</span></div>
-        <div class="wizard-summary-item"><span class="label">Participantes</span><span class="value">${totalPlayers}</span></div>
-      </div>
-    </div>
-    <div class="main-draw-preview">
-      <h4 style="margin:0 0 10px; font-size:13px; color:#6b7280; text-transform:uppercase; letter-spacing:.05em;">Previsualización del Main Draw</h4>
-      ${previewHtml}
-    </div>
-  `;
-}
-
-function renderDrawSlot(playerId, isWinner) {
-  const p = players.find(x => x.id === playerId);
-  if (!playerId) return `<div class="draw-slot">Bye</div>`;
-  const cls = `draw-slot${isWinner ? " is-winner" : ""} is-filled`;
-  return `<div class="${cls}">${escapeHtml(p?.name || "Jugador")}${p?.level ? `<br><small>${escapeHtml(p.level)}</small>` : ""}</div>`;
-}
-
-// ---------- Guardar ----------
-async function saveWizardTournament() {
-  const form = document.getElementById("adminTournamentForm");
-  if (!form) return;
-  const t = wizardState.tournament;
-  t.title = form.elements.namedItem("title").value.trim();
-  t.month = form.elements.namedItem("month").value;
-  t.status = form.elements.namedItem("status").value;
-  t.formatType = form.elements.namedItem("formatType").value;
-  t.category = form.elements.namedItem("category").value;
-  t.gender = form.elements.namedItem("gender").value;
-  t.startDate = form.elements.namedItem("startDate").value;
-  t.endDate = form.elements.namedItem("endDate").value;
-  t.maxParticipants = form.elements.namedItem("maxParticipants").value || null;
-  t.venue = form.elements.namedItem("venue").value.trim();
-  t.description = form.elements.namedItem("description").value.trim();
-  t.levels = Array.from(form.querySelectorAll('input[name="levels"]:checked'), i => i.value);
-
-  if (!t.title) { showToast("El nombre del torneo es requerido."); return; }
-  if (!t.levels.length) { showToast("Selecciona al menos un nivel."); return; }
-
-  const entries = wizardState.groups.flatMap(g => g.players.map(pid => ({ playerId: pid, created: new Date().toISOString() })));
-  const matches = wizardState.matches;
-
+async function showAdminPanel() {
+  if (!currentUser || currentUser.role !== "admin") return;
+  const content = document.getElementById("adminContent");
+  let orderSyncMessage = "";
   try {
-    const id = form.elements.namedItem("id").value;
-    const body = { ...t, entries, matches, generateDraw: true };
-    await api(id ? `/api/admin/tournaments/${encodeURIComponent(id)}` : "/api/admin/tournaments", {
-      method: id ? "PUT" : "POST",
-      body: JSON.stringify(body)
-    });
-    closeModal("tournamentWizardModal");
-    await loadTournaments();
-    await showAdminPanel();
-    showToast(id ? "Torneo actualizado" : "Torneo creado con Main Draw");
+    const sync = await api("/api/admin/orders/reconcile", { method: "POST" });
+    if (sync.added) {
+      orderSyncMessage = "Se recuperaron " + sync.added + " compra(s) faltante(s) desde Stripe.";
+    }
   } catch (error) {
-    showToast(`No se pudo guardar: ${error.message}`);
+    orderSyncMessage = "No se pudo sincronizar con Stripe: " + escapeHtml(error.message);
+  }
+  let stats, orders, users, allProducts, allTournaments, results, allChallenges;
+  try {
+    [stats, orders, users, allProducts, allTournaments, results, allChallenges] = await Promise.all([
+      api("/api/admin/stats"),
+      api("/api/admin/orders"),
+      api("/api/admin/users"),
+      api("/api/admin/products"),
+      api("/api/admin/tournaments"),
+      api("/api/results"),
+      api("/api/admin/challenges")
+    ]);
+  } catch (error) {
+    if (content) {
+      content.innerHTML =
+        '<div class="admin-load-error" role="alert">' +
+        '<p>No se pudo cargar el panel: ' + escapeHtml(error.message) + '</p>' +
+        '<button class="btn btn-primary" type="button" onclick="showAdminPanel()">Reintentar</button>' +
+        '</div>';
+    }
+    showToast("No se pudo abrir administración: " + error.message);
+    return;
+  }
+  if (!content) return;
+  products = allProducts;
+  tournaments = allTournaments;
+  adminTournaments = allTournaments;
+  matchResults = results;
+  adminUsers = users;
+  let allPlayers;
+  try {
+    allPlayers = await api("/api/admin/players");
+  } catch (error) {
+    content.innerHTML =
+      '<div class="admin-load-error" role="alert">' +
+      '<p>No se pudieron cargar los perfiles de jugadores: ' + escapeHtml(error.message) + '</p>' +
+      '<button class="btn btn-primary" type="button" onclick="showAdminPanel()">Reintentar</button>' +
+      '</div>';
+    showToast("No se pudieron cargar los perfiles de jugadores: " + error.message);
+    return;
+  }
+  players = allPlayers;
+  const levels = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0"];
+  const pendingResults = results.filter(function(result) {
+    return ["pending", "disputed"].includes(result.status);
+  });
+  const playersWithoutProfile = adminUsers.filter(function(user) {
+    return !allPlayers.some(function(player) { return player.userId === user.id; });
+  });
+
+  var html = '';
+  html += '<div class="admin-welcome">';
+  html += '<div>';
+  html += '<span class="section-kicker">CENTRO DE CONTROL</span>';
+  html += '<h2>¿Qué quieres hacer hoy?</h2>';
+  html += '<p>Elige una tarea para empezar. Los cambios se guardan al pulsar el botón de guardar.</p>';
+  html += '</div>';
+  html += '<div class="admin-quick-actions">';
+  html += '<button type="button" onclick="setAdminModule(\'tournaments\')"><span>01</span><b>Organizar un torneo</b><small>Fechas, niveles y partidos</small></button>';
+  html += '<button type="button" onclick="setAdminModule(\'results\')"><span>02</span><b>Revisar resultados</b><small>' + pendingResults.length + ' por revisar</small></button>';
+  html += '<button type="button" onclick="setAdminModule(\'players\')"><span>03</span><b>Gestionar jugadores</b><small>Perfiles y clasificación</small></button>';
+  html += '<button type="button" onclick="setAdminModule(\'products\')"><span>04</span><b>Editar la tienda</b><small>Productos y membresías</small></button>';
+  html += '</div>';
+  html += '</div>';
+  html += '<div class="admin-stats">';
+  html += '<div class="stat-card"><div class="stat-number">' + stats.totalUsers + '</div><div class="stat-label">Cuentas registradas</div></div>';
+  html += '<div class="stat-card"><div class="stat-number">' + stats.totalPlayers + '</div><div class="stat-label">Perfiles de jugador</div></div>';
+  html += '<div class="stat-card"><div class="stat-number">' + stats.totalOrders + '</div><div class="stat-label">Compras realizadas</div></div>';
+  html += '<div class="stat-card"><div class="stat-number">$' + (stats.revenue / 100).toFixed(2) + '</div><div class="stat-label">Ingresos totales</div></div>';
+  html += '<div class="stat-card"><div class="stat-number">' + stats.activeSubscriptions + '</div><div class="stat-label">Membresías activas</div></div>';
+  html += '<div class="stat-card"><div class="stat-number">' + pendingResults.length + '</div><div class="stat-label">Resultados por revisar</div></div>';
+  html += '</div>';
+
+  html += '<div class="admin-layout">';
+  html += '<nav class="admin-nav" aria-label="Módulos de administración">';
+  html += '<button type="button" data-module-btn="tournaments" onclick="setAdminModule(\'tournaments\')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/></svg>Torneos</button>';
+  html += '<button type="button" data-module-btn="players" onclick="setAdminModule(\'players\')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Jugadores</button>';
+  html += '<button type="button" data-module-btn="results" onclick="setAdminModule(\'results\')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3 21h18M7 17V9M12 17V5M17 17v-6"/></svg>Resultados</button>';
+  html += '<button type="button" data-module-btn="challenges" onclick="setAdminModule(\'challenges\')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg>Desafíos</button>';
+  html += '<button type="button" data-module-btn="products" onclick="setAdminModule(\'products\')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6ZM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>Tienda</button>';
+  html += '<button type="button" data-module-btn="orders" onclick="setAdminModule(\'orders\')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6ZM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>Compras</button>';
+  html += '<button type="button" data-module-btn="users" onclick="setAdminModule(\'users\')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87"/></svg>Cuentas</button>';
+  html += '<button type="button" data-module-btn="ranking" onclick="setAdminModule(\'ranking\')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3 21h18M7 17V9M12 17V5M17 17v-6"/></svg>Ranking 2026</button>';
+  html += '<button type="button" data-module-btn="settings" onclick="setAdminModule(\'settings\')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.4-3a7.4 7.4 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7.5 7.5 0 0 0-2-1.2L14.5 2h-5l-.4 2.6a7.5 7.5 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7.5 7.5 0 0 0 2 1.2l.4 2.6h5l.4-2.6a7.5 7.5 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z"/></svg>Ajustes</button>';
+  html += '</nav>';
+
+  // Sección de torneos
+  html += '<section class="admin-section admin-module" data-module="tournaments" hidden>';
+  html += '<div class="admin-section-head">';
+  html += '<div>';
+  html += '<h3>Torneos y campeonatos</h3>';
+  html += '<p class="admin-section-help">Crea torneos, inscribe jugadores, genera cuadros eliminatorios con BYEs o grupos Round Robin, programa partidos y visualiza el Main Draw.</p>';
+  html += '</div>';
+  html += '<button class="btn btn-primary" type="button" onclick="openTournamentWizard()">Crear torneo</button>';
+  html += '</div>';
+  html += '<div class="admin-tournament-grid">';
+  if (allTournaments.length === 0) {
+    html += '<div class="admin-empty-state" style="grid-column:1/-1; text-align:center; padding:40px;"><b>Aún no hay torneos</b><p style="color:rgba(31,41,55,.6); margin-top:8px;">Pulsa "Crear torneo" para publicar el primer campeonato.</p></div>';
+  } else {
+    allTournaments.forEach(function(tournament) {
+      var entrants = tournament.entries || [];
+      var matches = tournament.matches || [];
+      var completed = matches.filter(function(m) { return m.status === "completed"; }).length;
+      var pct = matches.length ? Math.round((completed / matches.length) * 100) : 0;
+      var statusLabel = {
+        registration: "Inscripciones abiertas",
+        scheduled: "Programado",
+        in_progress: "En curso",
+        completed: "Finalizado",
+        cancelled: "Cancelado"
+      }[tournament.status] || "Estado";
+      var tid = escapeHtml(tournament.id);
+      html += '<article class="card admin-tournament-card public">';
+      html += '<div class="admin-record-head">';
+      html += '<div>';
+      html += '<span class="tag ' + (tournament.status === "registration" ? "tag-blue" : tournament.status === "completed" ? "tag-green" : "tag-red") + '">' + escapeHtml(statusLabel) + '</span>';
+      html += '<h4>' + escapeHtml(tournament.title || tournament.month) + '</h4>';
+      html += '</div>';
+      html += '<div class="admin-form-actions">';
+      html += '<button class="btn btn-sm btn-dark" onclick="openTournamentManage(\'' + tid + '\')">Gestionar</button>';
+      html += '<button class="btn btn-sm btn-danger" onclick="deleteTournament(\'' + tid + '\')">Eliminar</button>';
+      html += '</div>';
+      html += '</div>';
+      html += '<div class="tournament-meta">';
+      html += '<div><b>' + escapeHtml(tournament.month) + '</b> · ' + escapeHtml(tournament.formatType === "league" ? "Liga · todos contra todos" : "Eliminación directa") + '</div>';
+      html += '<div>' + escapeHtml(CATEGORY_LABELS[tournament.category || "singles"] || "Singles");
+      if (tournament.gender && tournament.gender !== "mixto") {
+        html += ' · ' + escapeHtml(GENDER_LABELS[tournament.gender] || tournament.gender);
+      }
+      html += '</div>';
+      html += '<div>' + escapeHtml(tournament.venue || "Sede por definir") + '</div>';
+      html += '<div><b>' + entrants.length + '</b> inscritos';
+      if (tournament.maxParticipants) { html += ' / ' + tournament.maxParticipants; }
+      if (tournament.levels && tournament.levels.length) { html += ' · Niveles ' + escapeHtml(tournament.levels.join(", ")); }
+      html += '</div>';
+      html += '</div>';
+      html += '<div class="tournament-progress">';
+      html += '<div class="tournament-progress-track"><div class="tournament-progress-bar" style="width:' + pct + '%"></div></div>';
+      html += '<span class="tournament-progress-label">' + completed + ' / ' + matches.length + ' partidos finalizados</span>';
+      html += '</div>';
+      html += '<div class="admin-form-actions full">';
+      if (entrants.length < (tournament.maxParticipants || 999) && tournament.status === "registration") {
+        html += '<button class="btn btn-sm btn-secondary" onclick="openTournamentManage(\'' + tid + '\')">Ver inscritos</button>';
+      }
+      if (matches.length) {
+        html += '<button class="btn btn-sm btn-dark" onclick="openDrawModal(\'' + tid + '\')">Ver Main Draw</button>';
+      }
+      html += '</div>';
+      html += '</article>';
+    });
+  }
+  html += '</div>';
+  html += '</section>';
+
+  // Otras secciones (simplificadas)
+  html += '<section class="admin-section admin-module" data-module="results" hidden><h3>Resultados de partidos</h3><p class="muted">Gestiona los resultados reportados.</p><div class="grid grid-2 admin-records">' + (pendingResults.length ? pendingResults.map(function(r) {
+    return '<article class="card admin-record"><span class="tag ' + (r.status === "disputed" ? "tag-red" : "") + '">' + (r.status === "disputed" ? "En disputa" : "Pendiente") + '</span><h4>' + escapeHtml(r.winnerName) + ' vs ' + escapeHtml(r.loserName) + '</h4><p class="muted">' + escapeHtml(r.score) + '</p><div class="admin-form-actions"><button class="btn btn-primary" onclick="moderateResult(\'' + escapeHtml(r.id) + '\',\'confirm\')">Confirmar</button><button class="btn btn-secondary" onclick="moderateResult(\'' + escapeHtml(r.id) + '\',\'reject\')">Rechazar</button></div></article>';
+  }).join("") : '<p class="muted">No hay resultados pendientes.</p>') + '</div></section>';
+
+  html += '<section class="admin-section admin-module" data-module="players" hidden><h3>Jugadores de la liga</h3><p class="muted">Administra perfiles de jugador.</p></section>';
+  html += '<section class="admin-section admin-module" data-module="products" hidden><h3>Tienda y membresías</h3><p class="muted">Gestiona productos de la tienda.</p></section>';
+  html += '<section class="admin-section admin-module" data-module="challenges" hidden><h3>Desafíos publicados</h3><p class="muted">Gestiona desafíos.</p></section>';
+  html += '<section class="admin-section admin-module" data-module="users" hidden><h3>Cuentas registradas</h3><p class="muted">Gestiona cuentas de usuario.</p></section>';
+  html += '<section class="admin-section admin-module" data-module="ranking" hidden><h3>Ranking 2026</h3><p class="muted">Controla el ranking de temporada.</p></section>';
+  html += '<section class="admin-section admin-module" data-module="settings" hidden><h3>Ajustes del sitio</h3><p class="muted">Configura el sitio.</p></section>';
+
+  html += '</div>';
+  html += '</div>';
+
+  content.innerHTML = html;
+
+  document.getElementById("adminTournamentForm")?.addEventListener("submit", saveTournament);
+  document.getElementById("adminUserCreateForm")?.addEventListener("submit", createAdminUser);
+  document.getElementById("adminUserSearch")?.addEventListener("input", filterAdminUsers);
+  document.getElementById("adminUserRoleFilter")?.addEventListener("change", filterAdminUsers);
+  document.getElementById("adminUserPhoneFilter")?.addEventListener("change", filterAdminUsers);
+  document.getElementById("adminProductForm").addEventListener("submit", saveProduct);
+  document.getElementById("adminUserForm")?.addEventListener("submit", saveAdminUser);
+  document.getElementById("adminPlayerForm").addEventListener("submit", saveAdminPlayer);
+  document.getElementById("adminResultForm").addEventListener("submit", saveAdminResult);
+  document.getElementById("adminSettingsForm").addEventListener("submit", saveAdminSettings);
+  document.getElementById("adminRankingForm").addEventListener("submit", saveAdminRanking);
+  resetAdminUserForm();
+  resetTournamentForm();
+  resetProductForm();
+  fillAdminSettingsForm();
+  renderAdminRanking();
+  setAdminModule(currentAdminModule);
+  if (document.getElementById("adminModal")) openModal("adminModal");
+}
+
+function renderModernBracket(matches, formatType = "knockout", entries = []) {
+  if (!matches || !matches.length) {
+    return entries.length >= 2 ? '<p class="muted draw-pending">El cuadro se escribirá cuando se programen los partidos.</p>' : "";
+  }
+  if (formatType === "league") {
+    return renderTournamentMatches(matches, entries, "league");
+  }
+  const rounds = [];
+  matches.forEach(match => {
+    const round = match.round || "Ronda";
+    let bucket = rounds.find(item => item.name === round);
+    if (!bucket) { bucket = { name: round, matches: [] }; rounds.push(bucket); }
+    bucket.matches.push(match);
+  });
+  const entryById = new Map(entries.map(entry => [entry.playerId, entry]));
+  const slotHtml = (playerId, winner) => {
+    const entry = entryById.get(playerId);
+    const name = entry?.name || (playerId ? `Jugador ${String(playerId).slice(-4)}` : "Por definir");
+    const level = entry?.level || "";
+    return `<div class="mb-slot${winner ? " is-winner" : ""}${!playerId ? " is-placeholder" : ""}">
+      ${level ? `<span class="mb-level">${escapeHtml(level)}</span>` : ""}
+      <span class="mb-name">${escapeHtml(name)}</span>
+    </div>`;
+  };
+  return `<div class="modern-bracket-wrap"><div class="modern-bracket">${rounds.map((round, ri) => `
+    <div class="mb-round">
+      <h4>${escapeHtml(round.name)}</h4>
+      <div class="mb-round-body">${round.matches.map(match => {
+        const winnerA = match.status === "completed" && match.winnerId && match.winnerId === match.playerAId;
+        const winnerB = match.status === "completed" && match.winnerId && match.winnerId === match.playerBId;
+        const score = match.score || "";
+        return `<div class="mb-match${match.status === "completed" ? " is-completed" : ""}${match.status === "cancelled" ? " is-cancelled" : ""}">
+          ${slotHtml(match.playerAId, winnerA)}
+          ${slotHtml(match.playerBId, winnerB)}
+          <div class="mb-meta">${score ? `<b>${escapeHtml(score)}</b>` : `<span>${escapeHtml(match.date || (match.status === "cancelled" ? "Cancelado" : "Por jugar"))}</span>`}</div>
+        </div>`;
+      }).join("")}</div>
+    </div>`).join("")}</div></div>`;
+}
+
+function renderMatchesListHtml(matches) {
+  if (!matches || !matches.length) return '<p class="muted">Aún no hay partidos programados.</p>';
+  return `<div class="manage-match-list">${matches.map(match => `<div class="admin-match-row">
+    <div class="match-header">
+      <span class="match-round">${escapeHtml(match.round)}</span>
+      <span class="match-status ${match.status}">${match.status === "completed" ? "Finalizado" : match.status === "cancelled" ? "Cancelado" : "Programado"}</span>
+    </div>
+    <div class="match-teams">
+      <span class="match-team${match.status === "completed" && match.winnerId === match.playerAId ? " is-winner" : ""}">${escapeHtml(match.playerAName || match.playerAId || "Por definir")}</span>
+      <span class="match-vs">vs</span>
+      <span class="match-team${match.status === "completed" && match.winnerId === match.playerBId ? " is-winner" : ""}">${escapeHtml(match.playerBName || match.playerBId || "Por definir")}</span>
+    </div>
+    <div class="match-score">${match.score ? escapeHtml(match.score) : ""}<span class="match-meta">${match.date ? escapeHtml(match.date) : ""}${match.court ? ` · ${escapeHtml(match.court)}` : ""}</span></div>
+    <div class="match-actions">
+      <button class="btn btn-sm btn-dark" onclick="editTournamentMatch('${escapeHtml(match.tournamentId || "")}','${escapeHtml(match.id)}')">Editar</button>
+      ${match.status !== "completed" ? `<button class="btn btn-sm btn-primary" onclick="quickScoreMatch('${escapeHtml(match.tournamentId || "")}','${escapeHtml(match.id)}')">Marcar resultado</button>` : ""}
+      <button class="btn btn-sm btn-danger" onclick="deleteTournamentMatch('${escapeHtml(match.tournamentId || "")}','${escapeHtml(match.id)}')">Eliminar</button>
+    </div>
+  </div>`).join("")}</div>`;
+}
+
+function openDrawModal(tournamentId) {
+  const tournament = tournaments.find(item => item.id === tournamentId);
+  if (!tournament) return;
+  const title = document.getElementById("drawModalTitle");
+  const container = document.getElementById("drawModalContainer");
+  if (title) title.textContent = tournament.title || `Campeonato · ${tournament.month}`;
+  if (container) {
+    const formatType = tournament.formatType || "knockout";
+    container.innerHTML = `
+      <div class="draw-tabs" role="tablist">
+        <button type="button" class="is-active" data-draw-tab="bracket">Main Draw</button>
+        <button type="button" data-draw-tab="matches">Partidos</button>
+      </div>
+      <div class="draw-panel" data-draw-panel="bracket">${(formatType === "knockout") ? '<canvas id="publicDrawCanvas" class="draw-canvas"></canvas>' : renderModernBracket(tournament.matches, formatType, tournament.entries || [])}</div>
+      <div class="draw-panel" data-draw-panel="matches" hidden>${renderMatchesListHtml(tournament.matches)}</div>
+    `;
+    container.querySelectorAll("[data-draw-tab]").forEach(button => {
+      button.addEventListener("click", () => {
+        const tab = button.dataset.drawTab;
+        container.querySelectorAll("[data-draw-tab]").forEach(b => b.classList.toggle("is-active", b === button));
+        container.querySelectorAll("[data-draw-panel]").forEach(panel => { panel.hidden = panel.dataset.drawPanel !== tab; });
+        if (tab === "bracket" && formatType === "knockout") {
+          const canvas = document.getElementById("publicDrawCanvas");
+          if (canvas) drawUsOpenBracket(canvas, tournament, false);
+        }
+      });
+    });
+    if (formatType === "knockout") {
+      const canvas = document.getElementById("publicDrawCanvas");
+      if (canvas) drawUsOpenBracket(canvas, tournament, false);
+    }
+  }
+  openModal("drawModal");
+}
+
+function drawUsOpenBracket(canvas, tournament, interactive = false) {
+  if (!canvas) return;
+  const matches = tournament.matches || [];
+  const rounds = [];
+  matches.forEach(match => {
+    const round = match.round || "Ronda";
+    let bucket = rounds.find(item => item.name === round);
+    if (!bucket) { bucket = { name: round, matches: [] }; rounds.push(bucket); }
+    bucket.matches.push(match);
+  });
+  if (!rounds.length) {
+    canvas.height = 140;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, Math.max(480, canvas.width), canvas.height);
+    ctx.fillStyle = "#4b5563";
+    ctx.font = "14px system-ui, sans-serif";
+    ctx.fillText("Aún no hay partidos en el cuadro.", 20, 70);
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
+  const rowH = 24;
+  const matchGap = 10;
+  const roundGap = 86;
+  const colWidth = 250;
+  const marginTop = 58;
+  const marginLeft = 24;
+
+  const roundMatchCounts = rounds.map(round => round.matches.length);
+  const maxMatches = Math.max(...roundMatchCounts);
+  const totalHeight = marginTop + maxMatches * (rowH * 2 + matchGap) + 30;
+  const totalWidth = marginLeft * 2 + rounds.length * (colWidth + roundGap) - roundGap;
+
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(480, totalWidth) * dpr;
+  canvas.height = Math.max(260, totalHeight) * dpr;
+  canvas.style.width = "100%";
+  canvas.style.height = `${Math.max(260, totalHeight)}px`;
+  ctx.scale(dpr, dpr);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, Math.max(480, totalWidth), Math.max(260, totalHeight));
+
+  ctx.fillStyle = "#101d2d";
+  ctx.font = "800 15px system-ui, sans-serif";
+  ctx.fillText("MAIN DRAW", marginLeft, 20);
+  ctx.fillStyle = "rgba(16,29,45,.55)";
+  ctx.font = "600 11px system-ui, sans-serif";
+  ctx.fillText(tournament.title || "", marginLeft, 36);
+
+  rounds.forEach((round, ri) => {
+    const x = marginLeft + ri * (colWidth + roundGap);
+    ctx.fillStyle = "#101d2d";
+    ctx.font = "800 12px system-ui, sans-serif";
+    ctx.fillText(round.name.toUpperCase(), x, 56);
+  });
+
+  const positions = new Map();
+  let prevY = [];
+  rounds.forEach((round, ri) => {
+    const x = marginLeft + ri * (colWidth + roundGap);
+    const ys = [];
+    round.matches.forEach((match, mi) => {
+      let y;
+      if (ri === 0) {
+        y = marginTop + mi * (rowH * 2 + matchGap);
+      } else {
+        const a = prevY[mi * 2];
+        const b = prevY[mi * 2 + 1];
+        y = (a !== undefined && b !== undefined) ? (a + b) / 2 : (prevY[mi] || marginTop);
+      }
+      positions.set(match.id, { x, y, match });
+      ys.push(y);
+    });
+    prevY = ys;
+  });
+
+  const slotLine = (x, y, w) => {
+    ctx.strokeStyle = "rgba(15,30,46,.35)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(x, y + rowH);
+    ctx.lineTo(x + w, y + rowH);
+    ctx.stroke();
+  };
+
+  ctx.strokeStyle = "#0f1e2e";
+  ctx.lineWidth = 1.4;
+  matches.forEach(match => {
+    if (!match.nextMatchId) return;
+    const from = positions.get(match.id);
+    const to = positions.get(match.nextMatchId);
+    if (!from || !to) return;
+    const startX = from.x + colWidth;
+    const fromCenterY = from.y + rowH;
+    const endX = to.x;
+    const endCenterY = to.y + rowH;
+    const midX = startX + (endX - startX) / 2;
+    ctx.beginPath();
+    ctx.moveTo(startX, fromCenterY);
+    ctx.lineTo(midX, fromCenterY);
+    ctx.lineTo(midX, endCenterY);
+    ctx.lineTo(endX, endCenterY);
+    ctx.stroke();
+  });
+
+  positions.forEach(({ x, y, match }) => {
+    const winnerA = match.status === "completed" && match.winnerId && match.winnerId === match.playerAId;
+    const winnerB = match.status === "completed" && match.winnerId && match.winnerId === match.playerBId;
+    const drawSlot = (playerId, winner, slotY) => {
+      const name = playerId ? playerName(playerId, tournament) : "Por definir";
+      const level = playerLevel(playerId, tournament);
+      ctx.fillStyle = winner ? "#0e6b3d" : "#101d2d";
+      ctx.font = winner ? "700 12px system-ui, sans-serif" : "500 12px system-ui, sans-serif";
+      ctx.fillText(`${level ? level + "  " : ""}${truncate(name, 24)}${winner ? "  ✓" : ""}`, x, slotY + 16);
+      slotLine(x, slotY, colWidth - 14);
+    };
+    drawSlot(match.playerAId, winnerA, y);
+    drawSlot(match.playerBId, winnerB, y + rowH);
+    ctx.fillStyle = "rgba(16,29,45,.55)";
+    ctx.font = "500 10px system-ui, sans-serif";
+    const note = match.score ? `Resultado: ${match.score}` : (match.date ? `Fecha: ${match.date}` : "");
+    if (note) ctx.fillText(truncate(note, 30), x, y + rowH * 2 + 12);
+  });
+
+  if (interactive) {
+    canvas.style.cursor = "pointer";
+    canvas._hitAreas = [...positions.values()].map(({ x, y, match }) => ({ x, y, w: colWidth, h: rowH * 2, id: match.id }));
+    canvas.onclick = null;
+    canvas.addEventListener("click", event => {
+      if (!canvas._hitAreas) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const hit = canvas._hitAreas.find(area => x >= area.x && x <= area.x + area.w && y >= area.y && y <= area.y + area.h);
+      if (hit) editTournamentMatch(tournament.id, hit.id);
+    });
   }
 }
 
-// ---------- Funciones de gestión existentes (simplificadas y robustas) ----------
+function playerName(playerId, tournament) {
+  const entry = (tournament.entries || []).find(e => e.playerId === playerId);
+  return entry?.name || `Jugador ${String(playerId).slice(-4)}`;
+}
+
+function playerLevel(playerId, tournament) {
+  const entry = (tournament.entries || []).find(e => e.playerId === playerId);
+  return entry?.level ? String(entry.level) : "";
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function truncate(value, max) {
+  const text = String(value ?? "");
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
+// ---------------- Modales de torneo ----------------
+
+async function openTournamentFormModal(tournamentId) {
+  resetTournamentForm();
+  const modal = document.getElementById("tournamentFormModal");
+  if (!modal) return;
+  if (tournamentId) {
+    const tournament = adminTournaments.find(item => item.id === tournamentId);
+    if (tournament) editTournament(tournament);
+  }
+  openModal("tournamentFormModal");
+}
+
 async function openTournamentManage(tournamentId) {
   const content = document.getElementById("tournamentManageContent");
   const title = document.getElementById("tournamentManageTitle");
@@ -1540,6 +1653,10 @@ async function openTournamentManage(tournamentId) {
   const entrants = tournament.entries || [];
   const matches = tournament.matches || [];
   const standings = data.standings || null;
+  const availablePlayers = players.filter(player =>
+    !(tournament.entries || []).some(entry => entry.playerId === player.id) &&
+    (tournament.levels || []).includes(player.level)
+  );
   const completed = matches.filter(m => m.status === "completed").length;
   const total = matches.length;
   const pct = total ? Math.round((completed / total) * 100) : 0;
@@ -1551,13 +1668,13 @@ async function openTournamentManage(tournamentId) {
         <p class="manage-subtitle">${escapeHtml(tournament.month)} · ${escapeHtml(tournament.venue || "Sede por definir")} · ${escapeHtml(tournament.formatType === "league" ? "Liga · todos contra todos" : "Eliminación directa")}</p>
       </div>
       <div class="admin-form-actions">
-        <button class="btn btn-dark btn-sm" onclick="openTournamentWizard('${escapeHtml(tournament.id)}')">Reconfigurar torneo</button>
+        ${tournament.status === "registration" && entrants.length < (tournament.maxParticipants || 999) ? `<button class="btn btn-dark btn-sm" onclick="openTournamentFormModal('${escapeHtml(tournament.id)}')">Editar torneo</button>` : ""}
         <button class="btn btn-secondary btn-sm" onclick="closeModal('tournamentManageModal')">Cerrar</button>
       </div>
     </div>
     <div class="manage-summary">
       <span class="tag ${tournament.status === "registration" ? "tag-blue" : tournament.status === "completed" ? "tag-green" : "tag-red"}">${escapeHtml(tournamentStatusLabel(tournament.status))}</span>
-      <p class="muted">${escapeHtml(tournament.month)} · ${escapeHtml(tournament.venue || "Sede por definir")} · ${entrants.length}/${tournament.maxParticipants || "∞"} inscritos</p>
+      <p class="muted">${escapeHtml(tournament.month)} · ${escapeHtml(tournament.venue || "Sede por definir")} · ${escapeHtml(tournament.formatType === "league" ? "Liga · todos contra todos" : "Eliminación directa")} · ${entrants.length}/${tournament.maxParticipants || "∞"} inscritos</p>
       <div class="stats">
         <div class="manage-stat"><b>${entrants.length}</b><span>Inscritos</span></div>
         <div class="manage-stat"><b>${total}</b><span>Partidos</span></div>
@@ -1576,13 +1693,36 @@ async function openTournamentManage(tournamentId) {
     </div>
 
     <div class="manage-panel" data-manage-panel="participants">
+      <div class="manage-toolbar">
+        ${entrants.length >= 2 ? `<button class="btn btn-primary btn-sm" onclick="generateTournamentDraw('${escapeHtml(tournament.id)}')">${matches.some(match => match.auto) ? "Regenerar cuadro" : "Generar cuadro"}</button>` : ""}
+        ${entrants.length >= 4 ? `<button class="btn btn-secondary btn-sm" onclick="createTournamentGroups('${escapeHtml(tournament.id)}')">Crear grupos</button>` : ""}
+      </div>
       <ul class="admin-entrant-list manage-entrant-list">${entrants.map(entry => `<li>
         <span class="entrant-info">${escapeHtml(entry.name)} <small>${escapeHtml(entry.level || "")}</small></span>
         <button class="btn btn-sm btn-danger" onclick="removeTournamentEntry('${escapeHtml(tournament.id)}','${escapeHtml(entry.playerId)}')">Retirar</button>
       </li>`).join("") || '<li class="muted">Sin inscritos</li>'}</ul>
+      ${tournament.status === "registration" && availablePlayers.length ? `<form class="admin-entry-form panel-form" onsubmit="addTournamentEntry(event,'${escapeHtml(tournament.id)}')">
+        <label class="full">Agregar jugador
+          <select name="playerId" required>${availablePlayers.map(player => `<option value="${escapeHtml(player.id)}">${escapeHtml(player.name)} · ${escapeHtml(player.level)}</option>`).join("")}</select>
+        </label>
+        <button class="btn btn-dark full" type="submit">Agregar participante</button>
+      </form>` : ""}
     </div>
 
     <div class="manage-panel" data-manage-panel="matches" hidden>
+      ${entrants.length >= 2 ? `<form id="admin-match-form-${escapeHtml(tournament.id)}" class="admin-match-form panel-form" onsubmit="saveTournamentMatch(event,'${escapeHtml(tournament.id)}')">
+        <input type="hidden" name="matchId">
+        <b class="full">Programar partido</b>
+        <label>Jugador A<select name="playerAId" required>${entrants.map(entry => `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`).join("")}</select></label>
+        <label>Jugador B<select name="playerBId" required>${entrants.map(entry => `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`).join("")}</select></label>
+        <label>Ronda<input name="round" required placeholder="Final"></label>
+        <label>Fecha<input name="date" type="date"></label>
+        <label>Estado<select name="status"><option value="scheduled">Programado</option><option value="completed">Finalizado</option><option value="cancelled">Cancelado</option></select></label>
+        <label>Ganador<select name="winnerId"><option value="">Elegir al cerrar</option>${entrants.map(entry => `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`).join("")}</select></label>
+        <label>Marcador (ej. 6-4, 4-6, 7-6*)<input name="score" placeholder="6-4, 4-6, 7-6*"></label>
+        <label>Cancha<input name="court" maxlength="120"></label>
+        <button class="btn btn-primary full" type="submit">Guardar partido</button>
+      </form>` : '<p class="muted">Inscribe al menos 2 jugadores para programar partidos.</p>'}
       <div class="manage-match-list">${matches.map(match => {
         const isCompleted = match.status === "completed";
         const setsHtml = match.sets && match.sets.length ? `<div class="match-sets">${match.sets.map((s, i) => `<span class="match-set${isCompleted && match.winnerId === match.playerAId && i === match.sets.length - 1 ? " is-winner-set" : ""}${isCompleted && match.winnerId === match.playerBId && i === match.sets.length - 1 ? " is-loser-set" : ""}">${s[0]}-${s[1]}${s[2] ? "*" : ""}</span>`).join("")}</div>` : "";
@@ -1634,7 +1774,9 @@ async function openTournamentManage(tournamentId) {
       content.querySelectorAll("[data-manage-panel]").forEach(panel => { panel.hidden = panel.dataset.managePanel !== tab; });
       if (tab === "draw" && (tournament.formatType || "knockout") === "knockout") {
         const canvas = document.getElementById("manageDrawCanvas");
-        if (canvas) drawUsOpenBracket(canvas, tournament, true);
+        if (canvas) {
+          drawUsOpenBracket(canvas, tournament, true);
+        }
       }
     });
   });
@@ -1696,10 +1838,6 @@ function resetTournamentForm() {
 
 async function saveTournament(event) {
   event.preventDefault();
-  // Si el wizard está abierto, no usar este guardado (el wizard tiene su propia lógica)
-  if (document.getElementById("tournamentWizardModal")?.classList.contains("open")) {
-    return;
-  }
   const form = event.target;
   const formatType = form.elements.namedItem("formatType").value;
   const body = {
@@ -1908,208 +2046,6 @@ async function quickScoreMatch(tournamentId, matchId) {
   } catch (error) {
     showToast(`No se pudo guardar: ${error.message}`);
   }
-}
-
-// ---------- Draw público ----------
-function openDrawModal(tournamentId) {
-  const tournament = tournaments.find(item => item.id === tournamentId);
-  if (!tournament) return;
-  const title = document.getElementById("drawModalTitle");
-  const container = document.getElementById("drawModalContainer");
-  if (title) title.textContent = tournament.title || `Campeonato · ${tournament.month}`;
-  if (container) {
-    const formatType = tournament.formatType || "knockout";
-    container.innerHTML = `
-      <div class="draw-tabs" role="tablist">
-        <button type="button" class="is-active" data-draw-tab="bracket">Main Draw</button>
-        <button type="button" data-draw-tab="matches">Partidos</button>
-      </div>
-      <div class="draw-panel" data-draw-panel="bracket">${(formatType === "knockout") ? '<canvas id="publicDrawCanvas" class="draw-canvas"></canvas>' : renderModernBracket(tournament.matches, formatType, tournament.entries || [])}</div>
-      <div class="draw-panel" data-draw-panel="matches" hidden>${renderMatchesListHtml(tournament.matches)}</div>
-    `;
-    container.querySelectorAll("[data-draw-tab]").forEach(button => {
-      button.addEventListener("click", () => {
-        const tab = button.dataset.drawTab;
-        container.querySelectorAll("[data-draw-tab]").forEach(b => b.classList.toggle("is-active", b === button));
-        container.querySelectorAll("[data-draw-panel]").forEach(panel => { panel.hidden = panel.dataset.drawPanel !== tab; });
-        if (tab === "bracket" && formatType === "knockout") {
-          const canvas = document.getElementById("publicDrawCanvas");
-          if (canvas) drawUsOpenBracket(canvas, tournament, false);
-        }
-      });
-    });
-    if (formatType === "knockout") {
-      const canvas = document.getElementById("publicDrawCanvas");
-      if (canvas) drawUsOpenBracket(canvas, tournament, false);
-    }
-  }
-  openModal("drawModal");
-}
-
-function drawUsOpenBracket(canvas, tournament, interactive = false) {
-  if (!canvas) return;
-  const matches = tournament.matches || [];
-  const rounds = [];
-  matches.forEach(match => {
-    const round = match.round || "Ronda";
-    let bucket = rounds.find(item => item.name === round);
-    if (!bucket) { bucket = { name: round, matches: [] }; rounds.push(bucket); }
-    bucket.matches.push(match);
-  });
-  if (!rounds.length) {
-    canvas.height = 140;
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, Math.max(480, canvas.width), canvas.height);
-    ctx.fillStyle = "#4b5563";
-    ctx.font = "14px system-ui, sans-serif";
-    ctx.fillText("Aún no hay partidos en el cuadro.", 20, 70);
-    return;
-  }
-
-  const ctx = canvas.getContext("2d");
-  const rowH = 24;
-  const matchGap = 10;
-  const roundGap = 86;
-  const colWidth = 250;
-  const marginTop = 58;
-  const marginLeft = 24;
-
-  const roundMatchCounts = rounds.map(round => round.matches.length);
-  const maxMatches = Math.max(...roundMatchCounts);
-  const totalHeight = marginTop + maxMatches * (rowH * 2 + matchGap) + 30;
-  const totalWidth = marginLeft * 2 + rounds.length * (colWidth + roundGap) - roundGap;
-
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = Math.max(480, totalWidth) * dpr;
-  canvas.height = Math.max(260, totalHeight) * dpr;
-  canvas.style.width = "100%";
-  canvas.style.height = `${Math.max(260, totalHeight)}px`;
-  ctx.scale(dpr, dpr);
-
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, Math.max(480, totalWidth), Math.max(260, totalHeight));
-
-  ctx.fillStyle = "#101d2d";
-  ctx.font = "800 15px system-ui, sans-serif";
-  ctx.fillText("MAIN DRAW", marginLeft, 20);
-  ctx.fillStyle = "rgba(16,29,45,.55)";
-  ctx.font = "600 11px system-ui, sans-serif";
-  ctx.fillText(tournament.title || "", marginLeft, 36);
-
-  rounds.forEach((round, ri) => {
-    const x = marginLeft + ri * (colWidth + roundGap);
-    ctx.fillStyle = "#101d2d";
-    ctx.font = "800 12px system-ui, sans-serif";
-    ctx.fillText(round.name.toUpperCase(), x, 56);
-  });
-
-  const positions = new Map();
-  let prevY = [];
-  rounds.forEach((round, ri) => {
-    const x = marginLeft + ri * (colWidth + roundGap);
-    const ys = [];
-    round.matches.forEach((match, mi) => {
-      let y;
-      if (ri === 0) {
-        y = marginTop + mi * (rowH * 2 + matchGap);
-      } else {
-        const a = prevY[mi * 2];
-        const b = prevY[mi * 2 + 1];
-        y = (a !== undefined && b !== undefined) ? (a + b) / 2 : (prevY[mi] || marginTop);
-      }
-      positions.set(match.id, { x, y, match });
-      ys.push(y);
-    });
-    prevY = ys;
-  });
-
-  const slotLine = (x, y, w) => {
-    ctx.strokeStyle = "rgba(15,30,46,.35)";
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(x, y + rowH);
-    ctx.lineTo(x + w, y + rowH);
-    ctx.stroke();
-  };
-
-  ctx.strokeStyle = "#0f1e2e";
-  ctx.lineWidth = 1.4;
-  matches.forEach(match => {
-    if (!match.nextMatchId) return;
-    const from = positions.get(match.id);
-    const to = positions.get(match.nextMatchId);
-    if (!from || !to) return;
-    const startX = from.x + colWidth;
-    const fromCenterY = from.y + rowH;
-    const endX = to.x;
-    const endCenterY = to.y + rowH;
-    const midX = startX + (endX - startX) / 2;
-    ctx.beginPath();
-    ctx.moveTo(startX, fromCenterY);
-    ctx.lineTo(midX, fromCenterY);
-    ctx.lineTo(midX, endCenterY);
-    ctx.lineTo(endX, endCenterY);
-    ctx.stroke();
-  });
-
-  positions.forEach(({ x, y, match }) => {
-    const winnerA = match.status === "completed" && match.winnerId && match.winnerId === match.playerAId;
-    const winnerB = match.status === "completed" && match.winnerId && match.winnerId === match.playerBId;
-    const drawSlot = (playerId, winner, slotY) => {
-      const name = playerId ? playerName(playerId, tournament) : "Por definir";
-      const level = playerLevel(playerId, tournament);
-      ctx.fillStyle = winner ? "#0e6b3d" : "#101d2d";
-      ctx.font = winner ? "700 12px system-ui, sans-serif" : "500 12px system-ui, sans-serif";
-      ctx.fillText(`${level ? level + "  " : ""}${truncate(name, 24)}${winner ? "  ✓" : ""}`, x, slotY + 16);
-      slotLine(x, slotY, colWidth - 14);
-    };
-    drawSlot(match.playerAId, winnerA, y);
-    drawSlot(match.playerBId, winnerB, y + rowH);
-    ctx.fillStyle = "rgba(16,29,45,.55)";
-    ctx.font = "500 10px system-ui, sans-serif";
-    const note = match.score ? `Resultado: ${match.score}` : (match.date ? `Fecha: ${match.date}` : "");
-    if (note) ctx.fillText(truncate(note, 30), x, y + rowH * 2 + 12);
-  });
-
-  if (interactive) {
-    canvas.style.cursor = "pointer";
-    canvas._hitAreas = [...positions.values()].map(({ x, y, match }) => ({ x, y, w: colWidth, h: rowH * 2, id: match.id }));
-    canvas.onclick = null;
-    canvas.addEventListener("click", event => {
-      if (!canvas._hitAreas) return;
-      const rect = canvas.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      const hit = canvas._hitAreas.find(area => x >= area.x && x <= area.x + area.w && y >= area.y && y <= area.y + area.h);
-      if (hit) editTournamentMatch(tournament.id, hit.id);
-    });
-  }
-}
-
-function playerName(playerId, tournament) {
-  const entry = (tournament.entries || []).find(e => e.playerId === playerId);
-  return entry?.name || `Jugador ${String(playerId).slice(-4)}`;
-}
-
-function playerLevel(playerId, tournament) {
-  const entry = (tournament.entries || []).find(e => e.playerId === playerId);
-  return entry?.level ? String(entry.level) : "";
-}
-
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-
-function truncate(value, max) {
-  const text = String(value ?? "");
-  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
 
 // ========================================
