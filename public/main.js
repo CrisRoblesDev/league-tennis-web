@@ -1149,6 +1149,10 @@ async function withdrawTournament() {
   }
 }
 
+// ========================================
+// TORNEOS - MODERNIZACIÓN COMPLETA
+// ========================================
+
 function renderModernBracket(matches, formatType = "knockout", entries = []) {
   if (!matches || !matches.length) {
     return entries.length >= 2 ? '<p class="muted draw-pending">El cuadro se escribirá cuando se programen los partidos.</p>' : "";
@@ -1164,7 +1168,7 @@ function renderModernBracket(matches, formatType = "knockout", entries = []) {
     bucket.matches.push(match);
   });
   const entryById = new Map(entries.map(entry => [entry.playerId, entry]));
-  const slotHtml = (playerId, winner, seed) => {
+  const slotHtml = (playerId, winner) => {
     const entry = entryById.get(playerId);
     const name = entry?.name || (playerId ? `Jugador ${String(playerId).slice(-4)}` : "Por definir");
     const level = entry?.level || "";
@@ -1181,8 +1185,8 @@ function renderModernBracket(matches, formatType = "knockout", entries = []) {
         const winnerB = match.status === "completed" && match.winnerId && match.winnerId === match.playerBId;
         const score = match.score || "";
         return `<div class="mb-match${match.status === "completed" ? " is-completed" : ""}${match.status === "cancelled" ? " is-cancelled" : ""}">
-          ${slotHtml(match.playerAId, winnerA, ri + 1)}
-          ${slotHtml(match.playerBId, winnerB, ri + 1)}
+          ${slotHtml(match.playerAId, winnerA)}
+          ${slotHtml(match.playerBId, winnerB)}
           <div class="mb-meta">${score ? `<b>${escapeHtml(score)}</b>` : `<span>${escapeHtml(match.date || (match.status === "cancelled" ? "Cancelado" : "Por jugar"))}</span>`}</div>
         </div>`;
       }).join("")}</div>
@@ -1191,10 +1195,22 @@ function renderModernBracket(matches, formatType = "knockout", entries = []) {
 
 function renderMatchesListHtml(matches) {
   if (!matches || !matches.length) return '<p class="muted">Aún no hay partidos programados.</p>';
-  return `<div class="modern-match-list">${matches.map(match => `<div class="modern-match-item">
-    <div class="mmi-round">${escapeHtml(match.round)}</div>
-    <div class="mmi-teams"><span>${escapeHtml(match.playerAName || "Por definir")}</span><b>vs</b><span>${escapeHtml(match.playerBName || "Por definir")}</span></div>
-    <div class="mmi-meta">${escapeHtml(match.date || "Fecha por definir")}${match.court ? ` · ${escapeHtml(match.court)}` : ""}${match.score ? ` · ${escapeHtml(match.score)}` : ""}</div>
+  return `<div class="manage-match-list">${matches.map(match => `<div class="admin-match-row">
+    <div class="match-header">
+      <span class="match-round">${escapeHtml(match.round)}</span>
+      <span class="match-status ${match.status}">${match.status === "completed" ? "Finalizado" : match.status === "cancelled" ? "Cancelado" : "Programado"}</span>
+    </div>
+    <div class="match-teams">
+      <span class="match-team${match.status === "completed" && match.winnerId === match.playerAId ? " is-winner" : ""}">${escapeHtml(match.playerAName || match.playerAId || "Por definir")}</span>
+      <span class="match-vs">vs</span>
+      <span class="match-team${match.status === "completed" && match.winnerId === match.playerBId ? " is-winner" : ""}">${escapeHtml(match.playerBName || match.playerBId || "Por definir")}</span>
+    </div>
+    <div class="match-score">${match.score ? escapeHtml(match.score) : ""}<span class="match-meta">${match.date ? escapeHtml(match.date) : ""}${match.court ? ` · ${escapeHtml(match.court)}` : ""}</span></div>
+    <div class="match-actions">
+      <button class="btn btn-sm btn-dark" onclick="editTournamentMatch('${escapeHtml(match.tournamentId || "")}','${escapeHtml(match.id)}')">Editar</button>
+      ${match.status !== "completed" ? `<button class="btn btn-sm btn-primary" onclick="quickScoreMatch('${escapeHtml(match.tournamentId || "")}','${escapeHtml(match.id)}')">Marcar resultado</button>` : ""}
+      <button class="btn btn-sm btn-danger" onclick="deleteTournamentMatch('${escapeHtml(match.tournamentId || "")}','${escapeHtml(match.id)}')">Eliminar</button>
+    </div>
   </div>`).join("")}</div>`;
 }
 
@@ -1362,6 +1378,15 @@ function drawUsOpenBracket(canvas, tournament, interactive = false) {
   if (interactive) {
     canvas.style.cursor = "pointer";
     canvas._hitAreas = [...positions.values()].map(({ x, y, match }) => ({ x, y, w: colWidth, h: rowH * 2, id: match.id }));
+    canvas.onclick = null;
+    canvas.addEventListener("click", event => {
+      if (!canvas._hitAreas) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const hit = canvas._hitAreas.find(area => x >= area.x && x <= area.x + area.w && y >= area.y && y <= area.y + area.h);
+      if (hit) editTournamentMatch(tournament.id, hit.id);
+    });
   }
 }
 
@@ -1390,648 +1415,97 @@ function truncate(value, max) {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
 
-// ============ PUBLIC TOURNAMENTS ============
-async function loadTournaments() {
-  try {
-    const data = await api("/api/tournament");
-    tournaments = data.tournaments || [];
-    renderTournaments();
-    const featured = tournaments.find(item => item.month === new Date().toISOString().slice(0, 7)) ||
-      tournaments.find(item => ["registration", "scheduled", "in_progress"].includes(item.status)) ||
-      tournaments[0];
-    if (featured) {
-      const title = document.getElementById("heroTournamentTitle");
-      const date = document.getElementById("heroTournamentDate");
-      const summary = document.getElementById("heroTournamentSummary");
-      if (title) title.textContent = featured.title || `Campeonato · ${featured.month}`;
-      if (date) {
-        date.textContent = featured.startDate ?
-          formatLocalDate(new Date(`${featured.startDate}T00:00:00`)) : featured.month;
-      }
-      if (summary) {
-        summary.textContent = featured.description ||
-          `${(featured.entries || []).length} inscritos · ${featured.format || "Formato por anunciar"}`;
-      }
-    }
-  } catch (error) {
-    showToast(`No se pudieron cargar los torneos: ${error.message}`);
-  }
-}
+// ---------------- Modales de torneo ----------------
 
-function groupStandings(groupMatches) {
-  const table = new Map();
-  const ensure = (name) => {
-    if (!table.has(name)) table.set(name, { player: name, played: 0, won: 0, lost: 0, setsDiff: 0, gamesDiff: 0 });
-    return table.get(name);
-  };
-  groupMatches.forEach(match => {
-    if (match.status !== "completed" || !match.winnerId) return;
-    const nameA = match.playerAName || match.playerAId;
-    const nameB = match.playerBName || match.playerBId;
-    if (!nameA || !nameB || nameA === "Por definir" || nameB === "Por definir") return;
-    const rowA = ensure(nameA);
-    const rowB = ensure(nameB);
-    rowA.played += 1;
-    rowB.played += 1;
-    if (match.winnerId === match.playerAId) {
-      rowA.won += 1;
-      rowB.lost += 1;
-    } else {
-      rowB.won += 1;
-      rowA.lost += 1;
-    }
-    let setsA = 0;
-    let setsB = 0;
-    let gamesA = 0;
-    let gamesB = 0;
-    for (const set of match.score.split(",")) {
-      const [gamesASet, gamesBSet] = set.trim().split("-").map(Number);
-      if (!Number.isFinite(gamesASet) || !Number.isFinite(gamesBSet)) continue;
-      gamesA += gamesASet;
-      gamesB += gamesBSet;
-      if (gamesASet > gamesBSet) setsA += 1;
-      else if (gamesBSet > gamesASet) setsB += 1;
-    }
-    rowA.setsDiff += setsA - setsB;
-    rowA.gamesDiff += gamesA - gamesB;
-    rowB.setsDiff += setsB - setsA;
-    rowB.gamesDiff += gamesB - gamesA;
-  });
-  return [...table.values()].sort((left, right) =>
-    right.won - left.won ||
-    right.setsDiff - left.setsDiff ||
-    right.gamesDiff - left.gamesDiff ||
-    left.player.localeCompare(right.player));
-}
-
-function renderTournamentMatches(matches, entries = [], formatType = "knockout") {
-  if (!matches || !matches.length) {
-    if (entries.length >= 2) {
-      return '<p class="muted draw-pending">El cuadro se publicará cuando se programen los partidos.</p>';
-    }
-    return "";
-  }
-  if (formatType === "league") {
-    const groups = new Map();
-    matches.forEach(match => {
-      const key = match.round || "Grupo";
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push(match);
-    });
-    return `<div class="group-draw">${[...groups.entries()].map(([groupName, groupMatches]) => {
-      const roster = [];
-      groupMatches.forEach(match => {
-        [match.playerAName || match.playerAId, match.playerBName || match.playerBId].forEach(name => {
-          if (name && name !== "Por definir" && !roster.includes(name)) roster.push(name);
-        });
-      });
-      const weeks = new Map();
-      groupMatches.forEach(match => {
-        const week = match.week || 1;
-        if (!weeks.has(week)) weeks.set(week, []);
-        weeks.get(week).push(match);
-      });
-      return `<article class="group-panel">
-        <header class="group-panel-head"><span class="group-title">${escapeHtml(groupName)}</span><span class="group-sub">Round Robin · Best of 3</span></header>
-        ${(() => {
-          const standings = groupStandings(groupMatches);
-          const allDone = groupMatches.length > 0 && groupMatches.every(match => match.status === "completed");
-          const leader = standings[0];
-          const winnerBanner = allDone && leader ? `<div class="group-winner-banner"><span class="gw-trophy" aria-hidden="true">🏆</span> Ganador del grupo: <b>${escapeHtml(leader.player)}</b></div>` : "";
-          const standingsBlock = standings.length ? `<div class="group-standings"><span class="standings-label">Clasificación</span>${standings.map((row, index) => `
-            <div class="standings-row${index === 0 ? " is-leader" : ""}">
-              <b class="st-pos">${index + 1}</b>
-              <span class="st-name">${escapeHtml(row.player)}</span>
-              <span class="st-record">${row.won}-${row.lost}</span>
-              <span class="st-sets">Sets ${row.setsDiff > 0 ? "+" : ""}${row.setsDiff}</span>
-            </div>`).join("")}</div>` : "";
-          return `${winnerBanner}<div class="group-body"><div class="group-weeks">${[...weeks.entries()].sort((a, b) => a[0] - b[0]).map(([week, weekMatches]) => `
-          <div class="group-week"><span class="week-label">Semana ${week}</span>${weekMatches.map(match => {
-            const winnerA = match.status === "completed" && match.winnerId && match.winnerId === match.playerAId;
-            const winnerB = match.status === "completed" && match.winnerId && match.winnerId === match.playerBId;
-            return `<div class="group-match${match.status === "completed" ? " is-completed" : ""}${match.status === "cancelled" ? " is-cancelled" : ""}">
-              <span class="gm-player${winnerA ? " is-winner" : ""}">${escapeHtml(match.playerAName || "Por definir")}</span>
-              <span class="gm-vs">vs</span>
-              <span class="gm-player${winnerB ? " is-winner" : ""}">${escapeHtml(match.playerBName || "Por definir")}</span>
-              ${match.score ? `<b class="gm-score">${escapeHtml(match.score)}</b>` : `<small class="gm-state">${match.status === "cancelled" ? "Cancelado" : "Por jugar"}</small>`}
-            </div>`;
-          }).join("")}</div>`).join("")}</div>${standingsBlock}</div>`;
-        })()}
-        <div class="group-roster">${roster.map((name, index) =>
-          `<span class="roster-chip"><b>${index + 1}</b>${escapeHtml(name)}</span>`
-        ).join("")}</div>
-        <div class="group-weeks">${[...weeks.entries()].sort((a, b) => a[0] - b[0]).map(([week, weekMatches]) => `
-          <div class="group-week"><span class="week-label">Semana ${week}</span>${weekMatches.map(match => {
-            const winnerA = match.status === "completed" && match.winnerId && match.winnerId === match.playerAId;
-            const winnerB = match.status === "completed" && match.winnerId && match.winnerId === match.playerBId;
-            return `<div class="group-match${match.status === "completed" ? " is-completed" : ""}${match.status === "cancelled" ? " is-cancelled" : ""}">
-              <span class="gm-player${winnerA ? " is-winner" : ""}">${escapeHtml(match.playerAName || "Por definir")}</span>
-              <span class="gm-vs">vs</span>
-              <span class="gm-player${winnerB ? " is-winner" : ""}">${escapeHtml(match.playerBName || "Por definir")}</span>
-              ${match.score ? `<b class="gm-score">${escapeHtml(match.score)}</b>` : `<small class="gm-state">${match.status === "cancelled" ? "Cancelado" : "Por jugar"}</small>`}
-            </div>`;
-          }).join("")}</div>`).join("")}</div>
-      </article>`;
-    }).join("")}</div>`;
-  }
-
-  const rounds = [];
-  matches.forEach(match => {
-    const round = match.round || "Ronda";
-    let bucket = rounds.find(item => item.name === round);
-    if (!bucket) {
-      bucket = { name: round, matches: [] };
-      rounds.push(bucket);
-    }
-    bucket.matches.push(match);
-  });
-  return `<div class="bracket"><b class="draw-written-title">Cuadro eliminatorio</b><div class="bracket-rounds">${rounds.map(round => `
-    <div class="bracket-round"><h4>${escapeHtml(round.name)}</h4>${round.matches.map(match => {
-      const winnerA = match.status === "completed" && match.winnerId && match.winnerId === match.playerAId;
-      const winnerB = match.status === "completed" && match.winnerId && match.winnerId === match.playerBId;
-      return `<div class="bracket-match${match.status === "completed" ? " is-completed" : ""}${match.status === "cancelled" ? " is-cancelled" : ""}">
-        <span class="${winnerA ? "is-winner" : ""}">${escapeHtml(match.playerAName || "Por definir")}</span>
-        <span class="${winnerB ? "is-winner" : ""}">${escapeHtml(match.playerBName || "Por definir")}</span>
-        ${match.score ? `<b>${escapeHtml(match.score)}</b>` : `<small>${match.status === "cancelled" ? "Cancelado" : match.date ? escapeHtml(match.date) : "Por jugar"}</small>`}
-      </div>`;
-    }).join("")}</div>`).join("")}</div></div>`;
-}
-
-function renderTournaments() {
-  const container = document.getElementById("tournamentsList");
-  if (!container) return;
-  if (!tournaments.length) {
-    container.innerHTML = '<article class="card"><span class="tag">Próximamente</span><h3>Calendario de torneos</h3><p class="muted">Los próximos torneos se publicarán aquí.</p></article>';
-    return;
-  }
-  const statusLabels = {
-    registration: "Inscripciones abiertas",
-    scheduled: "Programado",
-    in_progress: "En curso",
-    completed: "Finalizado",
-    cancelled: "Cancelado"
-  };
-  container.innerHTML = tournaments.map(tournament => {
-    const entries = tournament.entries || [];
-    const status = statusLabels[tournament.status] || "Estado por confirmar";
-    const dates = [tournament.startDate, tournament.endDate].filter(Boolean).join(" – ");
-    const month = tournament.month || "";
-    const canJoin = tournament.status === "registration" &&
-      month === new Date().toISOString().slice(0, 7);
-    const isRegistered = canJoin && currentUser &&
-      entries.some(entry => entry.userId === currentUser.id);
-    const hasMatches = (tournament.matches || []).some(match =>
-      match.playerAId || match.playerBId);
-    const canWithdraw = isRegistered && !hasMatches;
-    return `<article class="card tournament-card">
-      <span class="tag ${tournament.status === "registration" ? "tag-blue" : ""}">${escapeHtml(status)}</span>
-      <h3>${escapeHtml(tournament.title || `Campeonato · ${month}`)}</h3>
-      <p class="muted">${escapeHtml(tournament.description || "")}</p>
-      <p><b>${escapeHtml(month)}</b>${dates ? ` · ${escapeHtml(dates)}` : ""}</p>
-      ${tournament.venue ? `<p class="muted">Cancha: ${escapeHtml(tournament.venue)}</p>` : ""}
-      <p class="muted">${escapeHtml(tournament.format || "Formato por anunciar")}</p>
-      <p><b>${entries.length}</b> inscritos${tournament.maxParticipants ? ` / ${tournament.maxParticipants}` : ""}${tournament.levels?.length ? ` · Niveles ${escapeHtml(tournament.levels.join(", "))}` : ""}</p>
-      ${entries.length ? `<details><summary>Ver jugadores inscritos</summary><ul class="tournament-entries">${entries.map(entry =>
-        `<li>${escapeHtml(entry.name)} <span class="muted">${escapeHtml(entry.level)}</span></li>`
-      ).join("")}</ul></details>` : ""}
-      ${(tournament.category && tournament.category !== "singles") || (tournament.gender && tournament.gender !== "mixto") ?
-        `<p class="muted">${escapeHtml(CATEGORY_LABELS[tournament.category || "singles"] || "Singles")}${tournament.gender && tournament.gender !== "mixto" ? ` · ${escapeHtml(GENDER_LABELS[tournament.gender] || tournament.gender)}` : ""}</p>` : ""}
-      ${(tournament.matches || []).length ? `<button class="btn btn-dark" onclick="openDrawModal('${escapeHtml(tournament.id)}')">Ver main draw completo</button>` : ""}
-      ${canJoin && !isRegistered ? '<button class="btn btn-dark" onclick="joinTournament()">Inscribirse</button>' : ""}
-      ${canWithdraw ? '<button class="btn btn-secondary tournament-withdraw" onclick="withdrawTournament()">Retirarme del torneo</button>' : ""}
-      ${isRegistered && hasMatches ? '<p class="muted small">Ya estás en el cuadro; para retirarte pide ayuda al administrador.</p>' : ""}
-    </article>`;
-  }).join("");
-}
-
-// ============ ADMIN PANEL ============
-async function showAdminPanel() {
-  if (!currentUser || currentUser.role !== "admin") return;
-  const content = document.getElementById("adminContent");
-  let orderSyncMessage = "";
-  if (!adminOrdersChecked) {
-    adminOrdersChecked = true;
-    try {
-      const sync = await api("/api/admin/orders/reconcile", { method: "POST" });
-      if (sync.added) {
-        orderSyncMessage = `Se recuperaron ${sync.added} compra(s) faltante(s) desde Stripe.`;
-      }
-    } catch (error) {
-      orderSyncMessage = `No se pudo sincronizar con Stripe: ${error.message}`;
-    }
-  }
-  let stats;
-  let orders;
-  let users;
-  let allProducts;
-  let allTournaments;
-  let results;
-  let allChallenges;
-  try {
-    [stats, orders, users, allProducts, allTournaments, results, allChallenges] = await Promise.all([
-      api("/api/admin/stats"),
-      api("/api/admin/orders"),
-      api("/api/admin/users"),
-      api("/api/admin/products"),
-      api("/api/admin/tournaments"),
-      api("/api/results"),
-      api("/api/admin/challenges")
-    ]);
-  } catch (error) {
-    if (content) {
-      content.innerHTML = `
-        <div class="admin-load-error" role="alert">
-          <p>No se pudo cargar el panel: ${escapeHtml(error.message)}</p>
-          <button class="btn btn-primary" type="button" onclick="showAdminPanel()">Reintentar</button>
-        </div>`;
-    }
-    showToast(`No se pudo abrir administración: ${error.message}`);
-    return;
-  }
-
-  if (!content) return;
-  products = allProducts;
-  tournaments = allTournaments;
-  adminTournaments = allTournaments;
-  matchResults = results;
-  adminUsers = users;
-  let allPlayers;
-  try {
-    allPlayers = await api("/api/admin/players");
-  } catch (error) {
-    content.innerHTML = `
-      <div class="admin-load-error" role="alert">
-        <p>No se pudieron cargar los perfiles de jugadores: ${escapeHtml(error.message)}</p>
-        <button class="btn btn-primary" type="button" onclick="showAdminPanel()">Reintentar</button>
-      </div>`;
-    showToast(`No se pudieron cargar los perfiles de jugadores: ${error.message}`);
-    return;
-  }
-  players = allPlayers;
-  const levels = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0"];
-  const pendingResults = results.filter(result => ["pending", "disputed"].includes(result.status));
-  const playersWithoutProfile = adminUsers.filter(user =>
-    !allPlayers.some(player => player.userId === user.id)
-  );
-
-  content.innerHTML = `
-    <div class="admin-welcome">
-      <div>
-        <span class="section-kicker">CENTRO DE CONTROL</span>
-        <h2>¿Qué quieres hacer hoy?</h2>
-        <p>Elige una tarea para empezar. Los cambios se guardan al pulsar el botón de guardar.</p>
-      </div>
-      <div class="admin-quick-actions">
-        <button type="button" onclick="setAdminModule('tournaments')"><span>01</span><b>Organizar un torneo</b><small>Fechas, niveles y partidos</small></button>
-        <button type="button" onclick="setAdminModule('results')"><span>02</span><b>Revisar resultados</b><small>${pendingResults.length} por revisar</small></button>
-        <button type="button" onclick="setAdminModule('players')"><span>03</span><b>Gestionar jugadores</b><small>Perfiles y clasificación</small></button>
-        <button type="button" onclick="setAdminModule('products')"><span>04</span><b>Editar la tienda</b><small>Productos y membresías</small></button>
-      </div>
-    </div>
-    <div class="admin-stats">
-      <div class="stat-card"><div class="stat-number">${stats.totalUsers}</div><div class="stat-label">Cuentas registradas</div></div>
-      <div class="stat-card"><div class="stat-number">${stats.totalPlayers}</div><div class="stat-label">Perfiles de jugador</div></div>
-      <div class="stat-card"><div class="stat-number">${stats.totalOrders}</div><div class="stat-label">Compras realizadas</div></div>
-      <div class="stat-card"><div class="stat-number">$${(stats.revenue / 100).toFixed(2)}</div><div class="stat-label">Ingresos totales</div></div>
-      <div class="stat-card"><div class="stat-number">${stats.activeSubscriptions}</div><div class="stat-label">Membresías activas</div></div>
-      <div class="stat-card"><div class="stat-number">${pendingResults.length}</div><div class="stat-label">Resultados por revisar</div></div>
-    </div>
-
-    <div class="admin-layout">
-    <nav class="admin-nav" aria-label="Módulos de administración">
-      <button type="button" data-module-btn="tournaments" onclick="setAdminModule('tournaments')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/></svg>Torneos</button>
-      <button type="button" data-module-btn="players" onclick="setAdminModule('players')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Jugadores</button>
-      <button type="button" data-module-btn="results" onclick="setAdminModule('results')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3 21h18M7 17V9M12 17V5M17 17v-6"/></svg>Resultados</button>
-      <button type="button" data-module-btn="challenges" onclick="setAdminModule('challenges')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg>Desafíos</button>
-      <button type="button" data-module-btn="products" onclick="setAdminModule('products')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6ZM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>Tienda</button>
-      <button type="button" data-module-btn="orders" onclick="setAdminModule('orders')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6ZM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>Compras</button>
-      <button type="button" data-module-btn="users" onclick="setAdminModule('users')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87"/></svg>Cuentas</button>
-      <button type="button" data-module-btn="ranking" onclick="setAdminModule('ranking')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3 21h18M7 17V9M12 17V5M17 17v-6"/></svg>Ranking 2026</button>
-      <button type="button" data-module-btn="settings" onclick="setAdminModule('settings')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.4-3a7.4 7.4 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7.5 7.5 0 0 0-2-1.2L14.5 2h-5l-.4 2.6a7.5 7.5 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7.5 7.5 0 0 0 2 1.2l.4 2.6h5l.4-2.6a7.5 7.5 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z"/></svg>Ajustes</button>
-    </nav>
-
-    <section class="admin-section admin-module" data-module="orders" hidden><h3>Compras recientes</h3>
-    <div class="admin-order-tools">
-      <p class="admin-section-help">Consulta las compras y pagos realizados en la tienda.</p>
-      <button class="btn btn-secondary btn-sm" type="button" onclick="syncAdminOrders()">Sincronizar pagos con Stripe</button>
-    </div>
-    ${orderSyncMessage ? `<p class="admin-order-sync-message" role="status">${escapeHtml(orderSyncMessage)}</p>` : ""}
-    <div class="table-wrap" style="margin-bottom:20px">
-      <table>
-        <thead><tr><th>ID</th><th>Usuario</th><th>Producto</th><th>Monto</th><th>Estado</th><th>Fecha</th></tr></thead>
-        <tbody>
-          ${orders.map(o => `<tr>
-            <td title="${escapeHtml(o.id)}">${escapeHtml(o.id.slice(0, 8))}</td>
-            <td>${escapeHtml(o.userName)}</td>
-            <td>${escapeHtml(o.productName)}</td>
-            <td>$${(o.amount / 100).toFixed(2)}</td>
-            <td><span class="tag">${escapeHtml(orderStatusLabel(o.status))}</span></td>
-            <td>${o.created ? formatLocalDate(o.created) : "-"}</td>
-          </tr>`).join("") || '<tr><td colspan="6" class="muted">No hay pedidos</td></tr>'}
-        </tbody>
-      </table>
-    </div>
-    </section>
-
-    <section class="admin-section admin-module" data-module="tournaments" hidden>
-    <div class="admin-section-head">
-      <div>
-        <h3>Torneos</h3>
-        <p class="admin-section-help">Crea campeonatos, administra participantes, programa partidos y previsualiza el Main Draw.</p>
-      </div>
-      <button class="btn btn-primary" type="button" onclick="openTournamentFormModal()">Crear torneo</button>
-    </div>
-    <div class="admin-tournament-grid">
-      ${allTournaments.map(tournament => `<article class="card admin-tournament-card">
-        <div class="admin-record-head">
-          <div>
-            <span class="tag ${tournament.status === "registration" ? "tag-blue" : ""}">${escapeHtml(tournamentStatusLabel(tournament.status))}</span>
-            <h4>${escapeHtml(tournament.title || tournament.month)}</h4>
-          </div>
-        </div>
-        <p class="muted">${escapeHtml(tournament.month)} · <b>${(tournament.entries || []).length}</b> inscritos${tournament.maxParticipants ? ` / ${tournament.maxParticipants}` : ""}</p>
-        <p class="muted">${escapeHtml(tournament.formatType === "league" ? "Liga · todos contra todos" : "Eliminación directa (cuadro)")} · ${escapeHtml(CATEGORY_LABELS[tournament.category || "singles"] || "Singles")}${tournament.gender && tournament.gender !== "mixto" ? ` · ${escapeHtml(GENDER_LABELS[tournament.gender] || tournament.gender)}` : ""}</p>
-        <p class="muted">${escapeHtml(tournament.venue || "Sede por definir")}</p>
-        <div class="admin-form-actions">
-          <button class="btn btn-sm btn-dark" onclick="openTournamentFormModal('${escapeHtml(tournament.id)}')">Datos</button>
-          <button class="btn btn-sm btn-primary" onclick="openTournamentManage('${escapeHtml(tournament.id)}')">Gestionar</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteTournament('${escapeHtml(tournament.id)}')">Eliminar</button>
-        </div>
-      </article>`).join("") || '<div class="admin-empty-state"><b>Aún no hay torneos</b><p>Pulsa "Crear torneo" para publicar el primero.</p></div>'}
-    </div>
-    </section>
-    <section class="admin-section admin-module" data-module="challenges" hidden><h3>Desafíos publicados</h3>
-    <p class="muted">Revisa la actividad de la comunidad, cierra publicaciones resueltas o elimina contenido inválido.</p>
-    <div class="grid grid-3 admin-records">
-      ${allChallenges.map(challenge => `<article class="card admin-record">
-        <span class="tag ${challenge.status === "accepted" ? "tag-blue" : ""}">${escapeHtml(challengeStatusLabel(challenge.status))}</span>
-        <h4>${escapeHtml(challenge.playerName)}</h4>
-        <p>${escapeHtml(challenge.availability || "")}</p>
-        ${challenge.acceptedPlayerName ? `<p class="muted">Aceptado por ${escapeHtml(challenge.acceptedPlayerName)}</p>` : ""}
-        <p class="muted">${challenge.created ? formatLocalDate(challenge.created) : ""}</p>
-        <div class="admin-form-actions">
-          ${challenge.status !== "closed" ? `<button class="btn btn-sm btn-dark" onclick="setChallengeStatus('${escapeHtml(challenge.id)}','closed')">Cerrar</button>` : ""}
-          ${challenge.status === "closed" ? `<button class="btn btn-sm btn-secondary" onclick="setChallengeStatus('${escapeHtml(challenge.id)}','open')">Reabrir</button>` : ""}
-          <button class="btn btn-sm btn-danger" onclick="deleteAdminChallenge('${escapeHtml(challenge.id)}')">Eliminar</button>
-        </div>
-      </article>`).join("") || '<p class="muted">No hay desafíos publicados.</p>'}
-    </div>
-    </section>
-
-    <section class="admin-section admin-module" data-module="products" hidden><h3>Tienda y membresías</h3>
-    <p class="admin-section-help">Lo que esté marcado como disponible se mostrará en la página principal.</p>
-    <form id="adminProductForm" class="admin-form">
-      <input type="hidden" name="id">
-      <label>Nombre<input name="name" maxlength="120" required></label>
-      <label>Precio (USD)<input name="price" type="number" min="0.01" step="0.01" required></label>
-      <label>Tipo<select name="type"><option value="digital">Producto digital</option><option value="subscription">Suscripción</option></select></label>
-      <label>Frecuencia<select name="interval"><option value="month">Mensual</option><option value="year">Anual</option></select></label>
-      <label>Categoría<select name="category"><option value="">General</option><option value="libros">Libros digitales</option><option value="ropa">Ropa y accesorios</option></select></label>
-      <label class="full">Descripción<textarea name="description" rows="2" maxlength="500"></textarea></label>
-      <label class="full">Imagen del producto<input name="imageFile" type="file" accept="image/png,image/jpeg,image/webp" onchange="previewProductImageFile(this)"></label>
-      <input type="hidden" name="image">
-      <div class="full"><img id="productImagePreview" alt="" style="display:none; width:100%; max-height:160px; object-fit:cover; border-radius:8px; border:1px solid var(--line);"></div>
-      <label class="full"><span><input name="active" type="checkbox" checked> Disponible en la tienda</span></label>
-      <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar producto</button><button class="btn btn-secondary" type="button" onclick="resetProductForm()">Limpiar</button></div>
-    </form>
-    <div class="grid grid-3 admin-records">
-      ${allProducts.map(product => `<article class="card admin-record">
-        <h4>${escapeHtml(product.name)}</h4>
-        <p class="muted">$${(product.price / 100).toFixed(2)}${product.type === "subscription" ? ` /${product.interval === "year" ? "año" : "mes"}` : ""}</p>
-        <span class="tag ${product.active ? "" : "tag-red"}">${product.active ? "Activo" : "Inactivo"}</span>
-        <p class="muted">${escapeHtml(product.description || "")}</p>
-        <button class="btn btn-sm btn-dark" onclick="editProduct('${escapeHtml(product.id)}')">Editar</button>
-        <button class="btn btn-sm btn-secondary" onclick="toggleProduct('${escapeHtml(product.id)}')">${product.active ? "Desactivar" : "Activar"}</button>
-        <button class="btn btn-sm btn-secondary" onclick="deleteProduct('${escapeHtml(product.id)}')">Eliminar</button>
-      </article>`).join("") || '<p class="muted">No hay productos configurados.</p>'}
-    </div>
-    </section>
-
-    <section class="admin-section admin-module" data-module="results" hidden><h3>Resultados de partidos</h3>
-    <p class="muted">Confirma, rechaza o elimina un reporte. Los resultados confirmados impactan el ranking.</p>
-    <div class="grid grid-2 admin-records">
-      ${pendingResults.map(result => `<article class="card admin-record">
-        <span class="tag ${result.status === "disputed" ? "tag-red" : ""}">${result.status === "disputed" ? "En disputa" : "Pendiente"}</span>
-        <h4>${escapeHtml(result.winnerName)} vs ${escapeHtml(result.loserName)}</h4>
-        <p class="muted">${escapeHtml(result.score)} · ${escapeHtml(result.playedAt || "")}</p>
-        <div class="admin-form-actions">
-          <button class="btn btn-primary" onclick="moderateResult('${escapeHtml(result.id)}','confirm')">Confirmar</button>
-          <button class="btn btn-secondary" onclick="moderateResult('${escapeHtml(result.id)}','reject')">Rechazar</button>
-          <button class="btn btn-sm btn-dark" onclick="editAdminResult('${escapeHtml(result.id)}')">Editar</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteAdminResult('${escapeHtml(result.id)}')">Eliminar</button>
-        </div>
-      </article>`).join("") || '<p class="muted">No hay resultados pendientes.</p>'}
-    </div>
-    <details class="admin-history">
-      <summary>Historial de resultados (${results.length})</summary>
-      <div class="table-wrap">
-        <table><thead><tr><th>Partido</th><th>Marcador</th><th>Estado</th><th>Fecha</th><th></th></tr></thead><tbody>
-          ${results.map(result => `<tr><td>${escapeHtml(result.winnerName)} vs ${escapeHtml(result.loserName)}</td><td>${escapeHtml(result.score)}</td><td>${escapeHtml(resultStatusLabel(result.status))}</td><td>${result.playedAt ? formatLocalDate(result.playedAt) : "-"}</td><td><button class="btn btn-sm btn-dark" onclick="editAdminResult('${escapeHtml(result.id)}')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminResult('${escapeHtml(result.id)}')">Eliminar</button></td></tr>`).join("") || '<tr><td colspan="5">Sin resultados</td></tr>'}
-        </tbody></table>
-      </div>
-    </details>
-    <form id="adminResultForm" class="admin-form admin-result-form" hidden>
-      <input type="hidden" name="resultId">
-      <h4 class="full">Editar resultado reportado</h4>
-      <p class="full muted">Al guardar, volverá a estado pendiente para que el rival confirme el cambio.</p>
-      <label>Ganador<select name="winnerId" required>${allPlayers.map(player => `<option value="${escapeHtml(player.id)}">${escapeHtml(player.name)}</option>`).join("")}</select></label>
-      <label>Rival<select name="loserId" required>${allPlayers.map(player => `<option value="${escapeHtml(player.id)}">${escapeHtml(player.name)}</option>`).join("")}</select></label>
-      <label>Marcador desde el ganador<input name="score" required placeholder="6-4, 4-6, 10-7"></label>
-      <label>Fecha<input name="playedAt" type="date" required></label>
-      <div class="admin-form-actions full"><button class="btn btn-primary">Guardar y solicitar confirmación</button><button type="button" class="btn btn-secondary" onclick="cancelAdminResultEdit()">Cancelar</button></div>
-    </form>
-    </section>
-
-    <section class="admin-section admin-module" data-module="players" hidden><h3>Jugadores de la liga</h3>
-    <p class="admin-section-help">Administra el nombre, nivel y zona que aparecen en la clasificación. Los perfiles con historial deportivo no se pueden borrar.</p>
-    <form id="adminPlayerForm" class="admin-form">
-      <input type="hidden" name="playerId">
-      <label class="full">Cuenta vinculada<select name="accountId" required>
-        <option value="">Selecciona una cuenta sin perfil</option>
-        ${playersWithoutProfile.map(user => `<option value="${escapeHtml(user.id)}">${escapeHtml(user.name)} · ${escapeHtml(user.email)}</option>`).join("")}
-      </select></label>
-      <label>Nombre público<input name="name" maxlength="100" required></label>
-      <label>Nivel<select name="level" required>${levels.map(level => `<option value="${level}">${level}</option>`).join("")}</select></label>
-      <label>Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label>
-      <label>Modalidad<select name="gender" required><option value="hombres">Hombres</option><option value="mujeres">Mujeres</option></select></label>
-      <label class="full">Zona<select name="zone" required><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
-      <div class="admin-form-actions full"><button class="btn btn-primary">Guardar perfil</button><button type="button" class="btn btn-secondary" onclick="resetAdminPlayerForm()">Cancelar</button></div>
-    </form>
-    <div class="table-wrap"><table><thead><tr><th>Jugador</th><th>Email</th><th>Nivel</th><th>Categoría</th><th>Modalidad</th><th>Zona</th><th>Partidos</th><th>Puntos</th><th>Acciones</th></tr></thead>
-      <tbody>${allPlayers.map(player => `<tr>
-        <td>${escapeHtml(player.name)}</td><td>${escapeHtml(player.email || "-")}</td><td>${escapeHtml(player.level)}</td>
-        <td>${escapeHtml(CATEGORY_LABELS[player.category || "singles"] || "Singles")}</td>
-        <td>${escapeHtml(GENDER_LABELS[player.gender || "hombres"] || "Hombres")}</td>
-        <td>${escapeHtml(player.zone)}</td><td>${Number(player.matches) || 0}</td><td>${Number(player.points) || 0}</td>
-        <td><button class="btn btn-sm btn-dark" onclick="editAdminPlayer('${escapeHtml(player.id)}')">Editar</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteAdminPlayer('${escapeHtml(player.id)}')">Eliminar</button></td>
-      </tr>`).join("") || '<tr><td colspan="9">No hay perfiles de jugador.</td></tr>'}</tbody>
-    </table></div>
-    </section>
-
-    <section class="admin-section admin-module" data-module="users" hidden><h3>Cuentas registradas</h3>
-    <p class="admin-section-help">Crea cuentas, gestiona emails y contraseñas, permisos y membresías. Por seguridad, las contraseñas nunca se muestran.</p>
-    <div class="admin-user-toolbar">
-      <label class="admin-search">Buscar usuario
-        <input id="adminUserSearch" type="search" placeholder="Nombre, email o teléfono">
-      </label>
-      <label class="admin-filter">Rol
-        <select id="adminUserRoleFilter">
-          <option value="all">Todos</option>
-          <option value="admin">Administradores</option>
-          <option value="user">Jugadores</option>
-        </select>
-      </label>
-      <label class="admin-filter">Teléfono
-        <select id="adminUserPhoneFilter">
-          <option value="all">Todos</option>
-          <option value="with">Con teléfono</option>
-          <option value="without">Sin teléfono</option>
-        </select>
-      </label>
-    </div>
-    <div class="admin-form-actions" style="margin-bottom:14px">
-      <button class="btn btn-primary" type="button" onclick="openCreateUserModal()">Crear usuario</button>
-    </div>
-    <div class="table-wrap admin-users-table-wrap">
-      <table class="admin-users-table">
-        <thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr></thead>
-        <tbody id="adminUsersBody">
-          ${users.map(u => `<tr data-user-id="${escapeHtml(u.id)}" data-role="${escapeHtml(u.role || "user")}" data-has-phone="${u.phone ? "true" : "false"}" data-membership="${u.membershipActive ? "true" : "false"}">
-            <td><strong>${escapeHtml(u.name)}</strong></td>
-            <td>${escapeHtml(u.email)}</td>
-            <td>${escapeHtml(u.phone || "Sin registrar")}</td>
-            <td>
-              <span class="tag ${u.role === "admin" ? "tag-blue" : ""}">${u.role === "admin" ? "Administrador" : "Jugador"}</span>
-              ${u.membershipActive ? '<span class="tag tag-green">Activa</span>' : ''}
-            </td>
-            <td class="admin-user-actions">
-              <button class="btn btn-sm btn-dark" type="button" onclick="editAdminUser('${escapeHtml(u.id)}')">Editar</button>
-              <button class="btn btn-sm btn-danger" type="button" onclick="deleteAdminUser('${escapeHtml(u.id)}')">Eliminar</button>
-            </td>
-          </tr>`).join("") || '<tr><td colspan="5" class="muted">No hay cuentas registradas.</td></tr>'}
-        </tbody>
-      </table>
-    </div>
-    </section>
-
-    <section class="admin-section admin-module" data-module="ranking" hidden><h3>Ranking 2026 · Total Points</h3>
-    <p class="admin-section-help">Controla el ranking de temporada que aparece en la página principal. Las posiciones se calculan solas por puntos (con empates).</p>
-    <form id="adminRankingForm" class="admin-form">
-      <input type="hidden" name="mode" value="add">
-      <label>Nombre del jugador<input name="player" maxlength="100" required></label>
-      <label>Puntos<input name="points" type="number" min="0" max="100000" step="1" required></label>
-      <div class="admin-form-actions full"><button class="btn btn-primary" type="submit" id="adminRankingSubmit">Agregar al ranking</button><button class="btn btn-secondary" type="button" onclick="resetAdminRankingForm()" hidden id="adminRankingCancel">Cancelar edición</button></div>
-    </form>
-    <div class="table-wrap"><table><thead><tr><th>Pos.</th><th>Jugador</th><th>Puntos</th><th>Acciones</th></tr></thead>
-      <tbody id="adminRankingBody"></tbody>
-    </table></div>
-    </section>
-
-    <section class="admin-section admin-module" data-module="settings" hidden><h3>Ajustes del sitio</h3>
-    <p class="admin-section-help">Configura el enlace del grupo de WhatsApp que aparece en la página pública.</p>
-    <form id="adminSettingsForm" class="admin-form">
-      <label class="full">Enlace del grupo de WhatsApp
-        <input name="whatsappUrl" type="url" placeholder="https://chat.whatsapp.com/... o https://wa.me/...">
-      </label>
-      <p class="full muted">Acepta enlaces de invitación (chat.whatsapp.com/...) o enlaces por número (wa.me/...). Déjalo vacío para ocultar el botón flotante.</p>
-      <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar ajustes</button></div>
-    </form>
-    </section>
-    </div>
-    </div>
-  `;
-  document.getElementById("adminUserCreateForm")?.addEventListener("submit", createAdminUser);
-  document.getElementById("adminUserSearch")?.addEventListener("input", filterAdminUsers);
-  document.getElementById("adminUserRoleFilter")?.addEventListener("change", filterAdminUsers);
-  document.getElementById("adminProductForm").addEventListener("submit", saveProduct);
-  document.getElementById("adminUserPhoneFilter")?.addEventListener("change", filterAdminUsers);
-  document.getElementById("adminPlayerForm").addEventListener("submit", saveAdminPlayer);
-  document.getElementById("adminResultForm").addEventListener("submit", saveAdminResult);
-  document.getElementById("adminSettingsForm").addEventListener("submit", saveAdminSettings);
-  document.getElementById("adminRankingForm").addEventListener("submit", saveAdminRanking);
-  resetAdminUserForm();
+async function openTournamentFormModal(tournamentId) {
   resetTournamentForm();
-  resetProductForm();
-  fillAdminSettingsForm();
-  renderAdminRanking();
-  setAdminModule(currentAdminModule);
-  if (document.getElementById("adminModal")) openModal("adminModal");
-}
-
-function setAdminModule(moduleId) {
-  currentAdminModule = moduleId;
-  document.querySelectorAll(".admin-module").forEach(section => {
-    section.hidden = section.dataset.module !== moduleId;
-  });
-  document.querySelectorAll("[data-module-btn]").forEach(button => {
-    button.classList.toggle("active", button.dataset.moduleBtn === moduleId);
-  });
-  if (window.innerWidth <= 900) {
-    document.querySelector(".admin-nav")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const modal = document.getElementById("tournamentFormModal");
+  if (!modal) return;
+  if (tournamentId) {
+    const tournament = adminTournaments.find(item => item.id === tournamentId);
+    if (tournament) editTournament(tournament);
   }
-}
-
-async function syncAdminOrders() {
-  try {
-    const result = await api("/api/admin/orders/reconcile", { method: "POST" });
-    adminOrdersChecked = true;
-    showToast(result.added
-      ? `Se recuperaron ${result.added} compra(s) desde Stripe.`
-      : "Stripe está sincronizado; no hay compras faltantes.");
-    await showAdminPanel();
-  } catch (error) {
-    showToast(`No se pudieron sincronizar los pagos: ${error.message}`);
-  }
-}
-
-function openTournamentFormModal(tournamentId) {
-  resetTournamentForm();
-  if (tournamentId) editTournament(tournamentId);
   openModal("tournamentFormModal");
 }
 
-function openTournamentManage(tournamentId) {
-  const tournament = adminTournaments.find(item => item.id === tournamentId);
-  if (!tournament) return;
+async function openTournamentManage(tournamentId) {
   const content = document.getElementById("tournamentManageContent");
   const title = document.getElementById("tournamentManageTitle");
-  if (title) title.textContent = `Gestionar · ${tournament.title || tournament.month}`;
+  if (title) title.textContent = "Cargando torneo...";
   if (!content) return;
+  let tournament;
+  try {
+    const res = await api(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}`);
+    const data = await res.json();
+    tournament = data.tournament;
+  } catch (error) {
+    content.innerHTML = `<div class="manage-summary"><p class="muted">No se pudo cargar el torneo: ${escapeHtml(error.message)}</p></div>`;
+    openModal("tournamentManageModal");
+    return;
+  }
+  if (!tournament) return;
+  if (title) title.textContent = `Gestionar · ${tournament.title || tournament.month}`;
   const entrants = tournament.entries || [];
   const matches = tournament.matches || [];
+  const standings = data.standings || null;
   const availablePlayers = players.filter(player =>
     !(tournament.entries || []).some(entry => entry.playerId === player.id) &&
     (tournament.levels || []).includes(player.level)
   );
+  const completed = matches.filter(m => m.status === "completed").length;
+  const total = matches.length;
+  const pct = total ? Math.round((completed / total) * 100) : 0;
+
   content.innerHTML = `
+    <div class="manage-header">
+      <div>
+        <h2 class="manage-title">${escapeHtml(tournament.title || tournament.month)}</h2>
+        <p class="manage-subtitle">${escapeHtml(tournament.month)} · ${escapeHtml(tournament.venue || "Sede por definir")} · ${escapeHtml(tournament.formatType === "league" ? "Liga · todos contra todos" : "Eliminación directa")}</p>
+      </div>
+      <div class="admin-form-actions">
+        ${tournament.status === "registration" && entrants.length < (tournament.maxParticipants || 999) ? `<button class="btn btn-dark btn-sm" onclick="openTournamentFormModal('${escapeHtml(tournament.id)}')">Editar torneo</button>` : ""}
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('tournamentManageModal')">Cerrar</button>
+      </div>
+    </div>
     <div class="manage-summary">
-      <span class="tag ${tournament.status === "registration" ? "tag-blue" : ""}">${escapeHtml(tournamentStatusLabel(tournament.status))}</span>
+      <span class="tag ${tournament.status === "registration" ? "tag-blue" : tournament.status === "completed" ? "tag-green" : "tag-red"}">${escapeHtml(tournamentStatusLabel(tournament.status))}</span>
       <p class="muted">${escapeHtml(tournament.month)} · ${escapeHtml(tournament.venue || "Sede por definir")} · ${escapeHtml(tournament.formatType === "league" ? "Liga · todos contra todos" : "Eliminación directa")} · ${entrants.length}/${tournament.maxParticipants || "∞"} inscritos</p>
+      <div class="stats">
+        <div class="manage-stat"><b>${entrants.length}</b><span>Inscritos</span></div>
+        <div class="manage-stat"><b>${total}</b><span>Partidos</span></div>
+        <div class="manage-stat"><b>${completed}</b><span>Finalizados</span></div>
+      </div>
+      <div class="manage-progress">
+        <div class="manage-progress-track"><div class="manage-progress-bar" style="width:${pct}%"></div></div>
+        <span class="manage-progress-text">${completed} / ${total} partidos finalizados</span>
+      </div>
     </div>
     <div class="manage-tabs" role="tablist">
       <button type="button" class="is-active" data-manage-tab="participants">Participantes (${entrants.length})</button>
-      <button type="button" data-manage-tab="matches">Partidos (${matches.length})</button>
+      <button type="button" data-manage-tab="matches">Partidos (${total})</button>
+      ${standings ? `<button type="button" data-manage-tab="standings">Clasificación (${standings.length})</button>` : ""}
       <button type="button" data-manage-tab="draw">Main Draw</button>
     </div>
+
     <div class="manage-panel" data-manage-panel="participants">
-      <div class="admin-form-actions" style="margin-bottom:12px">
+      <div class="manage-toolbar">
         ${entrants.length >= 2 ? `<button class="btn btn-primary btn-sm" onclick="generateTournamentDraw('${escapeHtml(tournament.id)}')">${matches.some(match => match.auto) ? "Regenerar cuadro" : "Generar cuadro"}</button>` : ""}
         ${entrants.length >= 4 ? `<button class="btn btn-secondary btn-sm" onclick="createTournamentGroups('${escapeHtml(tournament.id)}')">Crear grupos</button>` : ""}
       </div>
       <ul class="admin-entrant-list manage-entrant-list">${entrants.map(entry => `<li>
-        <span>${escapeHtml(entry.name)} <small>${escapeHtml(entry.level || "")}</small></span>
+        <span class="entrant-info">${escapeHtml(entry.name)} <small>${escapeHtml(entry.level || "")}</small></span>
         <button class="btn btn-sm btn-danger" onclick="removeTournamentEntry('${escapeHtml(tournament.id)}','${escapeHtml(entry.playerId)}')">Retirar</button>
       </li>`).join("") || '<li class="muted">Sin inscritos</li>'}</ul>
-      ${tournament.status === "registration" && availablePlayers.length ? `<form class="admin-entry-form" onsubmit="addTournamentEntry(event,'${escapeHtml(tournament.id)}')">
+      ${tournament.status === "registration" && availablePlayers.length ? `<form class="admin-entry-form panel-form" onsubmit="addTournamentEntry(event,'${escapeHtml(tournament.id)}')">
         <label class="full">Agregar jugador
           <select name="playerId" required>${availablePlayers.map(player => `<option value="${escapeHtml(player.id)}">${escapeHtml(player.name)} · ${escapeHtml(player.level)}</option>`).join("")}</select>
         </label>
         <button class="btn btn-dark full" type="submit">Agregar participante</button>
       </form>` : ""}
     </div>
+
     <div class="manage-panel" data-manage-panel="matches" hidden>
-      ${entrants.length >= 2 ? `<form id="admin-match-form-${escapeHtml(tournament.id)}" class="admin-match-form" onsubmit="saveTournamentMatch(event,'${escapeHtml(tournament.id)}')">
+      ${entrants.length >= 2 ? `<form id="admin-match-form-${escapeHtml(tournament.id)}" class="admin-match-form panel-form" onsubmit="saveTournamentMatch(event,'${escapeHtml(tournament.id)}')">
         <input type="hidden" name="matchId">
         <b class="full">Programar partido</b>
         <label>Jugador A<select name="playerAId" required>${entrants.map(entry => `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`).join("")}</select></label>
@@ -2040,16 +1514,46 @@ function openTournamentManage(tournamentId) {
         <label>Fecha<input name="date" type="date"></label>
         <label>Estado<select name="status"><option value="scheduled">Programado</option><option value="completed">Finalizado</option><option value="cancelled">Cancelado</option></select></label>
         <label>Ganador<select name="winnerId"><option value="">Elegir al cerrar</option>${entrants.map(entry => `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`).join("")}</select></label>
-        <label>Marcador desde Jugador A<input name="score" placeholder="6-4, 4-6, 10-7"></label>
+        <label>Marcador (ej. 6-4, 4-6, 7-6*)<input name="score" placeholder="6-4, 4-6, 7-6*"></label>
         <label>Cancha<input name="court" maxlength="120"></label>
         <button class="btn btn-primary full" type="submit">Guardar partido</button>
       </form>` : '<p class="muted">Inscribe al menos 2 jugadores para programar partidos.</p>'}
-      <div class="manage-match-list">${matches.map(match => `<div class="admin-match-row">
-        <p class="muted">${escapeHtml(match.round)}: ${escapeHtml(match.playerAName || "Por definir")} vs ${escapeHtml(match.playerBName || "Por definir")}${match.date ? ` · ${escapeHtml(match.date)}` : ""}${match.score ? ` · ${escapeHtml(match.score)}` : ""}</p>
-        <button class="btn btn-sm btn-dark" onclick="editTournamentMatch('${escapeHtml(tournament.id)}','${escapeHtml(match.id)}')">Editar</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteTournamentMatch('${escapeHtml(tournament.id)}','${escapeHtml(match.id)}')">Eliminar</button>
-      </div>`).join("") || '<p class="muted">Aún no hay partidos programados.</p>'}</div>
+      <div class="manage-match-list">${matches.map(match => {
+        const isCompleted = match.status === "completed";
+        const setsHtml = match.sets && match.sets.length ? `<div class="match-sets">${match.sets.map((s, i) => `<span class="match-set${isCompleted && match.winnerId === match.playerAId && i === match.sets.length - 1 ? " is-winner-set" : ""}${isCompleted && match.winnerId === match.playerBId && i === match.sets.length - 1 ? " is-loser-set" : ""}">${s[0]}-${s[1]}${s[2] ? "*" : ""}</span>`).join("")}</div>` : "";
+        return `<div class="admin-match-row">
+          <div class="match-header">
+            <span class="match-round">${escapeHtml(match.round)}</span>
+            <span class="match-status ${match.status}">${match.status === "completed" ? "Finalizado" : match.status === "cancelled" ? "Cancelado" : "Programado"}</span>
+          </div>
+          <div class="match-teams">
+            <span class="match-team${isCompleted && match.winnerId === match.playerAId ? " is-winner" : ""}">${escapeHtml(match.playerAName || match.playerAId || "Por definir")}</span>
+            <span class="match-vs">vs</span>
+            <span class="match-team${isCompleted && match.winnerId === match.playerBId ? " is-winner" : ""}">${escapeHtml(match.playerBName || match.playerBId || "Por definir")}</span>
+          </div>
+          <div class="match-score">${setsHtml || (match.score ? escapeHtml(match.score) : "")}<span class="match-meta">${match.date ? escapeHtml(match.date) : ""}${match.court ? ` · ${escapeHtml(match.court)}` : ""}</span></div>
+          <div class="match-actions">
+            <button class="btn btn-sm btn-dark" onclick="editTournamentMatch('${escapeHtml(tournament.id)}','${escapeHtml(match.id)}')">Editar</button>
+            ${!isCompleted ? `<button class="btn btn-sm btn-primary" onclick="quickScoreMatch('${escapeHtml(tournament.id)}','${escapeHtml(match.id)}')">Marcar resultado</button>` : ""}
+            <button class="btn btn-sm btn-danger" onclick="deleteTournamentMatch('${escapeHtml(tournament.id)}','${escapeHtml(match.id)}')">Eliminar</button>
+          </div>
+        </div>`;
+      }).join("") || '<p class="muted">Aún no hay partidos programados.</p>'}</div>
     </div>
+
+    ${standings ? `<div class="manage-panel" data-manage-panel="standings" hidden>
+      <table class="standings-table"><thead><tr><th>Pos.</th><th>Jugador</th><th>PJ</th><th>G</th><th>P</th><th>Sets</th><th>Juegos</th><th>Pts</th></tr></thead><tbody>
+        ${standings.map(s => `<tr class="pos-${s.position}">
+          <td><b>${s.position}</b></td>
+          <td>${escapeHtml(s.name)}<small>${s.level ? ` · ${escapeHtml(s.level)}` : ""}</small></td>
+          <td>${s.played}</td><td>${s.won}</td><td>${s.lost}</td>
+          <td>${s.setsWon}-${s.setsLost}</td>
+          <td>${s.gamesWon}-${s.gamesLost}</td>
+          <td><b>${s.points}</b></td>
+        </tr>`).join("")}
+      </tbody></table>
+    </div>` : ""}
+
     <div class="manage-panel" data-manage-panel="draw" hidden>
       ${(tournament.formatType || "knockout") === "knockout"
         ? '<canvas id="manageDrawCanvas" class="draw-canvas"></canvas>'
@@ -2057,6 +1561,7 @@ function openTournamentManage(tournamentId) {
       <details class="matching-details"><summary>Ver lista de partidos</summary>${renderMatchesListHtml(matches)}</details>
     </div>
   `;
+
   content.querySelectorAll("[data-manage-tab]").forEach(button => {
     button.addEventListener("click", () => {
       const tab = button.dataset.manageTab;
@@ -2066,14 +1571,6 @@ function openTournamentManage(tournamentId) {
         const canvas = document.getElementById("manageDrawCanvas");
         if (canvas) {
           drawUsOpenBracket(canvas, tournament, true);
-          canvas.addEventListener("click", event => {
-            if (!canvas._hitAreas) return;
-            const rect = canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            const hit = canvas._hitAreas.find(area => x >= area.x && x <= area.x + area.w && y >= area.y && y <= area.y + area.h);
-            if (hit) editTournamentMatch(tournament.id, hit.id);
-          });
         }
       }
     });
@@ -2173,13 +1670,6 @@ async function saveTournament(event) {
   }
 }
 
-async function refreshTournamentManage(tournamentId) {
-  await loadTournaments();
-  await showAdminPanel();
-  const tournament = adminTournaments.find(item => item.id === tournamentId);
-  if (tournament) openTournamentManage(tournamentId);
-}
-
 async function deleteTournament(tournamentId) {
   if (!window.confirm("¿Eliminar este torneo y su cuadro?")) return;
   try {
@@ -2193,7 +1683,7 @@ async function deleteTournament(tournamentId) {
 }
 
 async function generateTournamentDraw(tournamentId) {
-  if (!window.confirm("Se reemplazarán los partidos actuales por el cuadro/calendario generado con los inscritos. ¿Continuar?")) return;
+  if (!window.confirm("Se reemplazarán los partidos actuales por el cuadro generado con los inscritos. ¿Continuar?")) return;
   try {
     await api(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}`, {
       method: "PUT",
@@ -2316,6 +1806,46 @@ async function deleteTournamentMatch(tournamentId, matchId) {
     showToast(`No se pudo eliminar el partido: ${error.message}`);
   }
 }
+
+async function refreshTournamentManage(tournamentId) {
+  await loadTournaments();
+  await showAdminPanel();
+  const tournament = adminTournaments.find(item => item.id === tournamentId);
+  if (tournament) openTournamentManage(tournamentId);
+}
+
+async function quickScoreMatch(tournamentId, matchId) {
+  const tournament = adminTournaments.find(item => item.id === tournamentId);
+  if (!tournament) return;
+  const match = (tournament.matches || []).find(m => m.id === matchId);
+  if (!match) return;
+  const sets = prompt("Marcador (sets separados por coma, ej. 6-4, 4-6, 7-6*):", match.score || "");
+  if (sets === null) return;
+  const parsed = sets.split(",").map(s => {
+    const t = s.trim().split("-");
+    const tb = s.trim().includes("*");
+    return [Number(t[0]), Number(t[1]), tb];
+  }).filter(s => s.length === 2 && !isNaN(s[0]) && !isNaN(s[1]));
+  if (parsed.length < 1 || parsed.length > 3) {
+    showToast("Marcador inválido. Usa hasta 3 sets.");
+    return;
+  }
+  const superTiebreak = confirm("¿Es super tie-break (10 puntos) en el tercer set?");
+  try {
+    await api(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}`, {
+      method: "PUT",
+      body: JSON.stringify({ matchResult: { matchId, sets: parsed, superTiebreak, status: "completed" } })
+    });
+    showToast("Resultado registrado.");
+    openTournamentManage(tournamentId);
+  } catch (error) {
+    showToast(`No se pudo guardar: ${error.message}`);
+  }
+}
+
+// ========================================
+// FIN TORNEOS
+// ========================================
 
 function editProduct(productId) {
   const product = products.find(item => item.id === productId);

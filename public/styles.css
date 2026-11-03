@@ -783,3 +783,180 @@ html[dir="rtl"] .admin-record-head { direction: rtl; }
 .standings-table td b { color:#1f2937; }
 .standings-table tr:last-child td { border-bottom:none; }
 .tag-green { background:#dcfce7; color:#166534; border:1px solid #86efac; }
+/* ========================================
+   TORNEOS - DISEÑO MODERNO (Advantage)
+   ======================================== */
+.admin-section-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-bottom:20px;
+}
+.admin-section-head h3 { margin:0; font-size:1.35rem; letter-spacing:-.01em; }
+.admin-section-help { margin:6px 0 0; font-size:14px; color:rgba(31,41,55,.65); }
+
+.admin-tournament-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+  gap:18px;
+}
+.admin-tournament-card {
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  background:#fff;
+  border:1px solid #e9eaec;
+  border-radius:1.5rem;
+  padding:18px 18px 20px;
+  box-shadow:0 10px 30px rgba(31,41,55,.08);
+  transition:transform .18s, box-shadow .18s, border-color .18s;
+}
+.admin-tournament-card:hover {
+  transform:translateY(-3px);
+  box-shadow:0 20px 44px rgba(31,41,55,.12);
+  border-color:#dfe3e8;
+}
+.admin-tournament-card .admin-record-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+.admin-tournament-card h4 { margin:0; font-size:1.15rem; color:#1f2937; letter-spacing:-.01em; }
+.admin-tournament-card .tag {
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid;
+}
+.admin-tournament-card .tag-blue { background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
+.admin-tournament-card .tag-green { background:#dcfce7; color:#166534; border-color:#86efac; }
+.admin-tournament-card .tag-red { background:#fef2f2; color:#991b1b; border-color:#fecaca; }
+
+.tournament-meta { display:flex; flex-direction:column; gap:6px; font-size:13px; color:rgba(31,41,55,.7); }
+.tournament-meta b { color:#1f2937; font-weight:800; }
+.tournament-progress { margin-top:8px; }
+.tournament-progress-track {
+  height:7px; background:#e9eaec; border-radius:4px; overflow:hidden; margin-bottom:6px;
+}
+.tournament-progress-bar { height:100%; background:#ccff00; border-radius:4px; width:0%; transition:width .3s; }
+.tournament-progress-label { font-size:11px; font-weight:800; color:#1f2937; }
+
+.admin-form-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+.admin-form-actions.full { justify-content:flex-end; }
+.admin-form-actions .btn { font-weight:800; border-radius:1rem; }
+
+/* Gestión de torneo modal */
+.tournament-manage-box { width:min(980px,100%); max-height:90vh; overflow:hidden; display:flex; flex-direction:column; }
+.manage-header { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid #eef0f2; }
+.manage-title { font-size:1.25rem; font-weight:800; color:#1f2937; margin:0; }
+.manage-subtitle { font-size:13px; color:rgba(31,41,55,.65); margin-top:4px; }
+
+.manage-summary { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; background:#f8f9fa; border:1px solid #eef0f2; border-radius:1.25rem; padding:14px 16px; }
+.manage-summary .tag { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; padding:4px 10px; border-radius:999px; border:1px solid; }
+.manage-summary p { margin:0; font-size:13px; color:rgba(31,41,55,.7); }
+.manage-summary .stats { display:flex; gap:12px; margin-top:6px; }
+.manage-stat { text-align:center; }
+.manage-stat b { display:block; font-size:1.4rem; color:#1f2937; font-weight:800; }
+.manage-stat span { font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:.05em; }
+
+.manage-progress { margin-top:8px; }
+.manage-progress-track { height:8px; background:#e9eaec; border-radius:4px; overflow:hidden; }
+.manage-progress-bar { height:100%; background:#ccff00; border-radius:4px; width:0%; transition:width .4s; }
+.manage-progress-text { font-size:12px; font-weight:800; color:#1f2937; margin-top:6px; }
+
+.manage-tabs { display:flex; gap:6px; border-bottom:1px solid #eef0f2; margin-bottom:16px; }
+.manage-tabs button {
+  padding:10px 14px; border:none; background:transparent; cursor:pointer;
+  font-weight:800; color:#6b7280; border-bottom:2px solid transparent; font-size:13px;
+}
+.manage-tabs button.is-active { color:#1f2937; border-bottom-color:#ccff00; }
+
+.manage-panel[hidden] { display:none; }
+.manage-panel { animation:fadeIn .3s; }
+
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+
+.manage-toolbar { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; align-items:center; }
+
+/* Entrantes */
+.admin-entrant-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px; max-height:340px; overflow:auto; }
+.admin-entrant-list li {
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  background:#fff; border:1px solid #eef0f2; border-radius:1rem; padding:10px 14px;
+}
+.admin-entrant-list li .entrant-info { font-size:14px; font-weight:700; color:#1f2937; }
+.admin-entrant-list li small { color:#6b7280; font-size:12px; }
+
+/* Partidos */
+.manage-match-list { display:flex; flex-direction:column; gap:10px; margin-top:8px; max-height:420px; overflow:auto; }
+.admin-match-row {
+  display:grid; grid-template-columns:150px 1fr auto; gap:10px; align-items:center;
+  background:#fff; border:1px solid #e9eaec; border-left:4px solid #ccff00; border-radius:1rem; padding:12px 14px;
+}
+.match-header { display:flex; gap:8px; align-items:center; }
+.match-round { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#6b7280; }
+.match-status { font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px; color:#fff; }
+.match-status.scheduled { background:#6b7280; }
+.match-status.completed { background:#10b981; }
+.match-status.cancelled { background:#ef4444; }
+.match-teams { display:flex; gap:8px; align-items:center; font-size:14px; font-weight:700; color:#1f2937; }
+.match-team { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.match-team.is-winner { color:#10b981; }
+.match-vs { color:#9ca3af; font-weight:800; }
+.match-score { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:800; color:#1f2937; }
+.match-sets { display:flex; gap:4px; flex-wrap:wrap; }
+.match-set { font-size:12px; font-weight:800; padding:2px 6px; border-radius:6px; background:#f3f4f6; color:#374151; border:1px solid #e5e7eb; }
+.match-set.is-winner-set { background:#dcfce7; color:#166534; border-color:#86efac; }
+.match-set.is-loser-set { background:#fef2f2; color:#991b1b; border-color:#fecaca; }
+.match-meta { font-size:11px; color:#6b7280; margin-left:6px; white-space:nowrap; }
+.match-actions { display:flex; gap:6px; }
+
+/* Clasificación */
+.standings-table { width:100%; border-collapse:separate; border-spacing:0; background:#fff; border:1px solid #e9eaec; border-radius:1rem; overflow:hidden; margin-top:8px; }
+.standings-table th { background:#f8f9fa; color:#6b7280; font-size:11px; text-transform:uppercase; letter-spacing:.05em; padding:10px 12px; text-align:left; border-bottom:1px solid #e9eaec; }
+.standings-table td { padding:10px 12px; border-bottom:1px solid #f0f1f2; font-size:13px; }
+.standings-table td b { color:#1f2937; font-weight:800; }
+.standings-table tr:last-child td { border-bottom:none; }
+.standings-table tr.pos-1 td { background:#fffbeb; }
+.standings-table tr.pos-2 td { background:#f0fdf4; }
+.standings-table tr.pos-3 td { background:#fff7ed; }
+
+/* Formularios dentro de paneles */
+.panel-form { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:16px; }
+.panel-form label { font-size:12px; font-weight:700; color:#374151; text-transform:uppercase; letter-spacing:.04em; }
+.panel-form input, .panel-form select { width:100%; padding:10px 12px; border:1px solid #e5e7eb; border-radius:1rem; font-size:13px; background:#fff; }
+.panel-form input:focus, .panel-form select:focus { outline:none; border-color:#ccff00; box-shadow:0 0 0 3px rgba(204,255,0,.15); }
+
+/* Draw público */
+.draw-panel { margin-top:8px; }
+.draw-tabs { display:flex; gap:8px; margin-bottom:12px; border-bottom:1px solid #eef0f2; }
+.draw-tabs button { padding:10px 14px; border:none; background:transparent; cursor:pointer; font-weight:800; color:#6b7280; border-bottom:2px solid transparent; font-size:13px; }
+.draw-tabs button.is-active { color:#1f2937; border-bottom-color:#ccff00; }
+
+/* Página pública */
+.tournament-card.public { border-left:6px solid #ccff00; }
+.public-tag { display:inline-block; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; padding:4px 10px; border-radius:999px; margin-bottom:10px; }
+.public-tag.registration { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+.public-tag.scheduled { background:#ecfccb; color:#3f6212; border:1px solid #d9f99d; }
+.public-tag.in_progress { background:#dcfce7; color:#166534; border:1px solid #86efac; }
+.public-tag.completed { background:#f3f4f6; color:#4b5563; border:1px solid #e5e7eb; }
+
+/* Modales de torneo */
+.tournament-form-modal .modal-box { width:min(860px,92%); max-height:92vh; overflow-y:auto; }
+.tournament-form-modal .modal-head h2 { margin:0; font-size:1.35rem; }
+.tournament-form-modal .admin-form { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+.tournament-form-modal label.full { grid-column:1/-1; }
+.tournament-form-modal fieldset.admin-level-select { border:1px solid #eef0f2; border-radius:1rem; padding:12px 16px; margin:0; grid-column:1/-1; }
+.tournament-form-modal fieldset.admin-level-select legend { font-size:12px; font-weight:800; color:#374151; text-transform:uppercase; letter-spacing:.05em; padding-bottom:8px; }
+.tournament-form-modal fieldset.admin-level-select div { display:flex; flex-wrap:wrap; gap:10px; }
+.tournament-form-modal fieldset.admin-level-select label { display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer; }
+.tournament-form-modal .close { background:none; border:none; font-size:24px; cursor:pointer; color:#6b7280; line-height:1; }
+
+.tag-red, .tag-green, .tag-blue { font-weight:800; }
