@@ -621,35 +621,5 @@
     "createdBy": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
     "created": "2026-11-02T03:19:21.917Z",
     "updated": "2026-11-03T02:56:31.369Z"
-  },
-  {
-    "id": "tournament-31228676-d125-4530-bd1a-fa27d1a7e6e9",
-    "title": "Copa Noviembre",
-    "month": "2026-11",
-    "description": "",
-    "levels": [
-      "2.5",
-      "3.0",
-      "3.5"
-    ],
-    "startDate": "2026-11-03",
-    "endDate": "2026-11-10",
-    "venue": "Sede Prueba",
-    "format": "Eliminación directa · Best of 3",
-    "category": "singles",
-    "gender": "mixto",
-    "formatType": "knockout",
-    "status": "registration",
-    "entries": [
-      {
-        "playerId": "player-c4c83bd2-68bd-40ae-9254-f8c15dca06e6",
-        "userId": "user-a1baecda-879a-4cde-b3ae-4e11c21310f9",
-        "created": "2026-11-03T02:16:29.388Z"
-      }
-    ],
-    "matches": [],
-    "createdBy": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
-    "created": "2026-11-03T02:15:37.550Z",
-    "updated": "2026-11-03T02:16:29.388Z"
   }
 ]
