@@ -2459,7 +2459,8 @@ document.addEventListener("languagechange", () => {
 
 // ============ INIT ============
 document.addEventListener("DOMContentLoaded", async () => {
-  document.getElementById("loginForm")?.addEventListener("submit", login);
+  try {
+    document.getElementById("loginForm")?.addEventListener("submit", login);
   document.getElementById("registerForm")?.addEventListener("submit", register);
   document.getElementById("recoveryForm")?.addEventListener("submit", recoverPassword);
   document.getElementById("resultForm")?.addEventListener("submit", submitResult);
@@ -2511,5 +2512,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadRanking2026();
   if (new URLSearchParams(window.location.search).get("admin") === "login") {
     openModal("loginModal");
+  }
+  } catch (error) {
+    console.error("Error inicializando la aplicación:", error);
+    showToast("Error al cargar la aplicación: " + error.message);
   }
 });
