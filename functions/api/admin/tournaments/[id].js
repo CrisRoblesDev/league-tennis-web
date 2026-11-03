@@ -1,4 +1,5 @@
 import { gRead, gWrite, requireAdmin, validateMatchScore, jsonResponse, MATCH_CATEGORIES } from "../../../_helpers.js";
+import { validateTennisMatch, tennisScoreString, computeStandings } from "../tennis-scoring.js";
 
 const LEVELS = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0"];
 const STATUSES = ["registration", "scheduled", "in_progress", "completed", "cancelled"];
@@ -324,6 +325,47 @@ export async function onRequestPut({ request, env, params }) {
       created: new Date().toISOString()
     });
   }
+  if (body.matchResult !== undefined) {
+    const r = body.matchResult;
+    if (!r || typeof r !== "object" || Array.isArray(r) || typeof r.matchId !== "string") {
+      return jsonResponse({ error: "Resultado de partido inválido" }, 400);
+    }
+    const matchIndex = (tournament.matches || []).findIndex(m => m.id === r.matchId);
+    if (matchIndex < 0) return jsonResponse({ error: "Partido no encontrado" }, 404);
+    const match = tournament.matches[matchIndex];
+    const entryA = (tournament.entries || []).find(e => e.playerId === match.playerAId);
+    const entryB = (tournament.entries || []).find(e => e.playerId === match.playerBId);
+    if (!entryA || !entryB) return jsonResponse({ error: "Partido sin jugadores válidos" }, 400);
+
+    const status = r.status || "completed";
+    if (!MATCH_STATUSES.includes(status)) return jsonResponse({ error: "Estado inválido" }, 400);
+
+    let parsed = null;
+    let winnerId = null;
+    let score = "";
+    if (status === "completed") {
+      const superTiebreak = Boolean(r.superTiebreak);
+      parsed = validateTennisMatch(r.sets || [], superTiebreak);
+      if (!parsed) return jsonResponse({ error: "Marcador de tenis inválido (mejor de 3 sets, set a 6 con diferencia 2, tie-break a 7)." }, 400);
+      winnerId = match.playerAId === match.playerBId ? null : (parsed.winnerId === 0 ? match.playerAId : match.playerBId);
+      score = tennisScoreString(parsed.sets);
+    }
+
+    const updated = {
+      ...match,
+      date: typeof r.date === "string" ? r.date.trim() : match.date,
+      court: typeof r.court === "string" ? r.court.trim().slice(0, 120) : match.court,
+      status,
+      score,
+      winnerId: status === "completed" ? winnerId : null,
+      sets: parsed ? parsed.sets : null,
+      superTiebreak: status === "completed" ? Boolean(r.superTiebreak) : match.superTiebreak,
+      updated: new Date().toISOString()
+    };
+    tournament.matches[matchIndex] = updated;
+    if (status === "completed") advanceWinner(tournament, updated);
+  }
+
   if (body.match !== undefined) {
     const match = body.match;
     const isPlaceholder = match.playerAId === null && match.playerBId === null;
@@ -372,6 +414,26 @@ export async function onRequestPut({ request, env, params }) {
   tournament.updated = new Date().toISOString();
   await gWrite(env, "tournaments", tournaments);
   return jsonResponse({ tournament });
+}
+
+export async function onRequestGet({ request, env, params }) {
+  const { user, userId } = await requireAdmin(request, env);
+  if (!userId) return jsonResponse({ error: "No autenticado" }, 401);
+  if (!user) return jsonResponse({ error: "No autorizado" }, 403);
+  const [tournaments, players] = await Promise.all([gRead(env, "tournaments"), gRead(env, "players")]);
+  const tournament = tournaments.find(item => item.id === params.id);
+  if (!tournament) return jsonResponse({ error: "Torneo no encontrado" }, 404);
+  const playerById = new Map(players.map(p => [p.id, p]));
+  const entriesWithNames = (tournament.entries || []).map(e => ({
+    ...e,
+    name: playerById.get(e.playerId)?.name || "Jugador",
+    level: playerById.get(e.playerId)?.level || ""
+  }));
+  let standings = null;
+  if (tournament.formatType === "league") {
+    standings = computeStandings(entriesWithNames, tournament.matches || []);
+  }
+  return jsonResponse({ tournament: { ...tournament, entries: entriesWithNames }, standings });
 }
 
 export async function onRequestDelete({ request, env, params }) {

@@ -2263,10 +2263,25 @@ async function saveTournamentMatch(event, tournamentId) {
     showToast("Elige dos jugadores distintos.");
     return;
   }
+  const status = form.elements.namedItem("status").value;
+  const scoreRaw = form.elements.namedItem("score").value.trim();
+  let matchResult = null;
+  if (status === "completed" && scoreRaw) {
+    const sets = scoreRaw.split(",").map(s => {
+      const t = s.trim().split("-");
+      const tb = s.trim().includes("*");
+      return [Number(t[0]), Number(t[1]), tb];
+    }).filter(s => s.length === 2 && !isNaN(s[0]) && !isNaN(s[1]));
+    if (sets.length < 1 || sets.length > 3) {
+      showToast("Marcador inválido. Usa hasta 3 sets (ej. 6-4, 4-6, 7-6*).");
+      return;
+    }
+    matchResult = { matchId: form.elements.namedItem("matchId").value || undefined, sets, superTiebreak: false, status: "completed" };
+  }
   try {
     await api(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}`, {
       method: "PUT",
-      body: JSON.stringify({
+      body: JSON.stringify(matchResult ? { matchResult } : {
         match: {
           ...(form.elements.namedItem("matchId").value ?
             { id: form.elements.namedItem("matchId").value } : {}),
@@ -2275,16 +2290,16 @@ async function saveTournamentMatch(event, tournamentId) {
           round: form.elements.namedItem("round").value,
           date: form.elements.namedItem("date").value,
           court: form.elements.namedItem("court").value,
-          status: form.elements.namedItem("status").value,
+          status,
           winnerId: form.elements.namedItem("winnerId").value,
-          score: form.elements.namedItem("score").value
+          score: scoreRaw
         }
       })
     });
     await refreshTournamentManage(tournamentId);
-    showToast("Partido programado");
+    showToast(status === "completed" ? "Resultado registrado." : "Partido programado");
   } catch (error) {
-    showToast(`No se pudo programar: ${error.message}`);
+    showToast(`No se pudo guardar: ${error.message}`);
   }
 }
 
