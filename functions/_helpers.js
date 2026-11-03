@@ -15,7 +15,8 @@ const FILES = {
   challenges: "results.json",
   leagueChallenges: "challenges.json",
   tournaments: "tournaments.json",
-  settings: "settings.json"
+  settings: "settings.json",
+  ranking2026: "ranking2026.json"
 };
 
 const DEFAULTS = {
@@ -31,7 +32,8 @@ const DEFAULTS = {
   challenges: [],
   leagueChallenges: [],
   tournaments: [],
-  settings: { whatsappUrl: "" }
+  settings: { whatsappUrl: "" },
+  ranking2026: []
 };
 
 function assertGitHubConfig(env) {

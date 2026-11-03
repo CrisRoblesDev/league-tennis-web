@@ -705,8 +705,29 @@ async function submitResult(event) {
   }
 }
 
-async function loadChallenges() {
+async function loadRanking2026() {
+  const container = document.getElementById("ranking2026List");
+  if (!container) return;
   try {
+    const ranking = await api("/api/ranking2026");
+    if (!ranking.length) {
+      container.innerHTML = '<p class="muted">El ranking 2026 se publicará pronto.</p>';
+      return;
+    }
+    container.innerHTML = `<div class="ranking2026-grid">${ranking.map(entry => {
+      const badge = entry.pos === 1 ? "gold" : entry.pos === 2 ? "silver" : entry.pos === 3 ? "bronze" : "blue";
+      return `<div class="ranking2026-row">
+        <span class="r26-pos"><b class="r26-badge ${badge}">${entry.pos}</b></span>
+        <span class="r26-player">${escapeHtml(entry.player)}</span>
+        <span class="r26-points">${entry.points}</span>
+      </div>`;
+    }).join("")}</div>`;
+  } catch (error) {
+    container.innerHTML = `<p class="muted">No se pudo cargar el ranking 2026: ${escapeHtml(error.message)}</p>`;
+  }
+}
+
+async function loadChallenges() {  try {
     leagueChallenges = await api("/api/challenges");
     renderChallenges();
   } catch (error) {
@@ -2163,6 +2184,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
   await Promise.all([loadProducts(), loadPlayers(), loadTournaments()]);
+  loadRanking2026();
   if (new URLSearchParams(window.location.search).get("admin") === "login") {
     openModal("loginModal");
   }

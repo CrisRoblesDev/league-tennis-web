@@ -194,6 +194,23 @@ main { max-width: 1200px; margin: auto; padding: 0 5%; }
 .draw-modal-box { width: min(1100px, 100%); }
 .draw-modal-container { max-height: 68vh; overflow: auto; padding: 4px 2px 10px; }
 
+/* RANKING 2026 TOTAL POINTS */
+.ranking2026-block { margin-top: 26px; padding: 22px; border: 1px solid rgba(212,175,55,.45); border-radius: 16px; background: linear-gradient(165deg, #0d1b2e 0%, #14263d 100%); box-shadow: 0 12px 30px rgba(0,0,0,.2); }
+.ranking2026-head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 2px solid rgba(212,175,55,.5); }
+.ranking2026-head .section-kicker { color: #f0d060; }
+.ranking2026-head h3 { color: #fff; font-size: 20px; letter-spacing: .4px; }
+.ranking2026-grid { display: grid; gap: 4px; }
+.ranking2026-row { display: grid; grid-template-columns: 44px 1fr 64px; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 9px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.06); }
+.ranking2026-row:nth-child(odd) { background: rgba(255,255,255,.07); }
+.r26-badge { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-size: 12px; font-weight: 900; color: #10243a; }
+.r26-badge.gold { background: linear-gradient(160deg, #f5d34a, #c9992a); box-shadow: 0 0 10px rgba(245,211,74,.5); }
+.r26-badge.silver { background: linear-gradient(160deg, #e8eef4, #aebccb); }
+.r26-badge.bronze { background: linear-gradient(160deg, #e2a56a, #b5763c); }
+.r26-badge.blue { background: linear-gradient(160deg, #3f6fa8, #2a4d7c); color: #fff; }
+.r26-player { color: #f2f6fa; font-weight: 700; font-size: 14px; overflow-wrap: anywhere; }
+.r26-points { color: #f0d060; font-weight: 900; font-size: 15px; text-align: right; }
+.ranking2026-block .muted { color: #9fb3c4; }
+
 /* MAIN DRAW ESTILO OFICIAL (navy/dorado) */
 .group-draw { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
 .group-panel { background: linear-gradient(165deg, #0d1b2e 0%, #14263d 100%); border: 1px solid rgba(212,175,55,.45); border-radius: 14px; overflow: hidden; color: #fff; box-shadow: 0 10px 26px rgba(0,0,0,.22); }
