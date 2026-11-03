@@ -960,3 +960,93 @@ html[dir="rtl"] .admin-record-head { direction: rtl; }
 .tournament-form-modal .close { background:none; border:none; font-size:24px; cursor:pointer; color:#6b7280; line-height:1; }
 
 .tag-red, .tag-green, .tag-blue { font-weight:800; }
+/* ========================================
+   MAIN DRAW CREADOR POR ETAPAS (Wizard)
+   ======================================== */
+.tournament-wizard { display:flex; flex-direction:column; height:100%; }
+.wizard-steps { display:flex; gap:10px; margin-bottom:24px; padding:0 12px; overflow-x:auto; }
+.wizard-step { display:flex; align-items:center; gap:10px; padding:12px 16px; background:#f8f9fa; border:2px solid #eef0f2; border-radius:1rem; color:#6b7280; font-size:13px; font-weight:700; white-space:nowrap; cursor:pointer; transition:all .2s; }
+.wizard-step.is-active { background:#fff; border-color:#ccff00; color:#1f2937; box-shadow:0 4px 12px rgba(204,255,0,.12); }
+.wizard-step.is-completed { background:#ecfdf5; border-color:#86efac; color:#166534; }
+.wizard-step .step-number { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:900; color:#fff; background:#cbd5e1; }
+.wizard-step.is-active .step-number { background:#ccff00; color:#1f2937; }
+.wizard-step.is-completed .step-number { background:#10b981; color:#fff; }
+
+.wizard-panel { display:none; animation:fadeIn .3s; }
+.wizard-panel.is-active { display:block; }
+.wizard-panel h3 { margin:0 0 8px; font-size:1.25rem; color:#1f2937; }
+.wizard-subtitle { font-size:13px; color:rgba(31,41,55,.65); margin-bottom:20px; }
+
+.wizard-nav { display:flex; justify-content:space-between; align-items:center; margin-top:24px; padding-top:20px; border-top:1px solid #eef0f2; }
+.wizard-nav .btn { font-weight:800; border-radius:1rem; }
+
+/* Etapa 1 - Datos */
+.tournament-data-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+.tournament-data-grid label.full { grid-column:1/-1; }
+.tournament-data-grid fieldset { border:1px solid #eef0f2; border-radius:1rem; padding:14px 16px; margin:0; grid-column:1/-1; }
+.tournament-data-grid fieldset legend { font-size:12px; font-weight:800; color:#374151; text-transform:uppercase; letter-spacing:.05em; padding-bottom:8px; }
+.tournament-data-grid fieldset .levels-grid { display:flex; flex-wrap:wrap; gap:10px; }
+.tournament-data-grid fieldset .levels-grid label { display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer; }
+
+/* Etapa 2 - Grupos/Stage */
+.groups-container { display:flex; flex-direction:column; gap:16px; }
+.group-stage-card { border:1px solid #eef0f2; border-radius:1rem; padding:16px; background:#fff; }
+.group-stage-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.group-stage-name { font-weight:800; color:#1f2937; font-size:15px; }
+.group-stage-actions { display:flex; gap:8px; }
+.group-players { display:flex; flex-wrap:wrap; gap:10px; }
+.group-player-chip { display:flex; align-items:center; gap:8px; background:#f8f9fa; border:1px solid #eef0f2; border-radius:999px; padding:6px 12px; font-size:13px; color:#374151; }
+.group-player-chip.remove { cursor:pointer; color:#ef4444; font-weight:900; padding:0 4px; }
+.available-players { margin-top:16px; }
+.available-players h4 { margin:0 0 10px; font-size:13px; color:#6b7280; text-transform:uppercase; letter-spacing:.05em; }
+.available-players-list { display:flex; flex-wrap:wrap; gap:8px; }
+.available-player-btn { padding:8px 14px; border:1px solid #e5e7eb; border-radius:999px; background:#fff; color:#374151; font-size:13px; cursor:pointer; transition:all .2s; }
+.available-player-btn:hover { border-color:#ccff00; background:#fffbeb; color:#1f2937; }
+.group-count-control { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+.group-count-control label { font-size:13px; font-weight:700; color:#374151; }
+.group-count-control input { width:80px; padding:8px; border:1px solid #e5e7eb; border-radius:.75rem; text-align:center; }
+
+/* Etapa 3 - Participantes */
+.participants-container { display:flex; flex-direction:column; gap:16px; }
+.unassigned-players, .assigned-players { border:1px solid #eef0f2; border-radius:1rem; padding:16px; background:#fff; }
+.unassigned-players h4, .assigned-players h4 { margin:0 0 12px; font-size:13px; color:#6b7280; text-transform:uppercase; letter-spacing:.05em; }
+.player-list { display:flex; flex-direction:column; gap:8px; max-height:300px; overflow:auto; }
+.player-item { display:flex; justify-content:space-between; align-items:center; background:#f8f9fa; border:1px solid #eef0f2; border-radius:.75rem; padding:10px 14px; cursor:pointer; transition:all .2s; }
+.player-item:hover { background:#fffbeb; border-color:#ccff00; }
+.player-item.is-assigned { background:#ecfdf5; border-color:#86efac; color:#166534; }
+.player-info { font-size:14px; font-weight:700; color:#1f2937; }
+.player-level { font-size:12px; color:#6b7280; }
+.assign-actions { display:flex; gap:6px; }
+.btn-sm { padding:6px 12px; font-size:12px; }
+
+/* Etapa 4 - Main Draw Visual */
+.main-draw-preview { margin-top:16px; }
+.draw-visual-container { overflow-x:auto; padding:12px 0; }
+.draw-canvas-visual { background:#f8f9fa; border:1px solid #eef0f2; border-radius:1rem; min-width:600px; }
+.draw-stage { margin-bottom:20px; }
+.draw-stage-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.draw-stage-name { font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:.08em; color:#6b7280; }
+.draw-round { display:flex; flex-direction:column; gap:14px; }
+.draw-match-visual { display:flex; align-items:center; gap:10px; background:#fff; border:1px solid #eef0f2; border-radius:1rem; padding:10px 14px; min-width:260px; }
+.draw-slot { flex:1; padding:8px; border-radius:.75rem; border:2px solid transparent; background:#f3f4f6; color:#374151; font-size:13px; font-weight:700; text-align:center; }
+.draw-slot.is-filled { background:#fff; border-color:#ccff00; color:#1f2937; }
+.draw-slot.is-winner { background:#ecfdf5; border-color:#10b981; color:#166534; }
+.draw-vs { color:#9ca3af; font-weight:900; font-size:11px; }
+.draw-connector { flex-shrink:0; width:2px; height:40px; background:#eef0f2; margin:0 -4px; }
+.draw-line-h { height:2px; background:#eef0f2; flex:1; margin:0 -4px; }
+.draw-empty { text-align:center; padding:40px; color:#9ca3af; }
+
+/* Resumen final */
+.wizard-summary { background:#f8f9fa; border:1px solid #eef0f2; border-radius:1rem; padding:16px; margin-bottom:20px; }
+.wizard-summary h4 { margin:0 0 12px; font-size:13px; color:#6b7280; text-transform:uppercase; letter-spacing:.05em; }
+.wizard-summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+.wizard-summary-item { display:flex; flex-direction:column; gap:4px; }
+.wizard-summary-item .label { font-size:11px; color:#6b7280; }
+.wizard-summary-item .value { font-size:14px; font-weight:800; color:#1f2937; }
+
+/* Toast y mensajes */
+.wizard-message { padding:12px 16px; border-radius:.75rem; margin-bottom:16px; font-size:13px; font-weight:600; }
+.wizard-message.success { background:#ecfdf5; color:#166534; border:1px solid #86efac; }
+.wizard-message.error { background:#fef2f2; color:#991b1b; border:1px solid #fecaca; }
+
+.tag-blue, .tag-green, .tag-red { font-weight:800; }
