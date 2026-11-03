@@ -5,11 +5,6 @@
     "status": "registration",
     "entries": [
       {
-        "userId": "user-a1baecda-879a-4cde-b3ae-4e11c21310f9",
-        "playerId": "player-c4c83bd2-68bd-40ae-9254-f8c15dca06e6",
-        "created": "2026-11-01T22:17:53.365Z"
-      },
-      {
         "userId": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
         "playerId": "player-6dd454f9-531c-484f-996b-33e6c6f5a976",
         "created": "2026-11-02T00:55:33.294Z"
