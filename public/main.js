@@ -954,6 +954,22 @@ async function withdrawTournament() {
   }
 }
 
+function openDrawModal(tournamentId) {
+  const tournament = tournaments.find(item => item.id === tournamentId);
+  if (!tournament) return;
+  const title = document.getElementById("drawModalTitle");
+  const container = document.getElementById("drawModalContainer");
+  if (title) title.textContent = tournament.title || `Campeonato · ${tournament.month}`;
+  if (container) {
+    container.innerHTML = renderTournamentMatches(
+      tournament.matches,
+      tournament.entries || [],
+      tournament.formatType || "knockout"
+    );
+  }
+  openModal("drawModal");
+}
+
 // ============ PUBLIC TOURNAMENTS ============
 async function loadTournaments() {
   try {
@@ -1068,6 +1084,7 @@ function renderTournaments() {
       ${(tournament.category && tournament.category !== "singles") || (tournament.gender && tournament.gender !== "mixto") ?
         `<p class="muted">${escapeHtml(CATEGORY_LABELS[tournament.category || "singles"] || "Singles")}${tournament.gender && tournament.gender !== "mixto" ? ` · ${escapeHtml(GENDER_LABELS[tournament.gender] || tournament.gender)}` : ""}</p>` : ""}
       ${(tournament.matches || []).length || entries.length >= 2 ? renderTournamentMatches(tournament.matches, entries, tournament.formatType || "knockout") : ""}
+      ${(tournament.matches || []).length ? `<button class="btn btn-dark" onclick="openDrawModal('${escapeHtml(tournament.id)}')">Ver main draw completo</button>` : ""}
       ${canJoin && !isRegistered ? '<button class="btn btn-dark" onclick="joinTournament()">Inscribirse</button>' : ""}
       ${canWithdraw ? '<button class="btn btn-secondary tournament-withdraw" onclick="withdrawTournament()">Retirarme del torneo</button>' : ""}
       ${isRegistered && hasMatches ? '<p class="muted small">Ya estás en el cuadro; para retirarte pide ayuda al administrador.</p>' : ""}

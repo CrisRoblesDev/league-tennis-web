@@ -190,6 +190,10 @@ main { max-width: 1200px; margin: auto; padding: 0 5%; }
 .draw-match.is-cancelled { border-left-color: var(--red); opacity: .65; }
 .draw-pending { margin-top: 12px; }
 
+/* MAIN DRAW MODAL */
+.draw-modal-box { width: min(1100px, 100%); }
+.draw-modal-container { max-height: 68vh; overflow: auto; padding: 4px 2px 10px; }
+
 /* CUADRO ELIMINATORIO Y LIGA */
 .bracket-rounds { display: flex; gap: 18px; overflow-x: auto; padding: 4px 2px 10px; }
 .bracket-round { display: flex; flex-direction: column; justify-content: space-around; gap: 14px; min-width: 190px; flex: 0 0 auto; }
