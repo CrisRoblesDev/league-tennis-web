@@ -60,6 +60,30 @@ export async function onRequestPost(context) {
   return jsonResponse({ ok: true, challenge }, 201);
 }
 
+export async function onRequestDelete(context) {
+  const { request, env } = context;
+  const userId = await requireAuth(request, env);
+  if (!userId) return jsonResponse({ error: "Inicia sesión para eliminar tu desafío" }, 401);
+
+  const url = new URL(request.url);
+  const challengeId = url.searchParams.get("challengeId");
+  if (!challengeId) return jsonResponse({ error: "Desafío inválido" }, 400);
+
+  const challenges = await gRead(env, "leagueChallenges");
+  const index = challenges.findIndex(item => item.id === challengeId);
+  if (index < 0) return jsonResponse({ error: "Desafío no encontrado" }, 404);
+  const challenge = challenges[index];
+  if (challenge.creatorUserId !== userId) {
+    return jsonResponse({ error: "Solo puedes eliminar tus propios desafíos" }, 403);
+  }
+  if (challenge.status !== "open") {
+    return jsonResponse({ error: "El desafío ya fue aceptado; pide al administrador que lo cierre." }, 409);
+  }
+  challenges.splice(index, 1);
+  await gWrite(env, "leagueChallenges", challenges);
+  return jsonResponse({ ok: true, message: "Desafío eliminado" });
+}
+
 export async function onRequestPatch(context) {
   const { request, env } = context;
   const userId = await requireAuth(request, env);

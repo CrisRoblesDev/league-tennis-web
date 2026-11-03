@@ -740,6 +740,7 @@ function renderChallenges() {
   }
   container.innerHTML = leagueChallenges.map(challenge => {
     const canAccept = currentUser && currentUser.id !== challenge.creatorUserId && challenge.status === "open";
+    const canDeleteOwn = currentUser && currentUser.id === challenge.creatorUserId && challenge.status === "open";
     const initials = (challenge.creatorName || "Jugador").split(" ").map(part => part[0]).join("").slice(0, 2);
     return `<article class="challenge-card">
       <div class="challenge-card-top">
@@ -756,6 +757,7 @@ function renderChallenges() {
       <div class="challenge-availability"><span aria-hidden="true">◷</span><div><small>DISPONIBILIDAD</small><p>${escapeHtml(challenge.availability)}</p></div></div>
       ${canAccept ? `<button class="btn btn-dark challenge-accept" onclick="acceptChallenge('${escapeHtml(challenge.id)}')">Aceptar desafío <span aria-hidden="true">→</span></button>` :
         challenge.status === "accepted" ? '<p class="challenge-coordinating">Los jugadores están coordinando el partido.</p>' : ""}
+      ${canDeleteOwn ? '<button class="btn btn-secondary challenge-own-delete" onclick="deleteOwnChallenge(\'' + escapeHtml(challenge.id) + '\')">Eliminar mi desafío</button>' : ""}
     </article>`;
   }).join("");
 }
@@ -803,6 +805,17 @@ async function acceptChallenge(challengeId) {
     });
     await loadChallenges();
     showToast("Desafío aceptado. Coordina fecha y cancha con el rival.");
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function deleteOwnChallenge(challengeId) {
+  if (!window.confirm("¿Eliminar tu desafío? Dejará de aparecer en la zona de desafíos.")) return;
+  try {
+    await api(`/api/challenges?challengeId=${encodeURIComponent(challengeId)}`, { method: "DELETE" });
+    await loadChallenges();
+    showToast("Desafío eliminado.");
   } catch (error) {
     showToast(error.message);
   }
@@ -930,6 +943,17 @@ async function joinTournament() {
   }
 }
 
+async function withdrawTournament() {
+  if (!window.confirm("¿Retirarte de este torneo? Podrás volver a inscribirte mientras las inscripciones estén abiertas.")) return;
+  try {
+    const data = await api("/api/tournament", { method: "DELETE" });
+    showToast(data.message || "Te retiraste del torneo.");
+    await loadTournaments();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
 // ============ PUBLIC TOURNAMENTS ============
 async function loadTournaments() {
   try {
@@ -1025,6 +1049,11 @@ function renderTournaments() {
     const month = tournament.month || "";
     const canJoin = tournament.status === "registration" &&
       month === new Date().toISOString().slice(0, 7);
+    const isRegistered = canJoin && currentUser &&
+      entries.some(entry => entry.userId === currentUser.id);
+    const hasMatches = (tournament.matches || []).some(match =>
+      match.playerAId || match.playerBId);
+    const canWithdraw = isRegistered && !hasMatches;
     return `<article class="card tournament-card">
       <span class="tag ${tournament.status === "registration" ? "tag-blue" : ""}">${escapeHtml(status)}</span>
       <h3>${escapeHtml(tournament.title || `Campeonato · ${month}`)}</h3>
@@ -1039,7 +1068,9 @@ function renderTournaments() {
       ${(tournament.category && tournament.category !== "singles") || (tournament.gender && tournament.gender !== "mixto") ?
         `<p class="muted">${escapeHtml(CATEGORY_LABELS[tournament.category || "singles"] || "Singles")}${tournament.gender && tournament.gender !== "mixto" ? ` · ${escapeHtml(GENDER_LABELS[tournament.gender] || tournament.gender)}` : ""}</p>` : ""}
       ${(tournament.matches || []).length || entries.length >= 2 ? renderTournamentMatches(tournament.matches, entries, tournament.formatType || "knockout") : ""}
-      ${canJoin ? '<button class="btn btn-dark" onclick="joinTournament()">Inscribirse</button>' : ""}
+      ${canJoin && !isRegistered ? '<button class="btn btn-dark" onclick="joinTournament()">Inscribirse</button>' : ""}
+      ${canWithdraw ? '<button class="btn btn-secondary tournament-withdraw" onclick="withdrawTournament()">Retirarme del torneo</button>' : ""}
+      ${isRegistered && hasMatches ? '<p class="muted small">Ya estás en el cuadro; para retirarte pide ayuda al administrador.</p>' : ""}
     </article>`;
   }).join("");
 }

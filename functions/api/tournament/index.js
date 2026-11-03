@@ -15,6 +15,7 @@ export async function onRequestGet(context) {
       ...item,
       entries: (item.entries || []).map(entry => ({
         playerId: entry.playerId,
+        userId: entry.userId || null,
         name: playerById.get(entry.playerId)?.name || "Jugador",
         level: playerById.get(entry.playerId)?.level || ""
       })),
@@ -32,6 +33,39 @@ export async function onRequestGet(context) {
     tournament: publicTournaments.find(item => item.month === month) || null,
     tournaments: publicTournaments
   });
+}
+
+export async function onRequestDelete(context) {
+  const { request, env } = context;
+  const userId = await requireAuth(request, env);
+  if (!userId) return jsonResponse({ error: "Inicia sesión para retirarte del torneo" }, 401);
+
+  const [players, tournaments] = await Promise.all([
+    gRead(env, "players"),
+    gRead(env, "tournaments")
+  ]);
+  const player = players.find(item => item.userId === userId);
+  if (!player) return jsonResponse({ error: "No tienes perfil de jugador" }, 400);
+
+  const month = new Date().toISOString().slice(0, 7);
+  const tournament = tournaments.find(item => item.month === month);
+  if (!tournament) return jsonResponse({ error: "No hay torneo abierto este mes" }, 404);
+  if (tournament.status !== "registration") {
+    return jsonResponse({ error: "Las inscripciones de este torneo ya están cerradas" }, 409);
+  }
+  const entries = tournament.entries || [];
+  if (!entries.some(entry => entry.userId === userId || entry.playerId === player.id)) {
+    return jsonResponse({ error: "No estás inscrito en este torneo" }, 404);
+  }
+  if ((tournament.matches || []).some(match =>
+    [match.playerAId, match.playerBId].includes(player.id)
+  )) {
+    return jsonResponse({ error: "Ya tienes partidos en el cuadro; pide al administrador que te retire." }, 409);
+  }
+
+  tournament.entries = entries.filter(entry => entry.userId !== userId && entry.playerId !== player.id);
+  await gWrite(env, "tournaments", tournaments);
+  return jsonResponse({ ok: true, message: "Te retiraste del torneo" });
 }
 
 export async function onRequestPost(context) {

@@ -9,6 +9,8 @@ import { onRequestPost as adminUsers } from "../functions/api/admin/users.js";
 import { onRequestPost as uploadImage } from "../functions/api/admin/uploads.js";
 import { onRequestGet as serveUpload } from "../functions/api/uploads/[file].js";
 import { onRequestPost as createPlayerProfile } from "../functions/api/players/index.js";
+import { onRequestDelete as withdrawTournament } from "../functions/api/tournament/index.js";
+import { onRequestDelete as deleteOwnChallenge } from "../functions/api/challenges/index.js";
 import { onRequestGet as publicSettings } from "../functions/api/settings.js";
 import { onRequestGet as readAdminSettings, onRequestPost as saveAdminSettings } from "../functions/api/admin/settings.js";
 
@@ -271,6 +273,81 @@ test("donations, account management, uploads, and player categories work end to 
     const player = await playerCreation.json();
     assert.equal(player.category, "dobles_mixtos");
     assert.equal(player.gender, "mujeres");
+
+    // --- Retiro de torneo por el usuario ---
+    const tournamentsNow = JSON.parse(Buffer.from(github.files.get("tournaments.json") || Buffer.from("[]").toString("base64"), "base64").toString("utf8"));
+    const month = new Date().toISOString().slice(0, 7);
+    tournamentsNow.push({
+      id: "monthly-" + month,
+      title: "Torneo de prueba",
+      month,
+      levels: ["3.5"],
+      status: "registration",
+      entries: [{ playerId: player.id, userId: adminId }],
+      matches: []
+    });
+    github.files.set("tournaments.json", Buffer.from(JSON.stringify(tournamentsNow)).toString("base64"));
+
+    const withdrawOk = await withdrawTournament({
+      request: new Request("https://league.example/api/tournament", {
+        method: "DELETE",
+        headers: { Cookie: adminCookie }
+      }),
+      env
+    });
+    assert.equal(withdrawOk.status, 200);
+    const tournamentsAfterWithdraw = JSON.parse(Buffer.from(github.files.get("tournaments.json"), "base64").toString("utf8"));
+    assert.equal(tournamentsAfterWithdraw.find(t => t.month === month).entries.length, 0);
+
+    const withdrawAgain = await withdrawTournament({
+      request: new Request("https://league.example/api/tournament", {
+        method: "DELETE",
+        headers: { Cookie: adminCookie }
+      }),
+      env
+    });
+    assert.equal(withdrawAgain.status, 404);
+
+    // --- Eliminación del propio desafío ---
+    const challengesNow = JSON.parse(Buffer.from(github.files.get("challenges.json") || Buffer.from("[]").toString("base64"), "base64").toString("utf8"));
+    challengesNow.push({
+      id: "challenge-own",
+      playerId: player.id,
+      creatorUserId: adminId,
+      availability: "Tardes",
+      status: "open",
+      created: new Date().toISOString()
+    });
+    challengesNow.push({
+      id: "challenge-accepted",
+      playerId: player.id,
+      creatorUserId: adminId,
+      availability: "Mañanas",
+      status: "accepted",
+      created: new Date().toISOString()
+    });
+    github.files.set("challenges.json", Buffer.from(JSON.stringify(challengesNow)).toString("base64"));
+
+    const deleteAccepted = await deleteOwnChallenge({
+      request: new Request("https://league.example/api/challenges?challengeId=challenge-accepted", {
+        method: "DELETE",
+        headers: { Cookie: adminCookie }
+      }),
+      env
+    });
+    assert.equal(deleteAccepted.status, 409);
+
+    const deleteOwn = await deleteOwnChallenge({
+      request: new Request("https://league.example/api/challenges?challengeId=challenge-own", {
+        method: "DELETE",
+        headers: { Cookie: adminCookie }
+      }),
+      env
+    });
+    assert.equal(deleteOwn.status, 200);
+    const challengesAfterDelete = JSON.parse(Buffer.from(github.files.get("challenges.json"), "base64").toString("utf8"));
+    assert.equal(challengesAfterDelete.some(item => item.id === "challenge-own"), false);
+    assert.equal(challengesAfterDelete.some(item => item.id === "challenge-accepted"), true);
 
     // --- Ajustes del sitio: enlace de WhatsApp ---
     const invalidSettings = await saveAdminSettings({
