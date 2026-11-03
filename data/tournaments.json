@@ -31,7 +31,50 @@
     "description": "Modalidad Round Robin",
     "venue": "Aventura -Sunny Isles Beach -Hallandale - Hollywood",
     "format": "Round Robin",
-    "updated": "2026-11-03T02:52:29.038Z"
+    "updated": "2026-11-03T02:52:37.354Z",
+    "formatType": "knockout",
+    "matches": [
+      {
+        "id": "match-1f9cc3be-26e7-4253-92a4-8c5f18bedf95",
+        "round": "Semifinales",
+        "playerAId": "player-c4c83bd2-68bd-40ae-9254-f8c15dca06e6",
+        "playerBId": "player-e6f56afa-2d57-41e2-a158-6c5c8cf52664",
+        "date": "",
+        "court": "",
+        "status": "scheduled",
+        "score": "",
+        "winnerId": null,
+        "auto": true,
+        "nextMatchId": "match-c687ffca-7d53-44aa-a02f-3430147b236a",
+        "nextSlot": "A"
+      },
+      {
+        "id": "match-e3a45ba7-e416-4eb5-b4c4-3fd4da3e8bf6",
+        "round": "Semifinales",
+        "playerAId": null,
+        "playerBId": "player-6dd454f9-531c-484f-996b-33e6c6f5a976",
+        "date": "",
+        "court": "",
+        "status": "scheduled",
+        "score": "",
+        "winnerId": null,
+        "auto": true,
+        "nextMatchId": "match-c687ffca-7d53-44aa-a02f-3430147b236a",
+        "nextSlot": "B"
+      },
+      {
+        "id": "match-c687ffca-7d53-44aa-a02f-3430147b236a",
+        "round": "Final",
+        "playerAId": null,
+        "playerBId": null,
+        "date": "",
+        "court": "",
+        "status": "scheduled",
+        "score": "",
+        "winnerId": null,
+        "auto": true
+      }
+    ]
   },
   {
     "id": "tournament-124cbb00-b450-4ebf-ace6-ac6a9343fdf9",
