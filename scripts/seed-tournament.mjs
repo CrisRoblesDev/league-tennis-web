@@ -106,6 +106,7 @@ function roundRobin(ids, roundLabel) {
       matches.push({
         id: `match-${slug(roundLabel)}-${roundIndex + 1}-${index + 1}`,
         round: roundLabel,
+        week: roundIndex + 1,
         playerAId: roundIndex % 2 === 0 ? a : b,
         playerBId: roundIndex % 2 === 0 ? b : a,
         date: "",
@@ -142,6 +143,7 @@ for (const person of roster) {
 }
 tournament.formatType = "league";
 tournament.format = "Round Robin por grupos · Best of 3";
+tournament.status = "in_progress";
 tournament.matches = matches;
 tournament.updated = new Date().toISOString();
 

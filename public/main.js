@@ -1006,20 +1006,43 @@ function renderTournamentMatches(matches, entries = [], formatType = "knockout")
     return "";
   }
   if (formatType === "league") {
-    const rounds = new Map();
+    const groups = new Map();
     matches.forEach(match => {
-      const key = match.round || "Jornada";
-      if (!rounds.has(key)) rounds.set(key, []);
-      rounds.get(key).push(match);
+      const key = match.round || "Grupo";
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(match);
     });
-    return `<div class="league-schedule"><b class="draw-written-title">Calendario · todos contra todos</b>${[...rounds.entries()].map(([round, roundMatches]) => `
-      <div class="league-round"><h4>${escapeHtml(round)}</h4>${roundMatches.map(match => `
-        <div class="draw-match${match.status === "completed" ? " is-completed" : ""}${match.status === "cancelled" ? " is-cancelled" : ""}">
-          <span>${escapeHtml(match.playerAName || match.playerAId || "Por definir")}</span>
-          <span>${escapeHtml(match.playerBName || match.playerBId || "Por definir")}</span>
-          ${match.score ? `<b>${escapeHtml(match.score)}</b>` : `<small>${match.status === "cancelled" ? "Cancelado" : "Por jugar"}</small>`}
-          ${match.date ? `<small>${escapeHtml(match.date)}</small>` : ""}
-        </div>`).join("")}</div>`).join("")}</div>`;
+    return `<div class="group-draw">${[...groups.entries()].map(([groupName, groupMatches]) => {
+      const roster = [];
+      groupMatches.forEach(match => {
+        [match.playerAName || match.playerAId, match.playerBName || match.playerBId].forEach(name => {
+          if (name && name !== "Por definir" && !roster.includes(name)) roster.push(name);
+        });
+      });
+      const weeks = new Map();
+      groupMatches.forEach(match => {
+        const week = match.week || 1;
+        if (!weeks.has(week)) weeks.set(week, []);
+        weeks.get(week).push(match);
+      });
+      return `<article class="group-panel">
+        <header class="group-panel-head"><span class="group-title">${escapeHtml(groupName)}</span><span class="group-sub">Round Robin · Best of 3</span></header>
+        <div class="group-roster">${roster.map((name, index) =>
+          `<span class="roster-chip"><b>${index + 1}</b>${escapeHtml(name)}</span>`
+        ).join("")}</div>
+        <div class="group-weeks">${[...weeks.entries()].sort((a, b) => a[0] - b[0]).map(([week, weekMatches]) => `
+          <div class="group-week"><span class="week-label">Semana ${week}</span>${weekMatches.map(match => {
+            const winnerA = match.status === "completed" && match.winnerId && match.winnerId === match.playerAId;
+            const winnerB = match.status === "completed" && match.winnerId && match.winnerId === match.playerBId;
+            return `<div class="group-match${match.status === "completed" ? " is-completed" : ""}${match.status === "cancelled" ? " is-cancelled" : ""}">
+              <span class="gm-player${winnerA ? " is-winner" : ""}">${escapeHtml(match.playerAName || "Por definir")}</span>
+              <span class="gm-vs">vs</span>
+              <span class="gm-player${winnerB ? " is-winner" : ""}">${escapeHtml(match.playerBName || "Por definir")}</span>
+              ${match.score ? `<b class="gm-score">${escapeHtml(match.score)}</b>` : `<small class="gm-state">${match.status === "cancelled" ? "Cancelado" : "Por jugar"}</small>`}
+            </div>`;
+          }).join("")}</div>`).join("")}</div>
+      </article>`;
+    }).join("")}</div>`;
   }
 
   const rounds = [];

@@ -2,7 +2,7 @@
   {
     "id": "monthly-2026-11",
     "month": "2026-11",
-    "status": "registration",
+    "status": "in_progress",
     "entries": [
       {
         "userId": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
@@ -126,12 +126,13 @@
     "description": "Modalidad Round Robin",
     "venue": "Aventura -Sunny Isles Beach -Hallandale - Hollywood",
     "format": "Round Robin por grupos · Best of 3",
-    "updated": "2026-11-03T02:53:33.649Z",
+    "updated": "2026-11-03T03:06:44.731Z",
     "formatType": "league",
     "matches": [
       {
         "id": "match-grupo.damas-1-1",
         "round": "Grupo Damas",
+        "week": 1,
         "playerAId": "player-2097de7a-ce8e-4ba3-8645-5f7e8f52cbc0",
         "playerBId": "player-76298acf-664b-4115-a7ab-b07211d56106",
         "date": "",
@@ -143,6 +144,7 @@
       {
         "id": "match-grupo.damas-1-2",
         "round": "Grupo Damas",
+        "week": 1,
         "playerAId": "player-05961c74-cca6-43e0-b484-5fcff32717b6",
         "playerBId": "player-796d1776-6eb6-42ba-9a11-b1c110109485",
         "date": "",
@@ -154,6 +156,7 @@
       {
         "id": "match-grupo.damas-1-3",
         "round": "Grupo Damas",
+        "week": 1,
         "playerAId": "player-7d40a81c-a225-4a08-a80f-d126c7a86a19",
         "playerBId": "player-914de310-3c4d-4faa-bbaf-3c67940c14ee",
         "date": "",
@@ -165,6 +168,7 @@
       {
         "id": "match-grupo.damas-2-1",
         "round": "Grupo Damas",
+        "week": 2,
         "playerAId": "player-796d1776-6eb6-42ba-9a11-b1c110109485",
         "playerBId": "player-2097de7a-ce8e-4ba3-8645-5f7e8f52cbc0",
         "date": "",
@@ -176,6 +180,7 @@
       {
         "id": "match-grupo.damas-2-2",
         "round": "Grupo Damas",
+        "week": 2,
         "playerAId": "player-914de310-3c4d-4faa-bbaf-3c67940c14ee",
         "playerBId": "player-76298acf-664b-4115-a7ab-b07211d56106",
         "date": "",
@@ -187,6 +192,7 @@
       {
         "id": "match-grupo.damas-2-3",
         "round": "Grupo Damas",
+        "week": 2,
         "playerAId": "player-7d40a81c-a225-4a08-a80f-d126c7a86a19",
         "playerBId": "player-05961c74-cca6-43e0-b484-5fcff32717b6",
         "date": "",
@@ -198,6 +204,7 @@
       {
         "id": "match-grupo.damas-3-1",
         "round": "Grupo Damas",
+        "week": 3,
         "playerAId": "player-2097de7a-ce8e-4ba3-8645-5f7e8f52cbc0",
         "playerBId": "player-914de310-3c4d-4faa-bbaf-3c67940c14ee",
         "date": "",
@@ -209,6 +216,7 @@
       {
         "id": "match-grupo.damas-3-2",
         "round": "Grupo Damas",
+        "week": 3,
         "playerAId": "player-796d1776-6eb6-42ba-9a11-b1c110109485",
         "playerBId": "player-7d40a81c-a225-4a08-a80f-d126c7a86a19",
         "date": "",
@@ -220,6 +228,7 @@
       {
         "id": "match-grupo.damas-3-3",
         "round": "Grupo Damas",
+        "week": 3,
         "playerAId": "player-76298acf-664b-4115-a7ab-b07211d56106",
         "playerBId": "player-05961c74-cca6-43e0-b484-5fcff32717b6",
         "date": "",
@@ -231,6 +240,7 @@
       {
         "id": "match-grupo.damas-4-1",
         "round": "Grupo Damas",
+        "week": 4,
         "playerAId": "player-7d40a81c-a225-4a08-a80f-d126c7a86a19",
         "playerBId": "player-2097de7a-ce8e-4ba3-8645-5f7e8f52cbc0",
         "date": "",
@@ -242,6 +252,7 @@
       {
         "id": "match-grupo.damas-4-2",
         "round": "Grupo Damas",
+        "week": 4,
         "playerAId": "player-05961c74-cca6-43e0-b484-5fcff32717b6",
         "playerBId": "player-914de310-3c4d-4faa-bbaf-3c67940c14ee",
         "date": "",
@@ -253,6 +264,7 @@
       {
         "id": "match-grupo.damas-4-3",
         "round": "Grupo Damas",
+        "week": 4,
         "playerAId": "player-76298acf-664b-4115-a7ab-b07211d56106",
         "playerBId": "player-796d1776-6eb6-42ba-9a11-b1c110109485",
         "date": "",
@@ -264,6 +276,7 @@
       {
         "id": "match-grupo.damas-5-1",
         "round": "Grupo Damas",
+        "week": 5,
         "playerAId": "player-2097de7a-ce8e-4ba3-8645-5f7e8f52cbc0",
         "playerBId": "player-05961c74-cca6-43e0-b484-5fcff32717b6",
         "date": "",
@@ -275,6 +288,7 @@
       {
         "id": "match-grupo.damas-5-2",
         "round": "Grupo Damas",
+        "week": 5,
         "playerAId": "player-7d40a81c-a225-4a08-a80f-d126c7a86a19",
         "playerBId": "player-76298acf-664b-4115-a7ab-b07211d56106",
         "date": "",
@@ -286,6 +300,7 @@
       {
         "id": "match-grupo.damas-5-3",
         "round": "Grupo Damas",
+        "week": 5,
         "playerAId": "player-914de310-3c4d-4faa-bbaf-3c67940c14ee",
         "playerBId": "player-796d1776-6eb6-42ba-9a11-b1c110109485",
         "date": "",
@@ -297,6 +312,7 @@
       {
         "id": "match-grupo.a-1-1",
         "round": "Grupo A",
+        "week": 1,
         "playerAId": "player-b1d05262-983f-4527-bdc4-8ea370979608",
         "playerBId": "player-823dd9be-49e6-4721-98a6-2f1cad7141f0",
         "date": "",
@@ -308,6 +324,7 @@
       {
         "id": "match-grupo.a-1-2",
         "round": "Grupo A",
+        "week": 1,
         "playerAId": "player-fc961c15-60f3-4cfc-b891-61a8054682d7",
         "playerBId": "player-32c50521-9127-4805-855e-ad15a8d0eb8e",
         "date": "",
@@ -319,6 +336,7 @@
       {
         "id": "match-grupo.a-2-1",
         "round": "Grupo A",
+        "week": 2,
         "playerAId": "player-32c50521-9127-4805-855e-ad15a8d0eb8e",
         "playerBId": "player-b1d05262-983f-4527-bdc4-8ea370979608",
         "date": "",
@@ -330,6 +348,7 @@
       {
         "id": "match-grupo.a-2-2",
         "round": "Grupo A",
+        "week": 2,
         "playerAId": "player-fc961c15-60f3-4cfc-b891-61a8054682d7",
         "playerBId": "player-823dd9be-49e6-4721-98a6-2f1cad7141f0",
         "date": "",
@@ -341,6 +360,7 @@
       {
         "id": "match-grupo.a-3-1",
         "round": "Grupo A",
+        "week": 3,
         "playerAId": "player-b1d05262-983f-4527-bdc4-8ea370979608",
         "playerBId": "player-fc961c15-60f3-4cfc-b891-61a8054682d7",
         "date": "",
@@ -352,6 +372,7 @@
       {
         "id": "match-grupo.a-3-2",
         "round": "Grupo A",
+        "week": 3,
         "playerAId": "player-32c50521-9127-4805-855e-ad15a8d0eb8e",
         "playerBId": "player-823dd9be-49e6-4721-98a6-2f1cad7141f0",
         "date": "",
@@ -363,6 +384,7 @@
       {
         "id": "match-grupo.b-1-1",
         "round": "Grupo B",
+        "week": 1,
         "playerAId": "player-5882f81e-68d7-4047-a4e2-24ef8e247e12",
         "playerBId": "player-27e46df1-084c-4861-9257-7d90d4cc5eda",
         "date": "",
@@ -374,6 +396,7 @@
       {
         "id": "match-grupo.b-1-2",
         "round": "Grupo B",
+        "week": 1,
         "playerAId": "player-0ad5bb26-92b4-4da7-a28b-3cab8e767e06",
         "playerBId": "player-f1070b0a-5b06-42a1-a677-2ff27405c7c3",
         "date": "",
@@ -385,6 +408,7 @@
       {
         "id": "match-grupo.b-2-1",
         "round": "Grupo B",
+        "week": 2,
         "playerAId": "player-f1070b0a-5b06-42a1-a677-2ff27405c7c3",
         "playerBId": "player-5882f81e-68d7-4047-a4e2-24ef8e247e12",
         "date": "",
@@ -396,6 +420,7 @@
       {
         "id": "match-grupo.b-2-2",
         "round": "Grupo B",
+        "week": 2,
         "playerAId": "player-0ad5bb26-92b4-4da7-a28b-3cab8e767e06",
         "playerBId": "player-27e46df1-084c-4861-9257-7d90d4cc5eda",
         "date": "",
@@ -407,6 +432,7 @@
       {
         "id": "match-grupo.b-3-1",
         "round": "Grupo B",
+        "week": 3,
         "playerAId": "player-5882f81e-68d7-4047-a4e2-24ef8e247e12",
         "playerBId": "player-0ad5bb26-92b4-4da7-a28b-3cab8e767e06",
         "date": "",
@@ -418,6 +444,7 @@
       {
         "id": "match-grupo.b-3-2",
         "round": "Grupo B",
+        "week": 3,
         "playerAId": "player-f1070b0a-5b06-42a1-a677-2ff27405c7c3",
         "playerBId": "player-27e46df1-084c-4861-9257-7d90d4cc5eda",
         "date": "",
@@ -429,6 +456,7 @@
       {
         "id": "match-grupo.c-1-1",
         "round": "Grupo C",
+        "week": 1,
         "playerAId": "player-14771cfc-842f-419c-981e-a3244ca00a9b",
         "playerBId": "player-99183ac7-a450-456a-a359-6f32efb90402",
         "date": "",
@@ -440,6 +468,7 @@
       {
         "id": "match-grupo.c-1-2",
         "round": "Grupo C",
+        "week": 1,
         "playerAId": "player-92700dae-122b-4a9e-a4bf-532798d4d138",
         "playerBId": "player-c4dfb6a8-80be-48e8-99a0-c7aecde7d84b",
         "date": "",
@@ -451,6 +480,7 @@
       {
         "id": "match-grupo.c-2-1",
         "round": "Grupo C",
+        "week": 2,
         "playerAId": "player-c4dfb6a8-80be-48e8-99a0-c7aecde7d84b",
         "playerBId": "player-14771cfc-842f-419c-981e-a3244ca00a9b",
         "date": "",
@@ -462,6 +492,7 @@
       {
         "id": "match-grupo.c-2-2",
         "round": "Grupo C",
+        "week": 2,
         "playerAId": "player-92700dae-122b-4a9e-a4bf-532798d4d138",
         "playerBId": "player-99183ac7-a450-456a-a359-6f32efb90402",
         "date": "",
@@ -473,6 +504,7 @@
       {
         "id": "match-grupo.c-3-1",
         "round": "Grupo C",
+        "week": 3,
         "playerAId": "player-14771cfc-842f-419c-981e-a3244ca00a9b",
         "playerBId": "player-92700dae-122b-4a9e-a4bf-532798d4d138",
         "date": "",
@@ -484,6 +516,7 @@
       {
         "id": "match-grupo.c-3-2",
         "round": "Grupo C",
+        "week": 3,
         "playerAId": "player-c4dfb6a8-80be-48e8-99a0-c7aecde7d84b",
         "playerBId": "player-99183ac7-a450-456a-a359-6f32efb90402",
         "date": "",
@@ -495,6 +528,7 @@
       {
         "id": "match-grupo.d-1-1",
         "round": "Grupo D",
+        "week": 1,
         "playerAId": "player-8154d502-9055-4692-9ece-4f03e9e1a9eb",
         "playerBId": "player-171c8501-6929-494b-917d-f25368ad7e17",
         "date": "",
@@ -506,6 +540,7 @@
       {
         "id": "match-grupo.d-1-2",
         "round": "Grupo D",
+        "week": 1,
         "playerAId": "player-cc43ebc7-4260-4a95-82ef-a6aa56d46421",
         "playerBId": "player-6dd454f9-531c-484f-996b-33e6c6f5a976",
         "date": "",
@@ -517,6 +552,7 @@
       {
         "id": "match-grupo.d-2-1",
         "round": "Grupo D",
+        "week": 2,
         "playerAId": "player-6dd454f9-531c-484f-996b-33e6c6f5a976",
         "playerBId": "player-8154d502-9055-4692-9ece-4f03e9e1a9eb",
         "date": "",
@@ -528,6 +564,7 @@
       {
         "id": "match-grupo.d-2-2",
         "round": "Grupo D",
+        "week": 2,
         "playerAId": "player-cc43ebc7-4260-4a95-82ef-a6aa56d46421",
         "playerBId": "player-171c8501-6929-494b-917d-f25368ad7e17",
         "date": "",
@@ -539,6 +576,7 @@
       {
         "id": "match-grupo.d-3-1",
         "round": "Grupo D",
+        "week": 3,
         "playerAId": "player-8154d502-9055-4692-9ece-4f03e9e1a9eb",
         "playerBId": "player-cc43ebc7-4260-4a95-82ef-a6aa56d46421",
         "date": "",
@@ -550,6 +588,7 @@
       {
         "id": "match-grupo.d-3-2",
         "round": "Grupo D",
+        "week": 3,
         "playerAId": "player-6dd454f9-531c-484f-996b-33e6c6f5a976",
         "playerBId": "player-171c8501-6929-494b-917d-f25368ad7e17",
         "date": "",
