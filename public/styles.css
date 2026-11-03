@@ -207,6 +207,7 @@ main { max-width: 1200px; margin: auto; padding: 0 5%; }
 .bracket-match.is-completed { border-color: #c9dd9d; background: #f8fbf2; }
 .bracket-match.is-cancelled { opacity: .6; }
 .league-schedule { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+.league-schedule .draw-written-title { grid-column: 1 / -1; }
 .league-round h4 { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
 
 /* RANKING 3D */.ranking-head-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
