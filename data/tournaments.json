@@ -13,6 +13,11 @@
         "userId": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
         "playerId": "player-6dd454f9-531c-484f-996b-33e6c6f5a976",
         "created": "2026-11-02T00:55:33.294Z"
+      },
+      {
+        "playerId": "player-e6f56afa-2d57-41e2-a158-6c5c8cf52664",
+        "userId": "user-18574db8-0b20-451f-9693-ed7eb24e8a97",
+        "created": "2026-11-03T02:52:29.038Z"
       }
     ],
     "created": "2026-11-01T22:17:53.365Z",
@@ -26,7 +31,7 @@
     "description": "Modalidad Round Robin",
     "venue": "Aventura -Sunny Isles Beach -Hallandale - Hollywood",
     "format": "Round Robin",
-    "updated": "2026-11-02T19:55:38.617Z"
+    "updated": "2026-11-03T02:52:29.038Z"
   },
   {
     "id": "tournament-124cbb00-b450-4ebf-ace6-ac6a9343fdf9",
