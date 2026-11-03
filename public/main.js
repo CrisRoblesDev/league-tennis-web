@@ -1106,7 +1106,6 @@ function renderTournaments() {
       ).join("")}</ul></details>` : ""}
       ${(tournament.category && tournament.category !== "singles") || (tournament.gender && tournament.gender !== "mixto") ?
         `<p class="muted">${escapeHtml(CATEGORY_LABELS[tournament.category || "singles"] || "Singles")}${tournament.gender && tournament.gender !== "mixto" ? ` · ${escapeHtml(GENDER_LABELS[tournament.gender] || tournament.gender)}` : ""}</p>` : ""}
-      ${(tournament.matches || []).length || entries.length >= 2 ? renderTournamentMatches(tournament.matches, entries, tournament.formatType || "knockout") : ""}
       ${(tournament.matches || []).length ? `<button class="btn btn-dark" onclick="openDrawModal('${escapeHtml(tournament.id)}')">Ver main draw completo</button>` : ""}
       ${canJoin && !isRegistered ? '<button class="btn btn-dark" onclick="joinTournament()">Inscribirse</button>' : ""}
       ${canWithdraw ? '<button class="btn btn-secondary tournament-withdraw" onclick="withdrawTournament()">Retirarme del torneo</button>' : ""}
