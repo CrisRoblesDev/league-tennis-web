@@ -1,1 +1,1 @@
-export { onRequestGet, onRequestPost } from "../../auth/phone.js";
+export { onRequestGet, onRequestPost } from "../auth/phone.js";
