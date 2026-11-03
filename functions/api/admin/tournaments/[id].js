@@ -15,15 +15,29 @@ function roundName(totalRounds, roundIndex) {
   return `Ronda ${roundIndex + 1}`;
 }
 
-function buildKnockoutDraw(playerIds) {
-  const size = Math.max(2, 2 ** Math.ceil(Math.log2(Math.max(playerIds.length, 2))));
-  const slots = [...playerIds];
-  while (slots.length < size) slots.push(null);
-  // Mezcla aleatoria para el cuadro inicial
-  for (let index = slots.length - 1; index > 0; index--) {
-    const swap = Math.floor(Math.random() * (index + 1));
-    [slots[index], slots[swap]] = [slots[swap], slots[index]];
+function computeBracketSize(n_players) {
+  if (n_players < 2) return 0;
+  let size = 1;
+  while (size < n_players) size *= 2;
+  return size;
+}
+
+function distributeByes(players, bracketSize) {
+  const nByes = bracketSize - players.length;
+  const seeding = [];
+  for (let i = 0; i < nByes; i++) {
+    seeding.push(players[i], null);
   }
+  for (let i = nByes; i < players.length; i++) {
+    seeding.push(players[i]);
+  }
+  return seeding;
+}
+
+function buildKnockoutDraw(playerIds) {
+  const size = computeBracketSize(playerIds.length);
+  const shuffled = [...playerIds].sort(() => Math.random() - 0.5);
+  const seeding = distributeByes(shuffled, size);
   const totalRounds = Math.log2(size);
   const matches = [];
   let previousRound = null;
@@ -34,8 +48,8 @@ function buildKnockoutDraw(playerIds) {
       const match = {
         id: `match-${crypto.randomUUID()}`,
         round: roundName(totalRounds, roundIndex),
-        playerAId: roundIndex === 0 ? slots[index * 2] : null,
-        playerBId: roundIndex === 0 ? slots[index * 2 + 1] : null,
+        playerAId: null,
+        playerBId: null,
         date: "",
         court: "",
         status: "scheduled",
@@ -43,6 +57,19 @@ function buildKnockoutDraw(playerIds) {
         winnerId: null,
         auto: true
       };
+      if (roundIndex === 0) {
+        match.playerAId = seeding[index * 2];
+        match.playerBId = seeding[index * 2 + 1];
+        if (!match.playerAId && match.playerBId) {
+          match.status = "completed";
+          match.winnerId = match.playerBId;
+          match.score = "BYE";
+        } else if (!match.playerBId && match.playerAId) {
+          match.status = "completed";
+          match.winnerId = match.playerAId;
+          match.score = "BYE";
+        }
+      }
       currentRound.push(match);
       matches.push(match);
     }
@@ -191,6 +218,11 @@ export async function onRequestPut({ request, env, params }) {
     tournament.matches = tournament.formatType === "league"
       ? buildLeagueSchedule(entries)
       : buildKnockoutDraw(entries);
+    if (tournament.formatType === "knockout") {
+      tournament.matches.forEach(match => {
+        if (match.status === "completed" && match.winnerId) advanceWinner(tournament, match);
+      });
+    }
     tournament.groups = null;
     tournament.groupCount = null;
   }
