@@ -709,3 +709,27 @@ html[dir="rtl"] .admin-record-head { direction: rtl; }
 .manage-panel[hidden] { display:none; }
 .manage-entrant-list { max-height:320px; overflow:auto; }
 .manage-match-list { display:flex; flex-direction:column; gap:8px; margin-top:14px; }
+/* Modern main draw */
+.draw-tabs { display:flex; gap:8px; margin-bottom:12px; border-bottom:1px solid var(--line); }
+.draw-tabs button { padding:10px 14px; border:none; background:transparent; cursor:pointer; font-weight:700; color:var(--navy); border-bottom:2px solid transparent; }
+.draw-tabs button.is-active { border-bottom-color:var(--navy); }
+.modern-bracket-wrap { overflow-x:auto; padding:8px 0 16px; }
+.modern-bracket { display:flex; gap:28px; min-width:max-content; align-items:center; }
+.mb-round h4 { margin:0 0 10px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--navy); opacity:.7; }
+.mb-round-body { display:flex; flex-direction:column; gap:18px; }
+.mb-match { position:relative; width:240px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px; box-shadow:0 6px 18px rgba(16,36,58,.08); }
+.mb-match::after { content:""; position:absolute; right:-28px; top:50%; width:28px; border-top:2px solid rgba(16,36,58,.25); }
+.mb-round:last-child .mb-match::after { display:none; }
+.mb-slot { display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:8px; background:#f6f8fb; border:1px solid transparent; }
+.mb-slot + .mb-slot { margin-top:6px; }
+.mb-slot.is-winner { background:#e9f6ec; border-color:#bfe3c7; font-weight:800; }
+.mb-slot.is-placeholder { color:#9aa7b4; font-style:italic; }
+.mb-level { font-size:10px; font-weight:800; background:var(--navy); color:#fff; border-radius:6px; padding:2px 6px; }
+.mb-name { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mb-meta { margin-top:8px; font-size:10px; color:rgba(16,36,58,.6); }
+.modern-match-list { display:flex; flex-direction:column; gap:10px; max-height:420px; overflow:auto; }
+.modern-match-item { display:grid; grid-template-columns:110px 1fr auto; gap:10px; align-items:center; background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+.mmi-round { font-size:11px; font-weight:800; text-transform:uppercase; color:rgba(16,36,58,.6); }
+.mmi-teams { display:flex; gap:8px; align-items:center; font-size:13px; }
+.mmi-meta { font-size:11px; color:rgba(16,36,58,.6); }
+@media (max-width:720px) { .modern-match-item { grid-template-columns:1fr; } }

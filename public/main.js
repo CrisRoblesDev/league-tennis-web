@@ -97,6 +97,7 @@ async function login(e) {
     });
     currentUser = data.user;
     closeModal("loginModal");
+    closeNavMenu();
     updateAuthUI();
     promptPhoneIfNeeded();
     await loadPlayers();
@@ -129,6 +130,7 @@ async function register(e) {
     });
     currentUser = data.user;
     closeModal("registerModal");
+    closeNavMenu();
     updateAuthUI();
     promptPhoneIfNeeded();
     await loadPlayers();
@@ -141,6 +143,7 @@ async function logout() {
   try {
     await api("/api/auth/logout", { method: "POST" });
     currentUser = null;
+    closeNavMenu();
     window.location.replace("/");
   } catch (error) {
     showToast(error.message);
@@ -1146,6 +1149,55 @@ async function withdrawTournament() {
   }
 }
 
+function renderModernBracket(matches, formatType = "knockout", entries = []) {
+  if (!matches || !matches.length) {
+    return entries.length >= 2 ? '<p class="muted draw-pending">El cuadro se escribirá cuando se programen los partidos.</p>' : "";
+  }
+  if (formatType === "league") {
+    return renderTournamentMatches(matches, entries, "league");
+  }
+  const rounds = [];
+  matches.forEach(match => {
+    const round = match.round || "Ronda";
+    let bucket = rounds.find(item => item.name === round);
+    if (!bucket) { bucket = { name: round, matches: [] }; rounds.push(bucket); }
+    bucket.matches.push(match);
+  });
+  const entryById = new Map(entries.map(entry => [entry.playerId, entry]));
+  const slotHtml = (playerId, winner, seed) => {
+    const entry = entryById.get(playerId);
+    const name = entry?.name || (playerId ? `Jugador ${String(playerId).slice(-4)}` : "Por definir");
+    const level = entry?.level || "";
+    return `<div class="mb-slot${winner ? " is-winner" : ""}${!playerId ? " is-placeholder" : ""}">
+      ${level ? `<span class="mb-level">${escapeHtml(level)}</span>` : ""}
+      <span class="mb-name">${escapeHtml(name)}</span>
+    </div>`;
+  };
+  return `<div class="modern-bracket-wrap"><div class="modern-bracket">${rounds.map((round, ri) => `
+    <div class="mb-round">
+      <h4>${escapeHtml(round.name)}</h4>
+      <div class="mb-round-body">${round.matches.map(match => {
+        const winnerA = match.status === "completed" && match.winnerId && match.winnerId === match.playerAId;
+        const winnerB = match.status === "completed" && match.winnerId && match.winnerId === match.playerBId;
+        const score = match.score || "";
+        return `<div class="mb-match${match.status === "completed" ? " is-completed" : ""}${match.status === "cancelled" ? " is-cancelled" : ""}">
+          ${slotHtml(match.playerAId, winnerA, ri + 1)}
+          ${slotHtml(match.playerBId, winnerB, ri + 1)}
+          <div class="mb-meta">${score ? `<b>${escapeHtml(score)}</b>` : `<span>${escapeHtml(match.date || (match.status === "cancelled" ? "Cancelado" : "Por jugar"))}</span>`}</div>
+        </div>`;
+      }).join("")}</div>
+    </div>`).join("")}</div></div>`;
+}
+
+function renderMatchesListHtml(matches) {
+  if (!matches || !matches.length) return '<p class="muted">Aún no hay partidos programados.</p>';
+  return `<div class="modern-match-list">${matches.map(match => `<div class="modern-match-item">
+    <div class="mmi-round">${escapeHtml(match.round)}</div>
+    <div class="mmi-teams"><span>${escapeHtml(match.playerAName || "Por definir")}</span><b>vs</b><span>${escapeHtml(match.playerBName || "Por definir")}</span></div>
+    <div class="mmi-meta">${escapeHtml(match.date || "Fecha por definir")}${match.court ? ` · ${escapeHtml(match.court)}` : ""}${match.score ? ` · ${escapeHtml(match.score)}` : ""}</div>
+  </div>`).join("")}</div>`;
+}
+
 function openDrawModal(tournamentId) {
   const tournament = tournaments.find(item => item.id === tournamentId);
   if (!tournament) return;
@@ -1153,16 +1205,22 @@ function openDrawModal(tournamentId) {
   const container = document.getElementById("drawModalContainer");
   if (title) title.textContent = tournament.title || `Campeonato · ${tournament.month}`;
   if (container) {
-    if ((tournament.formatType || "knockout") === "knockout") {
-      container.innerHTML = '<canvas id="drawCanvas" class="draw-canvas"></canvas>';
-      drawKnockoutCanvas(document.getElementById("drawCanvas"), tournament);
-    } else {
-      container.innerHTML = renderTournamentMatches(
-        tournament.matches,
-        tournament.entries || [],
-        tournament.formatType || "knockout"
-      );
-    }
+    const formatType = tournament.formatType || "knockout";
+    container.innerHTML = `
+      <div class="draw-tabs" role="tablist">
+        <button type="button" class="is-active" data-draw-tab="bracket">Main Draw</button>
+        <button type="button" data-draw-tab="matches">Partidos</button>
+      </div>
+      <div class="draw-panel" data-draw-panel="bracket">${renderModernBracket(tournament.matches, formatType, tournament.entries || [])}</div>
+      <div class="draw-panel" data-draw-panel="matches" hidden>${renderMatchesListHtml(tournament.matches)}</div>
+    `;
+    container.querySelectorAll("[data-draw-tab]").forEach(button => {
+      button.addEventListener("click", () => {
+        const tab = button.dataset.drawTab;
+        container.querySelectorAll("[data-draw-tab]").forEach(b => b.classList.toggle("is-active", b === button));
+        container.querySelectorAll("[data-draw-panel]").forEach(panel => { panel.hidden = panel.dataset.drawPanel !== tab; });
+      });
+    });
   }
   openModal("drawModal");
 }
@@ -1852,7 +1910,6 @@ async function showAdminPanel() {
   document.getElementById("adminUserSearch")?.addEventListener("input", filterAdminUsers);
   document.getElementById("adminUserRoleFilter")?.addEventListener("change", filterAdminUsers);
   document.getElementById("adminProductForm").addEventListener("submit", saveProduct);
-  document.getElementById("adminTournamentForm")?.addEventListener("submit", saveTournament);
   document.getElementById("adminUserPhoneFilter")?.addEventListener("change", filterAdminUsers);
   document.getElementById("adminPlayerForm").addEventListener("submit", saveAdminPlayer);
   document.getElementById("adminResultForm").addEventListener("submit", saveAdminResult);
@@ -1958,9 +2015,8 @@ function openTournamentManage(tournamentId) {
       </div>`).join("") || '<p class="muted">Aún no hay partidos programados.</p>'}</div>
     </div>
     <div class="manage-panel" data-manage-panel="draw" hidden>
-      ${(tournament.formatType || "knockout") === "knockout"
-        ? '<canvas id="manageDrawCanvas" class="draw-canvas"></canvas>'
-        : renderTournamentMatches(matches, entrants, tournament.formatType || "league")}
+      ${renderModernBracket(matches, tournament.formatType || "knockout", entrants)}
+      <details class="matching-details"><summary>Ver lista de partidos</summary>${renderMatchesListHtml(matches)}</details>
     </div>
   `;
   content.querySelectorAll("[data-manage-tab]").forEach(button => {
@@ -1968,9 +2024,6 @@ function openTournamentManage(tournamentId) {
       const tab = button.dataset.manageTab;
       content.querySelectorAll("[data-manage-tab]").forEach(b => b.classList.toggle("is-active", b === button));
       content.querySelectorAll("[data-manage-panel]").forEach(panel => { panel.hidden = panel.dataset.managePanel !== tab; });
-      if (tab === "draw" && (tournament.formatType || "knockout") === "knockout") {
-        drawKnockoutCanvas(document.getElementById("manageDrawCanvas"), tournament);
-      }
     });
   });
   bindManageForms(content, tournament);
@@ -2599,6 +2652,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("adminUserForm")?.addEventListener("submit", saveAdminUser);
   document.getElementById("adminUserCreateForm")?.addEventListener("submit", createAdminUser);
   document.getElementById("adminTournamentForm")?.addEventListener("submit", saveTournament);
+
   syncHeaderLayout();
   HEADER_MOBILE_MEDIA.addEventListener("change", syncHeaderLayout);
   initWhatsAppPromos();
