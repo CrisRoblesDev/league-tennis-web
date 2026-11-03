@@ -1,16 +1,5 @@
 [
   {
-    "id": "challenge-f266d4a9-ccf6-49be-8edf-575666021d63",
-    "playerId": "player-c4c83bd2-68bd-40ae-9254-f8c15dca06e6",
-    "creatorUserId": "user-a1baecda-879a-4cde-b3ae-4e11c21310f9",
-    "availability": "tarde",
-    "status": "accepted",
-    "created": "2026-11-01T22:39:31.084Z",
-    "acceptedBy": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
-    "acceptedPlayerId": "player-6dd454f9-531c-484f-996b-33e6c6f5a976",
-    "acceptedAt": "2026-11-02T01:11:15.032Z"
-  },
-  {
     "id": "challenge-886e6496-55b7-4e85-8f4c-c4aa3a5bdd76",
     "playerId": "player-6dd454f9-531c-484f-996b-33e6c6f5a976",
     "creatorUserId": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
