@@ -693,3 +693,4 @@ html[dir="rtl"] .admin-record-head { direction: rtl; }
 .admin-users-table tbody tr[hidden] { display:none; }
 .admin-user-actions { display:flex; gap:8px; flex-wrap:wrap; }
 .tag-green { background:#e7f4e4; color:#2f6b2f; }
+.draw-canvas { background:#f8fafc; border:1px solid var(--line); border-radius:12px; display:block; }

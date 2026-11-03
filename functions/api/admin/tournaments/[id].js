@@ -171,6 +171,17 @@ export async function onRequestPut({ request, env, params }) {
     if (!FORMAT_TYPES.includes(body.formatType)) return jsonResponse({ error: "Tipo de competición inválido" }, 400);
     tournament.formatType = body.formatType;
   }
+  if (body.maxParticipants !== undefined) {
+    if (body.maxParticipants === null || body.maxParticipants === "") {
+      tournament.maxParticipants = null;
+    } else {
+      const value = Number(body.maxParticipants);
+      if (!Number.isInteger(value) || value < 2 || value > 256) {
+        return jsonResponse({ error: "Cantidad de participantes inválida" }, 400);
+      }
+      tournament.maxParticipants = value;
+    }
+  }
   if (body.generateDraw === true) {
     const entries = (tournament.entries || []).map(entry => entry.playerId);
     if (entries.length < 2) {

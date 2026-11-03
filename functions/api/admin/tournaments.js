@@ -43,6 +43,12 @@ function validateTournament(body) {
   if (body.formatType !== undefined && !FORMAT_TYPES.includes(body.formatType)) {
     return "El tipo de competición no es válido.";
   }
+  if (body.maxParticipants !== undefined && body.maxParticipants !== null && body.maxParticipants !== "") {
+    const value = Number(body.maxParticipants);
+    if (!Number.isInteger(value) || value < 2 || value > 256) {
+      return "La cantidad de participantes debe ser un número entre 2 y 256.";
+    }
+  }
   return null;
 }
 
@@ -112,6 +118,7 @@ export async function onRequestPost({ request, env }) {
     category: MATCH_CATEGORIES.includes(body.category) ? body.category : "singles",
     gender: TOURNAMENT_GENDERS.includes(body.gender) ? body.gender : "mixto",
     formatType: FORMAT_TYPES.includes(body.formatType) ? body.formatType : "knockout",
+    maxParticipants: body.maxParticipants ? Number(body.maxParticipants) : null,
     status: body.status,
     entries: [],
     matches: [],

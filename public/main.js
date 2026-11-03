@@ -1152,13 +1152,148 @@ function openDrawModal(tournamentId) {
   const container = document.getElementById("drawModalContainer");
   if (title) title.textContent = tournament.title || `Campeonato · ${tournament.month}`;
   if (container) {
-    container.innerHTML = renderTournamentMatches(
-      tournament.matches,
-      tournament.entries || [],
-      tournament.formatType || "knockout"
-    );
+    if ((tournament.formatType || "knockout") === "knockout") {
+      container.innerHTML = '<canvas id="drawCanvas" class="draw-canvas"></canvas>';
+      drawKnockoutCanvas(document.getElementById("drawCanvas"), tournament);
+    } else {
+      container.innerHTML = renderTournamentMatches(
+        tournament.matches,
+        tournament.entries || [],
+        tournament.formatType || "knockout"
+      );
+    }
   }
   openModal("drawModal");
+}
+
+function drawKnockoutCanvas(canvas, tournament) {
+  if (!canvas) return;
+  const matches = tournament.matches || [];
+  const rounds = [];
+  matches.forEach(match => {
+    const round = match.round || "Ronda";
+    let bucket = rounds.find(item => item.name === round);
+    if (!bucket) { bucket = { name: round, matches: [] }; rounds.push(bucket); }
+    bucket.matches.push(match);
+  });
+  if (!rounds.length) return;
+
+  const ctx = canvas.getContext("2d");
+  const boxW = 210;
+  const boxH = 52;
+  const roundGap = 90;
+  const matchGap = 20;
+  const margin = 24;
+
+  const roundMatchCounts = rounds.map(r => r.matches.length);
+  const maxMatches = Math.max(...roundMatchCounts);
+  const totalHeight = maxMatches * (boxH + matchGap) + margin * 2;
+  const totalWidth = rounds.length * (boxW + roundGap) + margin * 2 - roundGap;
+
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(320, totalWidth) * dpr;
+  canvas.height = Math.max(240, totalHeight) * dpr;
+  canvas.style.width = "100%";
+  canvas.style.height = `${Math.max(240, totalHeight)}px`;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, totalWidth, totalHeight);
+
+  const positions = new Map();
+  let prevY = [];
+  rounds.forEach((round, ri) => {
+    const x = margin + ri * (boxW + roundGap);
+    const ys = [];
+    round.matches.forEach((match, mi) => {
+      let y;
+      if (ri === 0) {
+        y = margin + mi * (boxH + matchGap);
+      } else {
+        const a = prevY[mi * 2];
+        const b = prevY[mi * 2 + 1];
+        y = (a !== undefined && b !== undefined) ? (a + b) / 2 : (prevY[mi] || margin);
+      }
+      positions.set(match.id, { x, y, match });
+      ys.push(y);
+    });
+    prevY = ys;
+  });
+
+  // connectors
+  ctx.strokeStyle = "rgba(16,36,58,.25)";
+  ctx.lineWidth = 1.5;
+  matches.forEach(match => {
+    if (!match.nextMatchId) return;
+    const from = positions.get(match.id);
+    const to = positions.get(match.nextMatchId);
+    if (!from || !to) return;
+    const startX = from.x + boxW;
+    const startY = from.y + boxH / 2;
+    const endX = to.x;
+    const endY = to.y + boxH / 2;
+    const midX = startX + (endX - startX) / 2;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(midX, startY);
+    ctx.lineTo(midX, endY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+  });
+
+  // boxes
+  positions.forEach(({ x, y, match }) => {
+    const winnerA = match.status === "completed" && match.winnerId && match.winnerId === match.playerAId;
+    const winnerB = match.status === "completed" && match.winnerId && match.winnerId === match.playerBId;
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = "rgba(16,36,58,.18)";
+    ctx.lineWidth = 1;
+    roundRect(ctx, x, y, boxW, boxH, 10);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#0f2339";
+    ctx.font = "600 12px system-ui, sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.fillText(truncate(match.playerAName || "Por definir", 22), x + 10, y + 14);
+    ctx.fillText(truncate(match.playerBName || "Por definir", 22), x + 10, y + 38);
+
+    if (winnerA || winnerB) {
+      ctx.fillStyle = "#2f6b2f";
+      ctx.font = "700 11px system-ui, sans-serif";
+      ctx.fillText("W", x + boxW - 18, winnerA ? y + 14 : y + 38);
+    }
+
+    ctx.fillStyle = "rgba(16,36,58,.55)";
+    ctx.font = "500 10px system-ui, sans-serif";
+    const scoreText = match.score ? match.score : (match.status === "cancelled" ? "Cancelado" : (match.date || "Por jugar"));
+    ctx.fillText(truncate(scoreText, 14), x + 10, y + boxH + 14);
+
+    // round label only first box of round
+  });
+
+  // round labels
+  rounds.forEach((round, ri) => {
+    const x = margin + ri * (boxW + roundGap);
+    ctx.fillStyle = "rgba(16,36,58,.7)";
+    ctx.font = "700 12px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(round.name, x + boxW / 2, margin - 6);
+    ctx.textAlign = "left";
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function truncate(value, max) {
+  const text = String(value ?? "");
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
 
 // ============ PUBLIC TOURNAMENTS ============
@@ -1361,7 +1496,7 @@ function renderTournaments() {
       <p><b>${escapeHtml(month)}</b>${dates ? ` · ${escapeHtml(dates)}` : ""}</p>
       ${tournament.venue ? `<p class="muted">Cancha: ${escapeHtml(tournament.venue)}</p>` : ""}
       <p class="muted">${escapeHtml(tournament.format || "Formato por anunciar")}</p>
-      <p><b>${entries.length}</b> inscritos${tournament.levels?.length ? ` · Niveles ${escapeHtml(tournament.levels.join(", "))}` : ""}</p>
+      <p><b>${entries.length}</b> inscritos${tournament.maxParticipants ? ` / ${tournament.maxParticipants}` : ""}${tournament.levels?.length ? ` · Niveles ${escapeHtml(tournament.levels.join(", "))}` : ""}</p>
       ${entries.length ? `<details><summary>Ver jugadores inscritos</summary><ul class="tournament-entries">${entries.map(entry =>
         `<li>${escapeHtml(entry.name)} <span class="muted">${escapeHtml(entry.level)}</span></li>`
       ).join("")}</ul></details>` : ""}
@@ -1521,6 +1656,7 @@ async function showAdminPanel() {
       <label>Modalidad<select name="gender"><option value="mixto">Mixto</option><option value="hombres">Hombres</option><option value="mujeres">Mujeres</option></select></label>
       <label>Fecha de inicio<input name="startDate" type="date"></label>
       <label>Fecha de término<input name="endDate" type="date"></label>
+      <label>Cantidad de participantes<input name="maxParticipants" type="number" min="2" max="256" placeholder="Ej. 16"></label>
       <label>Sede o cancha<input name="venue" maxlength="120" placeholder="Ej. Aventura Tennis Center"></label>
       <label class="full">Descripción<textarea name="description" rows="2" maxlength="500"></textarea></label>
       <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar torneo</button><button class="btn btn-secondary" type="button" onclick="resetTournamentForm()">Limpiar formulario</button></div>
@@ -1816,6 +1952,7 @@ function editTournament(tournamentId) {
   form.elements.namedItem("gender").value = tournament.gender || "mixto";
   form.elements.namedItem("startDate").value = tournament.startDate || "";
   form.elements.namedItem("endDate").value = tournament.endDate || "";
+  form.elements.namedItem("maxParticipants").value = tournament.maxParticipants || "";
   form.elements.namedItem("venue").value = tournament.venue || "";
   form.elements.namedItem("description").value = tournament.description || "";
   form.querySelectorAll('input[name="levels"]').forEach(input => {
@@ -1864,6 +2001,7 @@ async function saveTournament(event) {
     gender: form.elements.namedItem("gender").value,
     startDate: form.elements.namedItem("startDate").value,
     endDate: form.elements.namedItem("endDate").value,
+    maxParticipants: form.elements.namedItem("maxParticipants").value || null,
     venue: form.elements.namedItem("venue").value,
     description: form.elements.namedItem("description").value
   };
