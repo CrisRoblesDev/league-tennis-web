@@ -512,10 +512,6 @@ function resetAdminUserForm() {
   closeModal("adminUserEditModal");
 }
 
-function resetAdminUserCreateForm() {
-  document.getElementById("adminUserCreateForm")?.reset();
-}
-
 async function fillAdminSettingsForm() {
   const form = document.getElementById("adminSettingsForm");
   if (!form) return;
@@ -627,6 +623,11 @@ async function deleteAdminRanking(player) {
   }
 }
 
+function openCreateUserModal() {
+  document.getElementById("adminUserCreateForm")?.reset();
+  openModal("adminUserCreateModal");
+}
+
 async function createAdminUser(event) {
   event.preventDefault();
   const form = event.target;
@@ -642,11 +643,17 @@ async function createAdminUser(event) {
       })
     });
     form.reset();
+    closeModal("adminUserCreateModal");
     await showAdminPanel();
     showToast("Cuenta creada.");
   } catch (error) {
     showToast(`No se pudo crear la cuenta: ${error.message}`);
   }
+}
+
+function resetAdminUserCreateForm() {
+  document.getElementById("adminUserCreateForm")?.reset();
+  closeModal("adminUserCreateModal");
 }
 
 async function saveAdminUser(event) {
@@ -1653,14 +1660,9 @@ async function showAdminPanel() {
         </select>
       </label>
     </div>
-    <form id="adminUserCreateForm" class="admin-form">
-      <h4 class="full admin-form-title">Crear cuenta nueva</h4>
-      <label>Nombre<input name="name" maxlength="100" required></label>
-      <label>Email<input name="email" type="email" required></label>
-      <label>Contraseña<input name="password" type="password" minlength="8" maxlength="128" required placeholder="Mínimo 8 caracteres"></label>
-      <label>Rol<select name="role"><option value="user">Usuario</option><option value="admin">Administrador</option></select></label>
-      <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Crear cuenta</button><button class="btn btn-secondary" type="button" onclick="resetAdminUserCreateForm()">Limpiar</button></div>
-    </form>
+    <div class="admin-form-actions" style="margin-bottom:14px">
+      <button class="btn btn-primary" type="button" onclick="openCreateUserModal()">Crear usuario</button>
+    </div>
     <div class="table-wrap admin-users-table-wrap">
       <table class="admin-users-table">
         <thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr></thead>
@@ -1711,7 +1713,7 @@ async function showAdminPanel() {
   `;
   document.getElementById("adminTournamentForm").addEventListener("submit", saveTournament);
   document.getElementById("adminProductForm").addEventListener("submit", saveProduct);
-  document.getElementById("adminUserCreateForm").addEventListener("submit", createAdminUser);
+  document.getElementById("adminUserCreateForm")?.addEventListener("submit", createAdminUser);
   document.getElementById("adminUserSearch")?.addEventListener("input", filterAdminUsers);
   document.getElementById("adminUserRoleFilter")?.addEventListener("change", filterAdminUsers);
   document.getElementById("adminUserPhoneFilter")?.addEventListener("change", filterAdminUsers);
@@ -2407,6 +2409,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("genderFilter")?.addEventListener("change", filterPlayers);
   document.getElementById("searchPlayer")?.addEventListener("input", filterPlayers);
   document.getElementById("adminUserForm")?.addEventListener("submit", saveAdminUser);
+  document.getElementById("adminUserCreateForm")?.addEventListener("submit", createAdminUser);
   syncHeaderLayout();
   HEADER_MOBILE_MEDIA.addEventListener("change", syncHeaderLayout);
   initWhatsAppPromos();
