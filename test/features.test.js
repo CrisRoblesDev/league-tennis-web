@@ -13,6 +13,7 @@ import { onRequestDelete as withdrawTournament } from "../functions/api/tourname
 import { onRequestDelete as deleteOwnChallenge } from "../functions/api/challenges/index.js";
 import { onRequestGet as publicSettings } from "../functions/api/settings.js";
 import { onRequestGet as readAdminSettings, onRequestPost as saveAdminSettings } from "../functions/api/admin/settings.js";
+import { onRequestGet as readRanking, onRequestPost as addRanking, onRequestPut as updateRanking, onRequestDelete as removeRanking } from "../functions/api/admin/ranking2026.js";
 
 function createGitHubMock() {
   const files = new Map();
@@ -458,6 +459,48 @@ test("donations, account management, uploads, and player categories work end to 
       env
     });
     assert.equal(loginNewAfterRecovery.status, 200);
+
+    // --- CRUD del ranking 2026 ---
+    github.files.set("ranking2026.json", Buffer.from(JSON.stringify([
+      { player: "Andrii Melnyk", points: 17 },
+      { player: "Philips Burleigh", points: 16 }
+    ])).toString("base64"));
+
+    const duplicateRanking = await addRanking({
+      request: adminRequest("https://league.example/api/admin/ranking2026", "POST", {
+        player: "Andrii Melnyk", points: 20
+      }),
+      env
+    });
+    assert.equal(duplicateRanking.status, 409);
+
+    const addRankingEntry = await addRanking({
+      request: adminRequest("https://league.example/api/admin/ranking2026", "POST", {
+        player: "Jugador Nuevo", points: 5
+      }),
+      env
+    });
+    assert.equal(addRankingEntry.status, 201);
+
+    const updateRankingEntry = await updateRanking({
+      request: adminRequest("https://league.example/api/admin/ranking2026", "PUT", {
+        player: "Jugador Nuevo", points: 9
+      }),
+      env
+    });
+    assert.equal(updateRankingEntry.status, 200);
+
+    const removeRankingEntry = await removeRanking({
+      request: new Request("https://league.example/api/admin/ranking2026?player=Jugador%20Nuevo", {
+        method: "DELETE",
+        headers: { Cookie: adminCookie }
+      }),
+      env
+    });
+    assert.equal(removeRankingEntry.status, 200);
+    const rankingAfter = JSON.parse(Buffer.from(github.files.get("ranking2026.json"), "base64").toString("utf8"));
+    assert.equal(rankingAfter.some(item => item.player === "Jugador Nuevo"), false);
+    assert.equal(rankingAfter.find(item => item.player === "Andrii Melnyk").points, 17);
   } finally {
     globalThis.fetch = originalFetch;
   }

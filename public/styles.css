@@ -221,6 +221,19 @@ main { max-width: 1200px; margin: auto; padding: 0 5%; }
 .roster-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; color: #e8edf2; }
 .roster-chip b { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(160deg, #f0d060, #b8912f); color: #10243a; font-size: 10px; }
 .group-weeks { padding: 4px 0 8px; }
+.group-winner-banner { display: flex; align-items: center; gap: 8px; margin: 10px 14px 0; padding: 10px 12px; border: 1px solid rgba(240,208,96,.6); border-radius: 10px; background: linear-gradient(90deg, rgba(240,208,96,.16), rgba(240,208,96,.05)); color: #f0d060; font-size: 13px; font-weight: 700; }
+.group-winner-banner b { color: #fff; }
+.gw-trophy { font-size: 16px; }
+.group-standings { margin: 10px 14px 0; padding: 10px 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; background: rgba(255,255,255,.04); }
+.standings-label { display: block; margin-bottom: 6px; font-size: 9.5px; font-weight: 900; letter-spacing: 1.4px; text-transform: uppercase; color: #f0d060; }
+.standings-row { display: grid; grid-template-columns: 22px 1fr auto auto; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid rgba(255,255,255,.06); font-size: 12.5px; }
+.standings-row:first-of-type { border-top: 0; }
+.st-pos { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: rgba(255,255,255,.12); color: #dfe7ee; font-size: 10px; }
+.standings-row.is-leader .st-pos { background: linear-gradient(160deg, #f0d060, #b8912f); color: #10243a; font-weight: 900; }
+.st-name { min-width: 0; overflow-wrap: anywhere; font-weight: 700; color: #e8edf2; }
+.standings-row.is-leader .st-name { color: #f0d060; }
+.st-record { color: #dfe7ee; font-weight: 800; }
+.st-sets { color: #7d8fa1; font-size: 11px; }
 .group-week .week-label { display: block; padding: 8px 14px 4px; font-size: 9.5px; font-weight: 900; letter-spacing: 1.6px; text-transform: uppercase; color: #f0d060; }
 .group-match { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-top: 1px solid rgba(255,255,255,.07); font-size: 13px; }
 .group-match:first-of-type { border-top: 0; }

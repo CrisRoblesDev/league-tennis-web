@@ -465,6 +465,90 @@ async function saveAdminSettings(event) {
   }
 }
 
+let adminRanking = [];
+
+async function renderAdminRanking() {
+  const body = document.getElementById("adminRankingBody");
+  if (!body) return;
+  try {
+    adminRanking = await api("/api/admin/ranking2026");
+  } catch (error) {
+    body.innerHTML = `<tr><td colspan="4" class="muted">No se pudo cargar el ranking: ${escapeHtml(error.message)}</td></tr>`;
+    return;
+  }
+  const sorted = [...adminRanking].sort((a, b) => b.points - a.points);
+  let lastPoints = null;
+  let lastPos = 0;
+  const rows = sorted.map((entry, index) => {
+    const pos = entry.points === lastPoints ? lastPos : index + 1;
+    lastPoints = entry.points;
+    lastPos = pos;
+    return `<tr>
+      <td><b>${pos}</b></td>
+      <td>${escapeHtml(entry.player)}</td>
+      <td><b>${entry.points}</b></td>
+      <td><button class="btn btn-sm btn-dark" onclick="editAdminRanking('${escapeHtml(entry.player)}')">Editar</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteAdminRanking('${escapeHtml(entry.player)}')">Eliminar</button></td>
+    </tr>`;
+  });
+  body.innerHTML = rows.join("") || '<tr><td colspan="4" class="muted">El ranking está vacío.</td></tr>';
+}
+
+function resetAdminRankingForm() {
+  const form = document.getElementById("adminRankingForm");
+  form.reset();
+  form.elements.namedItem("mode").value = "add";
+  document.getElementById("adminRankingSubmit").textContent = "Agregar al ranking";
+  document.getElementById("adminRankingCancel").hidden = true;
+}
+
+function editAdminRanking(player) {
+  const entry = adminRanking.find(item => item.player === player);
+  const form = document.getElementById("adminRankingForm");
+  if (!entry || !form) return;
+  form.elements.namedItem("mode").value = "edit";
+  form.elements.namedItem("player").value = entry.player;
+  form.elements.namedItem("player").readOnly = true;
+  form.elements.namedItem("points").value = entry.points;
+  document.getElementById("adminRankingSubmit").textContent = "Actualizar puntos";
+  document.getElementById("adminRankingCancel").hidden = false;
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+async function saveAdminRanking(event) {
+  event.preventDefault();
+  const form = event.target;
+  const mode = form.elements.namedItem("mode").value;
+  const payload = {
+    player: form.elements.namedItem("player").value.trim(),
+    points: Number(form.elements.namedItem("points").value)
+  };
+  try {
+    if (mode === "edit") {
+      await api("/api/admin/ranking2026", { method: "PUT", body: JSON.stringify(payload) });
+      showToast("Puntos actualizados.");
+    } else {
+      await api("/api/admin/ranking2026", { method: "POST", body: JSON.stringify(payload) });
+      showToast("Jugador agregado al ranking.");
+    }
+    resetAdminRankingForm();
+    await renderAdminRanking();
+  } catch (error) {
+    showToast(`No se pudo guardar: ${error.message}`);
+  }
+}
+
+async function deleteAdminRanking(player) {
+  if (!window.confirm(`¿Eliminar a ${player} del ranking 2026?`)) return;
+  try {
+    await api(`/api/admin/ranking2026?player=${encodeURIComponent(player)}`, { method: "DELETE" });
+    await renderAdminRanking();
+    showToast("Jugador eliminado del ranking.");
+  } catch (error) {
+    showToast(`No se pudo eliminar: ${error.message}`);
+  }
+}
+
 async function createAdminUser(event) {
   event.preventDefault();
   const form = event.target;
@@ -1019,6 +1103,52 @@ async function loadTournaments() {
   }
 }
 
+function groupStandings(groupMatches) {
+  const table = new Map();
+  const ensure = (name) => {
+    if (!table.has(name)) table.set(name, { player: name, played: 0, won: 0, lost: 0, setsDiff: 0, gamesDiff: 0 });
+    return table.get(name);
+  };
+  groupMatches.forEach(match => {
+    if (match.status !== "completed" || !match.winnerId) return;
+    const nameA = match.playerAName || match.playerAId;
+    const nameB = match.playerBName || match.playerBId;
+    if (!nameA || !nameB || nameA === "Por definir" || nameB === "Por definir") return;
+    const rowA = ensure(nameA);
+    const rowB = ensure(nameB);
+    rowA.played += 1;
+    rowB.played += 1;
+    if (match.winnerId === match.playerAId) {
+      rowA.won += 1;
+      rowB.lost += 1;
+    } else {
+      rowB.won += 1;
+      rowA.lost += 1;
+    }
+    let setsA = 0;
+    let setsB = 0;
+    let gamesA = 0;
+    let gamesB = 0;
+    for (const set of match.score.split(",")) {
+      const [gamesASet, gamesBSet] = set.trim().split("-").map(Number);
+      if (!Number.isFinite(gamesASet) || !Number.isFinite(gamesBSet)) continue;
+      gamesA += gamesASet;
+      gamesB += gamesBSet;
+      if (gamesASet > gamesBSet) setsA += 1;
+      else if (gamesBSet > gamesASet) setsB += 1;
+    }
+    rowA.setsDiff += setsA - setsB;
+    rowA.gamesDiff += gamesA - gamesB;
+    rowB.setsDiff += setsB - setsA;
+    rowB.gamesDiff += gamesB - gamesA;
+  });
+  return [...table.values()].sort((left, right) =>
+    right.won - left.won ||
+    right.setsDiff - left.setsDiff ||
+    right.gamesDiff - left.gamesDiff ||
+    left.player.localeCompare(right.player));
+}
+
 function renderTournamentMatches(matches, entries = [], formatType = "knockout") {
   if (!matches || !matches.length) {
     if (entries.length >= 2) {
@@ -1048,6 +1178,20 @@ function renderTournamentMatches(matches, entries = [], formatType = "knockout")
       });
       return `<article class="group-panel">
         <header class="group-panel-head"><span class="group-title">${escapeHtml(groupName)}</span><span class="group-sub">Round Robin · Best of 3</span></header>
+        ${(() => {
+          const standings = groupStandings(groupMatches);
+          const allDone = groupMatches.length > 0 && groupMatches.every(match => match.status === "completed");
+          const leader = standings[0];
+          const winnerBanner = allDone && leader ? `<div class="group-winner-banner"><span class="gw-trophy" aria-hidden="true">🏆</span> Ganador del grupo: <b>${escapeHtml(leader.player)}</b></div>` : "";
+          const standingsBlock = standings.length ? `<div class="group-standings"><span class="standings-label">Clasificación del grupo</span>${standings.map((row, index) => `
+            <div class="standings-row${index === 0 ? " is-leader" : ""}">
+              <b class="st-pos">${index + 1}</b>
+              <span class="st-name">${escapeHtml(row.player)}</span>
+              <span class="st-record">${row.won}-${row.lost}</span>
+              <span class="st-sets">Sets ${row.setsDiff > 0 ? "+" : ""}${row.setsDiff}</span>
+            </div>`).join("")}</div>` : "";
+          return `${winnerBanner}${standingsBlock}`;
+        })()}
         <div class="group-roster">${roster.map((name, index) =>
           `<span class="roster-chip"><b>${index + 1}</b>${escapeHtml(name)}</span>`
         ).join("")}</div>
@@ -1236,6 +1380,7 @@ async function showAdminPanel() {
       <button type="button" data-module-btn="products" onclick="setAdminModule('products')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6ZM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>Tienda</button>
       <button type="button" data-module-btn="orders" onclick="setAdminModule('orders')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6ZM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>Compras</button>
       <button type="button" data-module-btn="users" onclick="setAdminModule('users')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87"/></svg>Cuentas</button>
+      <button type="button" data-module-btn="ranking" onclick="setAdminModule('ranking')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3 21h18M7 17V9M12 17V5M17 17v-6"/></svg>Ranking 2026</button>
       <button type="button" data-module-btn="settings" onclick="setAdminModule('settings')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.4-3a7.4 7.4 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7.5 7.5 0 0 0-2-1.2L14.5 2h-5l-.4 2.6a7.5 7.5 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7.5 7.5 0 0 0 2 1.2l.4 2.6h5l.4-2.6a7.5 7.5 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z"/></svg>Ajustes</button>
     </nav>
 
@@ -1443,6 +1588,19 @@ async function showAdminPanel() {
     </div>
     </section>
 
+    <section class="admin-section admin-module" data-module="ranking" hidden><h3>Ranking 2026 · Total Points</h3>
+    <p class="admin-section-help">Controla el ranking de temporada que aparece en la página principal. Las posiciones se calculan solas por puntos (con empates).</p>
+    <form id="adminRankingForm" class="admin-form">
+      <input type="hidden" name="mode" value="add">
+      <label>Nombre del jugador<input name="player" maxlength="100" required></label>
+      <label>Puntos<input name="points" type="number" min="0" max="100000" step="1" required></label>
+      <div class="admin-form-actions full"><button class="btn btn-primary" type="submit" id="adminRankingSubmit">Agregar al ranking</button><button class="btn btn-secondary" type="button" onclick="resetAdminRankingForm()" hidden id="adminRankingCancel">Cancelar edición</button></div>
+    </form>
+    <div class="table-wrap"><table><thead><tr><th>Pos.</th><th>Jugador</th><th>Puntos</th><th>Acciones</th></tr></thead>
+      <tbody id="adminRankingBody"></tbody>
+    </table></div>
+    </section>
+
     <section class="admin-section admin-module" data-module="settings" hidden><h3>Ajustes del sitio</h3>
     <p class="admin-section-help">Configura el enlace del grupo de WhatsApp que aparece en la página pública.</p>
     <form id="adminSettingsForm" class="admin-form">
@@ -1464,10 +1622,12 @@ async function showAdminPanel() {
   document.getElementById("adminResultForm").addEventListener("submit", saveAdminResult);
   document.getElementById("adminUserSearch").addEventListener("input", filterAdminUsers);
   document.getElementById("adminSettingsForm").addEventListener("submit", saveAdminSettings);
+  document.getElementById("adminRankingForm").addEventListener("submit", saveAdminRanking);
   resetAdminUserForm();
   resetTournamentForm();
   resetProductForm();
   fillAdminSettingsForm();
+  renderAdminRanking();
   setAdminModule(currentAdminModule);
   if (document.getElementById("adminModal")) openModal("adminModal");
 }
