@@ -1,12 +1,20 @@
-import { gRead, gWrite, rankPlayers, requireAuth, jsonResponse, MATCH_CATEGORIES, MODALITIES } from "../../_helpers.js";
+import { gRead, gWrite, buildRanking, requireAuth, jsonResponse, MATCH_CATEGORIES, MODALITIES } from "../../_helpers.js";
 
 export async function onRequestGet(context) {
-  const { env } = context;
-  const [players, results] = await Promise.all([
+  const { request, env } = context;
+  let scope = "all";
+  try {
+    scope = new URL(request.url).searchParams.get("ranking") || "all";
+  } catch {
+    scope = "all";
+  }
+  const [players, results, tournaments] = await Promise.all([
     gRead(env, "players"),
-    gRead(env, "challenges")
+    gRead(env, "challenges"),
+    gRead(env, "tournaments")
   ]);
-  return jsonResponse(rankPlayers(players, results));
+  const tournamentId = scope && scope !== "all" ? scope.slice(0, 120) : "";
+  return jsonResponse(buildRanking(players, results, tournaments, tournamentId));
 }
 
 export async function onRequestPost(context) {

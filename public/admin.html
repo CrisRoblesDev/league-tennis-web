@@ -102,6 +102,21 @@
       <div id="drawModalContainer" style="padding:20px 28px 28px;"></div>
     </div>
   </div>
+  <div class="modal" id="tournamentStageModal">
+    <div class="modal-box">
+      <div class="modal-head"><h2>Nuevo partido por etapa</h2><button class="close" type="button" onclick="closeModal('tournamentStageModal')">×</button></div>
+      <form id="tournamentStageForm" class="admin-form" onsubmit="saveStageMatch(event)">
+        <input type="hidden" name="tournamentId">
+        <input type="hidden" name="stage">
+        <p class="full muted" id="tournamentStageLabel" style="margin:0"></p>
+        <label>Jugador A<select name="playerAId" required></select></label>
+        <label>Jugador B<select name="playerBId" required></select></label>
+        <label>Fecha<input name="date" type="date"></label>
+        <label>Cancha<input name="court" maxlength="120"></label>
+        <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Añadir a la etapa</button></div>
+      </form>
+    </div>
+  </div>
   <div class="modal" id="adminUserCreateModal">
     <div class="modal-box">
       <div class="modal-head"><h2>Crear usuario</h2><button class="close" type="button" onclick="closeModal('adminUserCreateModal')">×</button></div>
@@ -130,15 +145,6 @@
         <label class="full"><span><input name="membershipActive" type="checkbox"> Membresía activa</span></label>
         <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar usuario</button><button class="btn btn-secondary" type="button" onclick="resetAdminUserForm()">Cancelar</button></div>
       </form>
-    </div>
-  </div>
-  <div class="modal" id="drawModal">
-    <div class="modal-box" style="width:min(95vw,1100px); max-height:92vh; overflow-y:auto; padding:0;">
-      <div class="modal-head" style="padding:20px 28px; border-bottom:1px solid #eef0f2;">
-        <h2 id="drawModalTitle" style="margin:0; font-size:1.35rem;">Main Draw</h2>
-        <button class="close" type="button" onclick="closeModal('drawModal')" style="background:none; border:none; font-size:24px; cursor:pointer; color:#6b7280;">×</button>
-      </div>
-      <div id="drawModalContainer" style="padding:20px 28px 28px;"></div>
     </div>
   </div>
 </body>

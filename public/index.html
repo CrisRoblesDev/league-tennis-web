@@ -94,6 +94,9 @@
         <p class="section-sub">Cada partido confirmado cuenta. Encuentra tu posición y el próximo objetivo.</p>
       </div>
       <div class="ranking-head-actions">
+        <select id="rankingScopeFilter" class="ranking-scope" aria-label="Filtrar ranking" onchange="onRankingScopeChange(this.value)">
+          <option value="all">Ranking general</option>
+        </select>
         <div class="ranking-view-toggle" role="group" aria-label="Vista del ranking">
           <button type="button" class="active" data-ranking-view="table" onclick="setRankingView('table')">Lista</button>
           <button type="button" data-ranking-view="3d" onclick="setRankingView('3d')">3D</button>
@@ -134,15 +137,6 @@
       </table>
     </div>
     <div id="resultsList" class="results-list"></div>
-    <div class="ranking2026-block" id="ranking2026Block">
-      <div class="ranking2026-head">
-        <span class="section-kicker">TEMPORADA 2026</span>
-        <h3>Aventura Tennis League · Total Points</h3>
-      </div>
-      <div class="ranking2026-table" id="ranking2026List">
-        <p class="muted">Cargando ranking 2026...</p>
-      </div>
-    </div>
   </section>
 
   <section class="section" id="desafios">

@@ -353,6 +353,42 @@ export async function awardRankingPoint(env, result) {
   await gWrite(env, "ranking2026", list);
 }
 
+// Ranking unificado: 1 punto por victoria. "General" suma los resultados
+// confirmados de la escalera y los partidos finalizados de todos los torneos.
+// Con tournamentId se calcula solo con los partidos de ese torneo.
+export function buildRanking(playersList, results, tournaments = [], tournamentId = "") {
+  const ranked = playersList.map(player => ({
+    ...player,
+    matches: Number.isFinite(player.matches) ? player.matches : 0,
+    points: Number.isFinite(player.points) ? player.points : 0
+  }));
+  const byId = new Map(ranked.map(player => [player.id, player]));
+  const tally = (winnerId, loserId) => {
+    const winner = byId.get(winnerId);
+    const loser = byId.get(loserId);
+    if (!winner) return;
+    winner.points += 1;
+    winner.matches += 1;
+    if (loser) loser.matches += 1;
+  };
+
+  let scopedResults = Array.isArray(results) ? results.filter(result => result.status === "confirmed") : [];
+  let scopedTournaments = Array.isArray(tournaments) ? tournaments : [];
+  if (tournamentId) {
+    // Ranking por torneo: únicamente los partidos finalizados de ese torneo.
+    scopedResults = [];
+    scopedTournaments = scopedTournaments.filter(tournament => tournament.id === tournamentId);
+  }
+  scopedResults.forEach(result => tally(result.winnerId, result.loserId));
+  scopedTournaments.forEach(tournament => {
+    (tournament.matches || []).forEach(match => {
+      if (!match || match.status !== "completed" || !match.winnerId || match.score === "BYE") return;
+      tally(match.winnerId, match.winnerId === match.playerAId ? match.playerBId : match.playerAId);
+    });
+  });
+  return ranked.sort((left, right) => right.points - left.points);
+}
+
 function isCompleteSet(first, second) {
   return (first === 6 && second <= 4) ||
     (second === 6 && first <= 4) ||

@@ -74,8 +74,11 @@ function validateTennisMatch(sets, superTiebreak) {
 function tennisScoreString(sets) {
   if (!sets || !sets.length) return "";
   return sets.map(s => {
-    const tb = s[2] ? "*" : "";
-    return `${s[0]}-${s[1]}${tb}`;
+    const home = (typeof s.home === "number") ? s.home : s[0];
+    const away = (typeof s.away === "number") ? s.away : s[1];
+    const tb = (typeof s.tiebreak === "boolean") ? s.tiebreak : (s.length >= 3 ? Boolean(s[2]) : false);
+    const tbMark = tb ? "*" : "";
+    return `${home}-${away}${tbMark}`;
   }).join(", ");
 }
 
@@ -96,10 +99,12 @@ function computeStandings(players, matches) {
     const sets = m.sets || [];
     let aSets = 0, bSets = 0, aGames = 0, bGames = 0;
     for (const s of sets) {
-      aGames += s[0];
-      bGames += s[1];
-      if (s[0] > s[1]) aSets += 1;
-      else if (s[1] > s[0]) bSets += 1;
+      const home = (typeof s.home === "number") ? s.home : s[0];
+      const away = (typeof s.away === "number") ? s.away : s[1];
+      aGames += home;
+      bGames += away;
+      if (home > away) aSets += 1;
+      else if (away > home) bSets += 1;
     }
 
     a.setsWon += aSets;

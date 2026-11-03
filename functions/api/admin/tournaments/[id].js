@@ -161,6 +161,58 @@ function advanceWinner(tournament, completedMatch) {
   next.updated = new Date().toISOString();
 }
 
+// Reconecta el cuadro por etapas: agrupa los partidos por ronda, empareja cada
+// etapa con la siguiente cuando el número de partidos encaja a la mitad y
+// repropaga los ganadores completados. Así los partidos creados a mano, por
+// etapas, se conectan como un Main Draw generado.
+function relinkBracket(tournament) {
+  if ((tournament.formatType || "knockout") !== "knockout") return;
+  const matches = tournament.matches || [];
+  if (!matches.length) return;
+  const matchIds = new Set(matches.map(match => match.id));
+  // Limpia enlaces colgantes (partidos eliminados).
+  matches.forEach(match => {
+    if (match.nextMatchId && !matchIds.has(match.nextMatchId)) {
+      delete match.nextMatchId;
+      delete match.nextSlot;
+    }
+  });
+  // Agrupa por etapa respetando el orden existente (la generación ya ordena
+  // de primeras rondas a la final).
+  const stageMap = new Map();
+  matches.forEach(match => {
+    const stage = String(match.round || "Ronda").trim();
+    if (!stageMap.has(stage)) stageMap.set(stage, []);
+    stageMap.get(stage).push(match);
+  });
+  const storedStages = (tournament.stages || []).map(stage => String(stage).trim()).filter(Boolean);
+  const present = [...stageMap.keys()];
+  const ordered = [
+    ...storedStages.filter(stage => stageMap.has(stage)),
+    ...present.filter(stage => !storedStages.includes(stage))
+  ];
+  for (let index = 0; index < ordered.length - 1; index++) {
+    const current = stageMap.get(ordered[index]);
+    const next = stageMap.get(ordered[index + 1]);
+    if (!current || !next) continue;
+    // Solo conecta cuando la etapa siguiente tiene exactamente la mitad de partidos.
+    if (next.length !== Math.floor(current.length / 2)) continue;
+    current.forEach((match, matchIndex) => {
+      if (matchIndex >= next.length * 2) {
+        delete match.nextMatchId;
+        delete match.nextSlot;
+        return;
+      }
+      match.nextMatchId = next[Math.floor(matchIndex / 2)].id;
+      match.nextSlot = matchIndex % 2 === 0 ? "A" : "B";
+    });
+  }
+  // Repropaga los ganadores a sus casillas del partido siguiente.
+  matches.forEach(match => {
+    if (match.status === "completed" && match.winnerId) advanceWinner(tournament, match);
+  });
+}
+
 function validDate(value) {
   if (value === "") return true;
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -261,6 +313,7 @@ export async function onRequestPut({ request, env, params }) {
     }
     tournament.groups = null;
     tournament.groupCount = null;
+    delete tournament.stages;
   }
   if (body.generateGroups === true) {
     const entries = (tournament.entries || []).map(entry => entry.playerId);
@@ -281,6 +334,7 @@ export async function onRequestPut({ request, env, params }) {
       entryPlayerIds: group
     }));
     tournament.matches = buildGroupMatches(tournament.groups);
+    delete tournament.stages;
   }
   if (body.groups !== undefined) {
     // Grupos personalizados (creador de Main Draw por etapas): conserva los
@@ -315,6 +369,7 @@ export async function onRequestPut({ request, env, params }) {
     tournament.groupCount = customGroups.length;
     tournament.groups = customGroups;
     tournament.matches = buildGroupMatches(customGroups);
+    delete tournament.stages;
   }
   if (tournament.startDate && tournament.endDate && tournament.startDate > tournament.endDate) {
     return jsonResponse({ error: "La fecha de término debe ser igual o posterior al inicio." }, 400);
@@ -402,6 +457,13 @@ export async function onRequestPut({ request, env, params }) {
       updated: new Date().toISOString()
     };
     tournament.matches[matchIndex] = updated;
+    if (status !== "completed" && updated.nextMatchId) {
+      const nextMatch = (tournament.matches || []).find(match => match.id === updated.nextMatchId);
+      if (nextMatch && nextMatch.status !== "completed") {
+        if (updated.nextSlot === "B") nextMatch.playerBId = null;
+        else nextMatch.playerAId = null;
+      }
+    }
     if (status === "completed") advanceWinner(tournament, updated);
   }
 
@@ -450,6 +512,40 @@ export async function onRequestPut({ request, env, params }) {
     if (matchRecord.status === "completed") advanceWinner(tournament, matchRecord);
   }
 
+  if (body.stageCreate !== undefined) {
+    if ((tournament.formatType || "knockout") !== "knockout") {
+      return jsonResponse({ error: "Las etapas solo aplican a torneos de eliminación directa." }, 400);
+    }
+    if (typeof body.stageCreate !== "string" || !body.stageCreate.trim()) {
+      return jsonResponse({ error: "Nombre de etapa inválido." }, 400);
+    }
+    const stageName = body.stageCreate.trim().slice(0, 60);
+    const stages = Array.isArray(tournament.stages) ? tournament.stages.filter(stage => stage !== stageName) : [];
+    stages.push(stageName);
+    tournament.stages = stages.slice(-32);
+  }
+  if (body.stageRemove !== undefined) {
+    if ((tournament.formatType || "knockout") !== "knockout") {
+      return jsonResponse({ error: "Las etapas solo aplican a torneos de eliminación directa." }, 400);
+    }
+    if (typeof body.stageRemove !== "string" || !body.stageRemove.trim()) {
+      return jsonResponse({ error: "Etapa inválida." }, 400);
+    }
+    const stageName = body.stageRemove.trim().slice(0, 60);
+    // Limpia las casillas fed por la etapa eliminada (evita fantasmas en rondas posteriores).
+    (tournament.matches || [])
+      .filter(match => String(match.round || "").trim() === stageName && match.nextMatchId)
+      .forEach(source => {
+        const target = (tournament.matches || []).find(match => match.id === source.nextMatchId);
+        if (target && target.status !== "completed") {
+          if (source.nextSlot === "B") target.playerBId = null;
+          else target.playerAId = null;
+        }
+      });
+    tournament.stages = (Array.isArray(tournament.stages) ? tournament.stages : []).filter(stage => stage !== stageName);
+    tournament.matches = (tournament.matches || []).filter(match => String(match.round || "").trim() !== stageName);
+  }
+  relinkBracket(tournament);
   tournament.updated = new Date().toISOString();
   await gWrite(env, "tournaments", tournaments);
   return jsonResponse({ tournament });
