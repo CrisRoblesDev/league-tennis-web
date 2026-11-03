@@ -3,12 +3,13 @@
     "id": "user-a1baecda-879a-4cde-b3ae-4e11c21310f9",
     "name": "Cristian Robles",
     "email": "crisroblesherrera99@gmail.com",
-    "password": "pbkdf2$100000$vfN2BY8Jde0YGsbFYRkoBg$lH6qB64uZneXLX1lwA3O7-4wuccNZZYkFr4vjOe175E",
-    "level": "",
-    "zone": "",
-    "role": "admin",
+    "password": "pbkdf2$100000$Dr_d9pR3XnFInZbbnPyeBg$RQu2R-tVsaqHkd3WCWuNSwBtrsU3uYpYpC4dn_bduMU",
+    "level": "2.5",
+    "zone": "Aventura / Sunny Isles",
+    "role": "user",
     "created": "2026-11-01T22:16:57.588Z",
-    "membershipActive": false
+    "membershipActive": false,
+    "phone": "+56933465843"
   },
   {
     "id": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
