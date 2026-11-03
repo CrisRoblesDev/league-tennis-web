@@ -295,5 +295,17 @@
     "created": "2026-11-03T02:50:34.510Z",
     "membershipActive": false,
     "temporary": true
+  },
+  {
+    "id": "user-be1b251f-f2bc-4fc3-9b08-dcb16eb5788a",
+    "name": "Max Cuevas",
+    "email": "max.navarro@maxlife.cl",
+    "password": "pbkdf2$100000$1kCJwq-DH2oND3jG2yRrog$T1cq5-ylbDYBwgis69jl75IMKYB__XbpERjnBu5hYD4",
+    "phone": "+56932355846",
+    "level": "5.0",
+    "zone": "",
+    "role": "user",
+    "created": "2026-11-03T18:33:21.986Z",
+    "membershipActive": false
   }
 ]
