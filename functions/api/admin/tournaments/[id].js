@@ -191,6 +191,58 @@ export async function onRequestPut({ request, env, params }) {
     tournament.matches = tournament.formatType === "league"
       ? buildLeagueSchedule(entries)
       : buildKnockoutDraw(entries);
+    tournament.groups = null;
+    tournament.groupCount = null;
+  }
+  if (body.generateGroups === true) {
+    const entries = (tournament.entries || []).map(entry => entry.playerId);
+    const groupCount = Math.max(1, Math.floor(Number(body.groupCount) || 2));
+    if (groupCount < 2 || groupCount > 16) {
+      return jsonResponse({ error: "El número de grupos debe estar entre 2 y 16." }, 400);
+    }
+    if (entries.length < groupCount * 2) {
+      return jsonResponse({ error: "No hay suficientes participantes para crear los grupos." }, 409);
+    }
+    const shuffled = [...entries].sort(() => Math.random() - 0.5);
+    const groups = Array.from({ length: groupCount }, () => []);
+    shuffled.forEach((playerId, index) => groups[index % groupCount].push(playerId));
+    tournament.formatType = "league";
+    tournament.groupCount = groupCount;
+    tournament.groups = groups.map((group, index) => ({
+      name: `Grupo ${String.fromCharCode(65 + index)}`,
+      entryPlayerIds: group
+    }));
+    const matches = [];
+    groups.forEach((group, groupIndex) => {
+      group = [...group];
+      if (group.length % 2 === 1) group.push(null);
+      const rounds = group.length - 1;
+      const rotation = [...group];
+      for (let roundIndex = 0; roundIndex < rounds; roundIndex++) {
+        for (let index = 0; index < group.length / 2; index++) {
+          const playerA = rotation[index];
+          const playerB = rotation[rotation.length - 1 - index];
+          if (playerA === null || playerB === null) continue;
+          matches.push({
+            id: `match-${crypto.randomUUID()}`,
+            round: `Grupo ${String.fromCharCode(65 + groupIndex)} · Jornada ${roundIndex + 1}`,
+            playerAId: playerA,
+            playerBId: playerB,
+            date: "",
+            court: "",
+            status: "scheduled",
+            score: "",
+            winnerId: null,
+            auto: true
+          });
+        }
+        const fixed = rotation[0];
+        const rest = rotation.slice(1);
+        rest.unshift(rest.pop());
+        rotation.splice(0, rotation.length, fixed, ...rest);
+      }
+    });
+    tournament.matches = matches;
   }
   if (tournament.startDate && tournament.endDate && tournament.startDate > tournament.endDate) {
     return jsonResponse({ error: "La fecha de término debe ser igual o posterior al inicio." }, 400);

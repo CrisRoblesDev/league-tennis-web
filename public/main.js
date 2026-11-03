@@ -1211,7 +1211,7 @@ function openDrawModal(tournamentId) {
         <button type="button" class="is-active" data-draw-tab="bracket">Main Draw</button>
         <button type="button" data-draw-tab="matches">Partidos</button>
       </div>
-      <div class="draw-panel" data-draw-panel="bracket">${renderModernBracket(tournament.matches, formatType, tournament.entries || [])}</div>
+      <div class="draw-panel" data-draw-panel="bracket">${(formatType === "knockout") ? '<canvas id="publicDrawCanvas" class="draw-canvas"></canvas>' : renderModernBracket(tournament.matches, formatType, tournament.entries || [])}</div>
       <div class="draw-panel" data-draw-panel="matches" hidden>${renderMatchesListHtml(tournament.matches)}</div>
     `;
     container.querySelectorAll("[data-draw-tab]").forEach(button => {
@@ -1219,13 +1219,21 @@ function openDrawModal(tournamentId) {
         const tab = button.dataset.drawTab;
         container.querySelectorAll("[data-draw-tab]").forEach(b => b.classList.toggle("is-active", b === button));
         container.querySelectorAll("[data-draw-panel]").forEach(panel => { panel.hidden = panel.dataset.drawPanel !== tab; });
+        if (tab === "bracket" && formatType === "knockout") {
+          const canvas = document.getElementById("publicDrawCanvas");
+          if (canvas) drawUsOpenBracket(canvas, tournament, false);
+        }
       });
     });
+    if (formatType === "knockout") {
+      const canvas = document.getElementById("publicDrawCanvas");
+      if (canvas) drawUsOpenBracket(canvas, tournament, false);
+    }
   }
   openModal("drawModal");
 }
 
-function drawKnockoutCanvas(canvas, tournament) {
+function drawUsOpenBracket(canvas, tournament, interactive = false) {
   if (!canvas) return;
   const matches = tournament.matches || [];
   const rounds = [];
@@ -1235,41 +1243,67 @@ function drawKnockoutCanvas(canvas, tournament) {
     if (!bucket) { bucket = { name: round, matches: [] }; rounds.push(bucket); }
     bucket.matches.push(match);
   });
-  if (!rounds.length) return;
+  if (!rounds.length) {
+    canvas.height = 140;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, Math.max(480, canvas.width), canvas.height);
+    ctx.fillStyle = "#4b5563";
+    ctx.font = "14px system-ui, sans-serif";
+    ctx.fillText("Aún no hay partidos en el cuadro.", 20, 70);
+    return;
+  }
 
   const ctx = canvas.getContext("2d");
-  const boxW = 210;
-  const boxH = 52;
-  const roundGap = 90;
-  const matchGap = 20;
-  const margin = 24;
+  const rowH = 24;
+  const matchGap = 10;
+  const roundGap = 86;
+  const colWidth = 250;
+  const marginTop = 58;
+  const marginLeft = 24;
 
-  const roundMatchCounts = rounds.map(r => r.matches.length);
+  const roundMatchCounts = rounds.map(round => round.matches.length);
   const maxMatches = Math.max(...roundMatchCounts);
-  const totalHeight = maxMatches * (boxH + matchGap) + margin * 2;
-  const totalWidth = rounds.length * (boxW + roundGap) + margin * 2 - roundGap;
+  const totalHeight = marginTop + maxMatches * (rowH * 2 + matchGap) + 30;
+  const totalWidth = marginLeft * 2 + rounds.length * (colWidth + roundGap) - roundGap;
 
   const dpr = window.devicePixelRatio || 1;
-  canvas.width = Math.max(320, totalWidth) * dpr;
-  canvas.height = Math.max(240, totalHeight) * dpr;
+  canvas.width = Math.max(480, totalWidth) * dpr;
+  canvas.height = Math.max(260, totalHeight) * dpr;
   canvas.style.width = "100%";
-  canvas.style.height = `${Math.max(240, totalHeight)}px`;
+  canvas.style.height = `${Math.max(260, totalHeight)}px`;
   ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, totalWidth, totalHeight);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, Math.max(480, totalWidth), Math.max(260, totalHeight));
+
+  ctx.fillStyle = "#101d2d";
+  ctx.font = "800 15px system-ui, sans-serif";
+  ctx.fillText("MAIN DRAW", marginLeft, 20);
+  ctx.fillStyle = "rgba(16,29,45,.55)";
+  ctx.font = "600 11px system-ui, sans-serif";
+  ctx.fillText(tournament.title || "", marginLeft, 36);
+
+  rounds.forEach((round, ri) => {
+    const x = marginLeft + ri * (colWidth + roundGap);
+    ctx.fillStyle = "#101d2d";
+    ctx.font = "800 12px system-ui, sans-serif";
+    ctx.fillText(round.name.toUpperCase(), x, 56);
+  });
 
   const positions = new Map();
   let prevY = [];
   rounds.forEach((round, ri) => {
-    const x = margin + ri * (boxW + roundGap);
+    const x = marginLeft + ri * (colWidth + roundGap);
     const ys = [];
     round.matches.forEach((match, mi) => {
       let y;
       if (ri === 0) {
-        y = margin + mi * (boxH + matchGap);
+        y = marginTop + mi * (rowH * 2 + matchGap);
       } else {
         const a = prevY[mi * 2];
         const b = prevY[mi * 2 + 1];
-        y = (a !== undefined && b !== undefined) ? (a + b) / 2 : (prevY[mi] || margin);
+        y = (a !== undefined && b !== undefined) ? (a + b) / 2 : (prevY[mi] || marginTop);
       }
       positions.set(match.id, { x, y, match });
       ys.push(y);
@@ -1277,67 +1311,68 @@ function drawKnockoutCanvas(canvas, tournament) {
     prevY = ys;
   });
 
-  // connectors
-  ctx.strokeStyle = "rgba(16,36,58,.25)";
-  ctx.lineWidth = 1.5;
+  const slotLine = (x, y, w) => {
+    ctx.strokeStyle = "rgba(15,30,46,.35)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(x, y + rowH);
+    ctx.lineTo(x + w, y + rowH);
+    ctx.stroke();
+  };
+
+  ctx.strokeStyle = "#0f1e2e";
+  ctx.lineWidth = 1.4;
   matches.forEach(match => {
     if (!match.nextMatchId) return;
     const from = positions.get(match.id);
     const to = positions.get(match.nextMatchId);
     if (!from || !to) return;
-    const startX = from.x + boxW;
-    const startY = from.y + boxH / 2;
+    const startX = from.x + colWidth;
+    const fromCenterY = from.y + rowH;
     const endX = to.x;
-    const endY = to.y + boxH / 2;
+    const endCenterY = to.y + rowH;
     const midX = startX + (endX - startX) / 2;
     ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(midX, startY);
-    ctx.lineTo(midX, endY);
-    ctx.lineTo(endX, endY);
+    ctx.moveTo(startX, fromCenterY);
+    ctx.lineTo(midX, fromCenterY);
+    ctx.lineTo(midX, endCenterY);
+    ctx.lineTo(endX, endCenterY);
     ctx.stroke();
   });
 
-  // boxes
   positions.forEach(({ x, y, match }) => {
     const winnerA = match.status === "completed" && match.winnerId && match.winnerId === match.playerAId;
     const winnerB = match.status === "completed" && match.winnerId && match.winnerId === match.playerBId;
-    ctx.fillStyle = "#ffffff";
-    ctx.strokeStyle = "rgba(16,36,58,.18)";
-    ctx.lineWidth = 1;
-    roundRect(ctx, x, y, boxW, boxH, 10);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = "#0f2339";
-    ctx.font = "600 12px system-ui, sans-serif";
-    ctx.textBaseline = "middle";
-    ctx.fillText(truncate(match.playerAName || "Por definir", 22), x + 10, y + 14);
-    ctx.fillText(truncate(match.playerBName || "Por definir", 22), x + 10, y + 38);
-
-    if (winnerA || winnerB) {
-      ctx.fillStyle = "#2f6b2f";
-      ctx.font = "700 11px system-ui, sans-serif";
-      ctx.fillText("W", x + boxW - 18, winnerA ? y + 14 : y + 38);
-    }
-
-    ctx.fillStyle = "rgba(16,36,58,.55)";
+    const drawSlot = (playerId, winner, slotY) => {
+      const name = playerId ? playerName(playerId, tournament) : "Por definir";
+      const level = playerLevel(playerId, tournament);
+      ctx.fillStyle = winner ? "#0e6b3d" : "#101d2d";
+      ctx.font = winner ? "700 12px system-ui, sans-serif" : "500 12px system-ui, sans-serif";
+      ctx.fillText(`${level ? level + "  " : ""}${truncate(name, 24)}${winner ? "  ✓" : ""}`, x, slotY + 16);
+      slotLine(x, slotY, colWidth - 14);
+    };
+    drawSlot(match.playerAId, winnerA, y);
+    drawSlot(match.playerBId, winnerB, y + rowH);
+    ctx.fillStyle = "rgba(16,29,45,.55)";
     ctx.font = "500 10px system-ui, sans-serif";
-    const scoreText = match.score ? match.score : (match.status === "cancelled" ? "Cancelado" : (match.date || "Por jugar"));
-    ctx.fillText(truncate(scoreText, 14), x + 10, y + boxH + 14);
-
-    // round label only first box of round
+    const note = match.score ? `Resultado: ${match.score}` : (match.date ? `Fecha: ${match.date}` : "");
+    if (note) ctx.fillText(truncate(note, 30), x, y + rowH * 2 + 12);
   });
 
-  // round labels
-  rounds.forEach((round, ri) => {
-    const x = margin + ri * (boxW + roundGap);
-    ctx.fillStyle = "rgba(16,36,58,.7)";
-    ctx.font = "700 12px system-ui, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(round.name, x + boxW / 2, margin - 6);
-    ctx.textAlign = "left";
-  });
+  if (interactive) {
+    canvas.style.cursor = "pointer";
+    canvas._hitAreas = [...positions.values()].map(({ x, y, match }) => ({ x, y, w: colWidth, h: rowH * 2, id: match.id }));
+  }
+}
+
+function playerName(playerId, tournament) {
+  const entry = (tournament.entries || []).find(e => e.playerId === playerId);
+  return entry?.name || `Jugador ${String(playerId).slice(-4)}`;
+}
+
+function playerLevel(playerId, tournament) {
+  const entry = (tournament.entries || []).find(e => e.playerId === playerId);
+  return entry?.level ? String(entry.level) : "";
 }
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -1982,6 +2017,7 @@ function openTournamentManage(tournamentId) {
     <div class="manage-panel" data-manage-panel="participants">
       <div class="admin-form-actions" style="margin-bottom:12px">
         ${entrants.length >= 2 ? `<button class="btn btn-primary btn-sm" onclick="generateTournamentDraw('${escapeHtml(tournament.id)}')">${matches.some(match => match.auto) ? "Regenerar cuadro" : "Generar cuadro"}</button>` : ""}
+        ${entrants.length >= 4 ? `<button class="btn btn-secondary btn-sm" onclick="createTournamentGroups('${escapeHtml(tournament.id)}')">Crear grupos</button>` : ""}
       </div>
       <ul class="admin-entrant-list manage-entrant-list">${entrants.map(entry => `<li>
         <span>${escapeHtml(entry.name)} <small>${escapeHtml(entry.level || "")}</small></span>
@@ -2015,7 +2051,9 @@ function openTournamentManage(tournamentId) {
       </div>`).join("") || '<p class="muted">Aún no hay partidos programados.</p>'}</div>
     </div>
     <div class="manage-panel" data-manage-panel="draw" hidden>
-      ${renderModernBracket(matches, tournament.formatType || "knockout", entrants)}
+      ${(tournament.formatType || "knockout") === "knockout"
+        ? '<canvas id="manageDrawCanvas" class="draw-canvas"></canvas>'
+        : renderModernBracket(matches, tournament.formatType || "league", entrants)}
       <details class="matching-details"><summary>Ver lista de partidos</summary>${renderMatchesListHtml(matches)}</details>
     </div>
   `;
@@ -2024,6 +2062,20 @@ function openTournamentManage(tournamentId) {
       const tab = button.dataset.manageTab;
       content.querySelectorAll("[data-manage-tab]").forEach(b => b.classList.toggle("is-active", b === button));
       content.querySelectorAll("[data-manage-panel]").forEach(panel => { panel.hidden = panel.dataset.managePanel !== tab; });
+      if (tab === "draw" && (tournament.formatType || "knockout") === "knockout") {
+        const canvas = document.getElementById("manageDrawCanvas");
+        if (canvas) {
+          drawUsOpenBracket(canvas, tournament, true);
+          canvas.addEventListener("click", event => {
+            if (!canvas._hitAreas) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const hit = canvas._hitAreas.find(area => x >= area.x && x <= area.x + area.w && y >= area.y && y <= area.y + area.h);
+            if (hit) editTournamentMatch(tournament.id, hit.id);
+          });
+        }
+      }
     });
   });
   bindManageForms(content, tournament);
@@ -2151,6 +2203,25 @@ async function generateTournamentDraw(tournamentId) {
     showToast("Cuadro generado. Al registrar resultados, los ganadores avanzan solos.");
   } catch (error) {
     showToast(`No se pudo generar el cuadro: ${error.message}`);
+  }
+}
+
+async function createTournamentGroups(tournamentId) {
+  const groupCount = Number(window.prompt("¿Cuántos grupos quieres crear?", "2") || "0");
+  if (!Number.isInteger(groupCount) || groupCount < 2) {
+    showToast("Indica un número de grupos válido (mínimo 2).");
+    return;
+  }
+  if (!window.confirm(`Se crearán ${groupCount} grupos y se reemplazarán los partidos actuales. ¿Continuar?`)) return;
+  try {
+    await api(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}`, {
+      method: "PUT",
+      body: JSON.stringify({ generateGroups: true, groupCount })
+    });
+    await refreshTournamentManage(tournamentId);
+    showToast("Grupos creados.");
+  } catch (error) {
+    showToast(`No se pudieron crear los grupos: ${error.message}`);
   }
 }
 
