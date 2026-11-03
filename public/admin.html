@@ -43,6 +43,44 @@
       <div class="admin-loading">Cargando el centro de administración...</div>
     </div>
   </main>
+  <div class="modal" id="tournamentFormModal">
+    <div class="modal-box">
+      <div class="modal-head"><h2>Datos del torneo</h2><button class="close" type="button" onclick="closeModal('tournamentFormModal')">×</button></div>
+      <form id="adminTournamentForm" class="admin-form">
+        <input type="hidden" name="id">
+        <label>Nombre del torneo<input name="title" maxlength="120" required placeholder="Ej. Copa de noviembre"></label>
+        <label>Mes del torneo<input name="month" type="month" required></label>
+        <fieldset class="admin-level-select full">
+          <legend>Niveles participantes</legend>
+          <p>Selecciona uno o más niveles de juego.</p>
+          <div>
+            <label><input type="checkbox" name="levels" value="2.5"><span>2.5</span></label>
+            <label><input type="checkbox" name="levels" value="3.0"><span>3.0</span></label>
+            <label><input type="checkbox" name="levels" value="3.5"><span>3.5</span></label>
+            <label><input type="checkbox" name="levels" value="4.0"><span>4.0</span></label>
+            <label><input type="checkbox" name="levels" value="4.5"><span>4.5</span></label>
+            <label><input type="checkbox" name="levels" value="5.0"><span>5.0</span></label>
+          </div>
+        </fieldset>
+        <label>Estado del torneo<select name="status"><option value="registration">Inscripciones abiertas</option><option value="scheduled">Programado</option><option value="in_progress">En curso</option><option value="completed">Finalizado</option><option value="cancelled">Cancelado</option></select></label>
+        <label>Tipo de competición<select name="formatType"><option value="knockout">Eliminación directa (cuadro)</option><option value="league">Liga · todos contra todos</option></select></label>
+        <label>Categoría<select name="category"><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label>
+        <label>Modalidad<select name="gender"><option value="mixto">Mixto</option><option value="hombres">Hombres</option><option value="mujeres">Mujeres</option></select></label>
+        <label>Fecha de inicio<input name="startDate" type="date"></label>
+        <label>Fecha de término<input name="endDate" type="date"></label>
+        <label>Cantidad de participantes<input name="maxParticipants" type="number" min="2" max="256" placeholder="Ej. 16"></label>
+        <label>Sede o cancha<input name="venue" maxlength="120" placeholder="Ej. Aventura Tennis Center"></label>
+        <label class="full">Descripción<textarea name="description" rows="2" maxlength="500"></textarea></label>
+        <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar torneo</button><button class="btn btn-secondary" type="button" onclick="resetTournamentForm()">Limpiar</button></div>
+      </form>
+    </div>
+  </div>
+  <div class="modal" id="tournamentManageModal">
+    <div class="modal-box tournament-manage-box">
+      <div class="modal-head"><h2 id="tournamentManageTitle">Gestionar torneo</h2><button class="close" type="button" onclick="closeModal('tournamentManageModal')">×</button></div>
+      <div id="tournamentManageContent"></div>
+    </div>
+  </div>
   <div class="modal" id="adminUserCreateModal">
     <div class="modal-box">
       <div class="modal-head"><h2>Crear usuario</h2><button class="close" type="button" onclick="closeModal('adminUserCreateModal')">×</button></div>

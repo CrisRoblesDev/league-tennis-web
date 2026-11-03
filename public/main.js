@@ -24,6 +24,7 @@ let matchResults = [];
 let leagueChallenges = [];
 let tournaments = [];
 let adminUsers = [];
+let adminTournaments = [];
 let adminOrdersChecked = false;
 let paymentNoticeState = null;
 let currentAdminModule = "tournaments";
@@ -1558,6 +1559,7 @@ async function showAdminPanel() {
   if (!content) return;
   products = allProducts;
   tournaments = allTournaments;
+  adminTournaments = allTournaments;
   matchResults = results;
   adminUsers = users;
   let allPlayers;
@@ -1638,34 +1640,33 @@ async function showAdminPanel() {
     </div>
     </section>
 
-    <section class="admin-section admin-module" data-module="tournaments" hidden><h3>Torneos y partidos</h3>
-    <p class="admin-section-help">Crea el torneo y define sus niveles. Después podrás inscribir jugadores y organizar partidos.</p>
-    <form id="adminTournamentForm" class="admin-form">
-      <input type="hidden" name="id">
-      <h4 class="full admin-form-title">Datos del torneo</h4>
-      <label>Nombre del torneo<input name="title" maxlength="120" required placeholder="Ej. Copa de noviembre"></label>
-      <label>Mes del torneo<input name="month" type="month" required></label>
-      <fieldset class="admin-level-select full">
-        <legend>Niveles participantes</legend>
-        <p>Selecciona uno o más niveles de juego.</p>
-        <div>${levels.map(level => `<label><input type="checkbox" name="levels" value="${level}"><span>${level}</span></label>`).join("")}</div>
-      </fieldset>
-      <label>Estado del torneo<select name="status"><option value="registration">Inscripciones abiertas</option><option value="scheduled">Programado</option><option value="in_progress">En curso</option><option value="completed">Finalizado</option><option value="cancelled">Cancelado</option></select></label>
-      <label>Tipo de competición<select name="formatType"><option value="knockout">Eliminación directa (cuadro)</option><option value="league">Liga · todos contra todos</option></select></label>
-      <label>Categoría<select name="category"><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label>
-      <label>Modalidad<select name="gender"><option value="mixto">Mixto</option><option value="hombres">Hombres</option><option value="mujeres">Mujeres</option></select></label>
-      <label>Fecha de inicio<input name="startDate" type="date"></label>
-      <label>Fecha de término<input name="endDate" type="date"></label>
-      <label>Cantidad de participantes<input name="maxParticipants" type="number" min="2" max="256" placeholder="Ej. 16"></label>
-      <label>Sede o cancha<input name="venue" maxlength="120" placeholder="Ej. Aventura Tennis Center"></label>
-      <label class="full">Descripción<textarea name="description" rows="2" maxlength="500"></textarea></label>
-      <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar torneo</button><button class="btn btn-secondary" type="button" onclick="resetTournamentForm()">Limpiar formulario</button></div>
-    </form>
-    <div class="grid grid-2 admin-records">
-      ${allTournaments.map(tournament => renderAdminTournament(tournament)).join("") || '<div class="admin-empty-state"><b>Aún no hay torneos</b><p>Completa el formulario de arriba para publicar el primero.</p></div>'}
+    <section class="admin-section admin-module" data-module="tournaments" hidden>
+    <div class="admin-section-head">
+      <div>
+        <h3>Torneos</h3>
+        <p class="admin-section-help">Crea campeonatos, administra participantes, programa partidos y previsualiza el Main Draw.</p>
+      </div>
+      <button class="btn btn-primary" type="button" onclick="openTournamentFormModal()">Crear torneo</button>
+    </div>
+    <div class="admin-tournament-grid">
+      ${allTournaments.map(tournament => `<article class="card admin-tournament-card">
+        <div class="admin-record-head">
+          <div>
+            <span class="tag ${tournament.status === "registration" ? "tag-blue" : ""}">${escapeHtml(tournamentStatusLabel(tournament.status))}</span>
+            <h4>${escapeHtml(tournament.title || tournament.month)}</h4>
+          </div>
+        </div>
+        <p class="muted">${escapeHtml(tournament.month)} · <b>${(tournament.entries || []).length}</b> inscritos${tournament.maxParticipants ? ` / ${tournament.maxParticipants}` : ""}</p>
+        <p class="muted">${escapeHtml(tournament.formatType === "league" ? "Liga · todos contra todos" : "Eliminación directa (cuadro)")} · ${escapeHtml(CATEGORY_LABELS[tournament.category || "singles"] || "Singles")}${tournament.gender && tournament.gender !== "mixto" ? ` · ${escapeHtml(GENDER_LABELS[tournament.gender] || tournament.gender)}` : ""}</p>
+        <p class="muted">${escapeHtml(tournament.venue || "Sede por definir")}</p>
+        <div class="admin-form-actions">
+          <button class="btn btn-sm btn-dark" onclick="openTournamentFormModal('${escapeHtml(tournament.id)}')">Datos</button>
+          <button class="btn btn-sm btn-primary" onclick="openTournamentManage('${escapeHtml(tournament.id)}')">Gestionar</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteTournament('${escapeHtml(tournament.id)}')">Eliminar</button>
+        </div>
+      </article>`).join("") || '<div class="admin-empty-state"><b>Aún no hay torneos</b><p>Pulsa "Crear torneo" para publicar el primero.</p></div>'}
     </div>
     </section>
-
     <section class="admin-section admin-module" data-module="challenges" hidden><h3>Desafíos publicados</h3>
     <p class="muted">Revisa la actividad de la comunidad, cierra publicaciones resueltas o elimina contenido inválido.</p>
     <div class="grid grid-3 admin-records">
@@ -1847,11 +1848,11 @@ async function showAdminPanel() {
     </div>
     </div>
   `;
-  document.getElementById("adminTournamentForm").addEventListener("submit", saveTournament);
-  document.getElementById("adminProductForm").addEventListener("submit", saveProduct);
   document.getElementById("adminUserCreateForm")?.addEventListener("submit", createAdminUser);
   document.getElementById("adminUserSearch")?.addEventListener("input", filterAdminUsers);
   document.getElementById("adminUserRoleFilter")?.addEventListener("change", filterAdminUsers);
+  document.getElementById("adminProductForm").addEventListener("submit", saveProduct);
+  document.getElementById("adminTournamentForm")?.addEventListener("submit", saveTournament);
   document.getElementById("adminUserPhoneFilter")?.addEventListener("change", filterAdminUsers);
   document.getElementById("adminPlayerForm").addEventListener("submit", saveAdminPlayer);
   document.getElementById("adminResultForm").addEventListener("submit", saveAdminResult);
@@ -1892,57 +1893,100 @@ async function syncAdminOrders() {
   }
 }
 
-function renderAdminTournament(tournament) {
+function openTournamentFormModal(tournamentId) {
+  resetTournamentForm();
+  if (tournamentId) editTournament(tournamentId);
+  openModal("tournamentFormModal");
+}
+
+function openTournamentManage(tournamentId) {
+  const tournament = adminTournaments.find(item => item.id === tournamentId);
+  if (!tournament) return;
+  const content = document.getElementById("tournamentManageContent");
+  const title = document.getElementById("tournamentManageTitle");
+  if (title) title.textContent = `Gestionar · ${tournament.title || tournament.month}`;
+  if (!content) return;
   const entrants = tournament.entries || [];
+  const matches = tournament.matches || [];
   const availablePlayers = players.filter(player =>
     !(tournament.entries || []).some(entry => entry.playerId === player.id) &&
     (tournament.levels || []).includes(player.level)
   );
-  return `<article class="card admin-record">
-    <div class="admin-record-head"><div><span class="tag">${escapeHtml(tournamentStatusLabel(tournament.status))}</span><h4>${escapeHtml(tournament.title || tournament.month)}</h4></div>
-      <div class="admin-form-actions"><button class="btn btn-sm btn-dark" onclick="editTournament('${escapeHtml(tournament.id)}')">Editar</button>
-      <button class="btn btn-sm btn-secondary" onclick="deleteTournament('${escapeHtml(tournament.id)}')">Eliminar</button></div>
+  content.innerHTML = `
+    <div class="manage-summary">
+      <span class="tag ${tournament.status === "registration" ? "tag-blue" : ""}">${escapeHtml(tournamentStatusLabel(tournament.status))}</span>
+      <p class="muted">${escapeHtml(tournament.month)} · ${escapeHtml(tournament.venue || "Sede por definir")} · ${escapeHtml(tournament.formatType === "league" ? "Liga · todos contra todos" : "Eliminación directa")} · ${entrants.length}/${tournament.maxParticipants || "∞"} inscritos</p>
     </div>
-    <p class="muted">${escapeHtml(tournament.month)} · ${entrants.length} inscritos · ${escapeHtml(tournament.venue || "Sede por definir")}</p>
-    <p class="muted">${escapeHtml(tournament.formatType === "league" ? "Liga · todos contra todos" : "Eliminación directa (cuadro)")}</p>
-    ${entrants.length >= 2 ? `<button class="btn btn-sm btn-primary admin-generate-btn" onclick="generateTournamentDraw('${escapeHtml(tournament.id)}')">${(tournament.matches || []).some(match => match.auto) ? "Regenerar cuadro automáticamente" : "Generar cuadro automáticamente"}</button>` : ""}
-    <ul class="admin-entrant-list">${entrants.map(entry => `<li>
-      <span>${escapeHtml(entry.name)} <small>${escapeHtml(entry.level || "")}</small></span>
-      <button class="btn btn-sm btn-danger" onclick="removeTournamentEntry('${escapeHtml(tournament.id)}','${escapeHtml(entry.playerId)}')">Retirar</button>
-    </li>`).join("") || '<li class="muted">Sin inscritos</li>'}</ul>
-    ${tournament.status === "registration" && availablePlayers.length ? `<form class="admin-entry-form" onsubmit="addTournamentEntry(event,'${escapeHtml(tournament.id)}')">
-      <label class="full">Agregar jugador inscrito
-        <select name="playerId">${availablePlayers.map(player => `<option value="${escapeHtml(player.id)}">${escapeHtml(player.name)} · ${escapeHtml(player.level)}</option>`).join("")}</select>
-      </label>
-      <button class="btn btn-sm btn-dark full">Agregar participante</button>
-    </form>` : ""}
-    ${entrants.length >= 2 ? `<form id="admin-match-form-${escapeHtml(tournament.id)}" class="admin-match-form" onsubmit="saveTournamentMatch(event,'${escapeHtml(tournament.id)}')">
-      <input type="hidden" name="matchId">
-      <b class="full">Programar partido</b>
-      <label>Jugador A<select name="playerAId" required>${entrants.map(entry => `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`).join("")}</select></label>
-      <label>Jugador B<select name="playerBId" required>${entrants.map(entry => `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`).join("")}</select></label>
-      <label>Ronda<input name="round" required placeholder="Final"></label>
-      <label>Fecha<input name="date" type="date"></label>
-      <label>Estado<select name="status"><option value="scheduled">Programado</option><option value="completed">Finalizado</option><option value="cancelled">Cancelado</option></select></label>
-      <label>Ganador<select name="winnerId"><option value="">Elegir al cerrar</option>${entrants.map(entry =>
-        `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`
-      ).join("")}</select></label>
-      <label>Marcador desde Jugador A<input name="score" placeholder="6-4, 4-6, 10-7"></label>
-      <label>Cancha<input name="court" maxlength="120"></label>
-      <button class="btn btn-primary full">Guardar partido</button>
-    </form>` : ""}
-    ${(tournament.matches || []).map(match => `<div class="admin-match-row">
-      <p class="muted">${escapeHtml(match.round)}: ${escapeHtml(match.playerAName || match.playerAId)} vs ${escapeHtml(match.playerBName || match.playerBId)}${match.score ? ` · ${escapeHtml(match.score)}` : ""}</p>
-      <button class="btn btn-sm btn-dark" onclick="editTournamentMatch('${escapeHtml(tournament.id)}','${escapeHtml(match.id)}')">Editar partido</button>
-      <button class="btn btn-sm btn-danger" onclick="deleteTournamentMatch('${escapeHtml(tournament.id)}','${escapeHtml(match.id)}')">Eliminar partido</button>
-    </div>`).join("")}
-  </article>`;
+    <div class="manage-tabs" role="tablist">
+      <button type="button" class="is-active" data-manage-tab="participants">Participantes (${entrants.length})</button>
+      <button type="button" data-manage-tab="matches">Partidos (${matches.length})</button>
+      <button type="button" data-manage-tab="draw">Main Draw</button>
+    </div>
+    <div class="manage-panel" data-manage-panel="participants">
+      <div class="admin-form-actions" style="margin-bottom:12px">
+        ${entrants.length >= 2 ? `<button class="btn btn-primary btn-sm" onclick="generateTournamentDraw('${escapeHtml(tournament.id)}')">${matches.some(match => match.auto) ? "Regenerar cuadro" : "Generar cuadro"}</button>` : ""}
+      </div>
+      <ul class="admin-entrant-list manage-entrant-list">${entrants.map(entry => `<li>
+        <span>${escapeHtml(entry.name)} <small>${escapeHtml(entry.level || "")}</small></span>
+        <button class="btn btn-sm btn-danger" onclick="removeTournamentEntry('${escapeHtml(tournament.id)}','${escapeHtml(entry.playerId)}')">Retirar</button>
+      </li>`).join("") || '<li class="muted">Sin inscritos</li>'}</ul>
+      ${tournament.status === "registration" && availablePlayers.length ? `<form class="admin-entry-form" onsubmit="addTournamentEntry(event,'${escapeHtml(tournament.id)}')">
+        <label class="full">Agregar jugador
+          <select name="playerId" required>${availablePlayers.map(player => `<option value="${escapeHtml(player.id)}">${escapeHtml(player.name)} · ${escapeHtml(player.level)}</option>`).join("")}</select>
+        </label>
+        <button class="btn btn-dark full" type="submit">Agregar participante</button>
+      </form>` : ""}
+    </div>
+    <div class="manage-panel" data-manage-panel="matches" hidden>
+      ${entrants.length >= 2 ? `<form id="admin-match-form-${escapeHtml(tournament.id)}" class="admin-match-form" onsubmit="saveTournamentMatch(event,'${escapeHtml(tournament.id)}')">
+        <input type="hidden" name="matchId">
+        <b class="full">Programar partido</b>
+        <label>Jugador A<select name="playerAId" required>${entrants.map(entry => `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`).join("")}</select></label>
+        <label>Jugador B<select name="playerBId" required>${entrants.map(entry => `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`).join("")}</select></label>
+        <label>Ronda<input name="round" required placeholder="Final"></label>
+        <label>Fecha<input name="date" type="date"></label>
+        <label>Estado<select name="status"><option value="scheduled">Programado</option><option value="completed">Finalizado</option><option value="cancelled">Cancelado</option></select></label>
+        <label>Ganador<select name="winnerId"><option value="">Elegir al cerrar</option>${entrants.map(entry => `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`).join("")}</select></label>
+        <label>Marcador desde Jugador A<input name="score" placeholder="6-4, 4-6, 10-7"></label>
+        <label>Cancha<input name="court" maxlength="120"></label>
+        <button class="btn btn-primary full" type="submit">Guardar partido</button>
+      </form>` : '<p class="muted">Inscribe al menos 2 jugadores para programar partidos.</p>'}
+      <div class="manage-match-list">${matches.map(match => `<div class="admin-match-row">
+        <p class="muted">${escapeHtml(match.round)}: ${escapeHtml(match.playerAName || "Por definir")} vs ${escapeHtml(match.playerBName || "Por definir")}${match.date ? ` · ${escapeHtml(match.date)}` : ""}${match.score ? ` · ${escapeHtml(match.score)}` : ""}</p>
+        <button class="btn btn-sm btn-dark" onclick="editTournamentMatch('${escapeHtml(tournament.id)}','${escapeHtml(match.id)}')">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteTournamentMatch('${escapeHtml(tournament.id)}','${escapeHtml(match.id)}')">Eliminar</button>
+      </div>`).join("") || '<p class="muted">Aún no hay partidos programados.</p>'}</div>
+    </div>
+    <div class="manage-panel" data-manage-panel="draw" hidden>
+      ${(tournament.formatType || "knockout") === "knockout"
+        ? '<canvas id="manageDrawCanvas" class="draw-canvas"></canvas>'
+        : renderTournamentMatches(matches, entrants, tournament.formatType || "league")}
+    </div>
+  `;
+  content.querySelectorAll("[data-manage-tab]").forEach(button => {
+    button.addEventListener("click", () => {
+      const tab = button.dataset.manageTab;
+      content.querySelectorAll("[data-manage-tab]").forEach(b => b.classList.toggle("is-active", b === button));
+      content.querySelectorAll("[data-manage-panel]").forEach(panel => { panel.hidden = panel.dataset.managePanel !== tab; });
+      if (tab === "draw" && (tournament.formatType || "knockout") === "knockout") {
+        drawKnockoutCanvas(document.getElementById("manageDrawCanvas"), tournament);
+      }
+    });
+  });
+  bindManageForms(content, tournament);
+  openModal("tournamentManageModal");
+}
+
+function bindManageForms(content, tournament) {
+  const matchForm = content.querySelector('.admin-match-form');
+  if (matchForm) matchForm.addEventListener("submit", event => saveTournamentMatch(event, tournament.id));
 }
 
 function editTournament(tournamentId) {
-  const tournament = tournaments.find(item => item.id === tournamentId);
+  const tournament = adminTournaments.find(item => item.id === tournamentId);
   if (!tournament) return;
   const form = document.getElementById("adminTournamentForm");
+  if (!form) return;
   form.elements.namedItem("id").value = tournament.id;
   form.elements.namedItem("title").value = tournament.title || "";
   form.elements.namedItem("month").value = tournament.month || "";
@@ -1958,11 +2002,10 @@ function editTournament(tournamentId) {
   form.querySelectorAll('input[name="levels"]').forEach(input => {
     input.checked = (tournament.levels || []).includes(input.value);
   });
-  form.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function editTournamentMatch(tournamentId, matchId) {
-  const tournament = tournaments.find(item => item.id === tournamentId);
+  const tournament = adminTournaments.find(item => item.id === tournamentId);
   const match = tournament?.matches?.find(item => item.id === matchId);
   const form = document.getElementById(`admin-match-form-${tournamentId}`);
   if (!match || !form) return;
@@ -2018,10 +2061,18 @@ async function saveTournament(event) {
     });
     await loadTournaments();
     await showAdminPanel();
+    closeModal("tournamentFormModal");
     showToast(id ? "Torneo actualizado" : "Torneo creado");
   } catch (error) {
     showToast(`No se pudo guardar el torneo: ${error.message}`);
   }
+}
+
+async function refreshTournamentManage(tournamentId) {
+  await loadTournaments();
+  await showAdminPanel();
+  const tournament = adminTournaments.find(item => item.id === tournamentId);
+  if (tournament) openTournamentManage(tournamentId);
 }
 
 async function deleteTournament(tournamentId) {
@@ -2043,7 +2094,7 @@ async function generateTournamentDraw(tournamentId) {
       method: "PUT",
       body: JSON.stringify({ generateDraw: true })
     });
-    await Promise.all([loadTournaments(), showAdminPanel()]);
+    await refreshTournamentManage(tournamentId);
     showToast("Cuadro generado. Al registrar resultados, los ganadores avanzan solos.");
   } catch (error) {
     showToast(`No se pudo generar el cuadro: ${error.message}`);
@@ -2058,7 +2109,7 @@ async function addTournamentEntry(event, tournamentId) {
       method: "PUT",
       body: JSON.stringify({ addEntryPlayerId: playerId })
     });
-    await Promise.all([loadTournaments(), showAdminPanel()]);
+    await refreshTournamentManage(tournamentId);
     showToast("Participante agregado al torneo.");
   } catch (error) {
     showToast(`No se pudo agregar al participante: ${error.message}`);
@@ -2072,7 +2123,7 @@ async function removeTournamentEntry(tournamentId, playerId) {
       method: "PUT",
       body: JSON.stringify({ removeEntryPlayerId: playerId })
     });
-    await Promise.all([loadTournaments(), showAdminPanel()]);
+    await refreshTournamentManage(tournamentId);
     showToast("Inscripción retirada.");
   } catch (error) {
     showToast(`No se pudo retirar la inscripción: ${error.message}`);
@@ -2106,8 +2157,7 @@ async function saveTournamentMatch(event, tournamentId) {
         }
       })
     });
-    await loadTournaments();
-    await showAdminPanel();
+    await refreshTournamentManage(tournamentId);
     showToast("Partido programado");
   } catch (error) {
     showToast(`No se pudo programar: ${error.message}`);
@@ -2121,7 +2171,7 @@ async function deleteTournamentMatch(tournamentId, matchId) {
       method: "PUT",
       body: JSON.stringify({ deleteMatchId: matchId })
     });
-    await Promise.all([loadTournaments(), showAdminPanel()]);
+    await refreshTournamentManage(tournamentId);
     showToast("Partido eliminado del cuadro.");
   } catch (error) {
     showToast(`No se pudo eliminar el partido: ${error.message}`);
@@ -2548,6 +2598,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("searchPlayer")?.addEventListener("input", filterPlayers);
   document.getElementById("adminUserForm")?.addEventListener("submit", saveAdminUser);
   document.getElementById("adminUserCreateForm")?.addEventListener("submit", createAdminUser);
+  document.getElementById("adminTournamentForm")?.addEventListener("submit", saveTournament);
   syncHeaderLayout();
   HEADER_MOBILE_MEDIA.addEventListener("change", syncHeaderLayout);
   initWhatsAppPromos();

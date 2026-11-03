@@ -694,3 +694,18 @@ html[dir="rtl"] .admin-record-head { direction: rtl; }
 .admin-user-actions { display:flex; gap:8px; flex-wrap:wrap; }
 .tag-green { background:#e7f4e4; color:#2f6b2f; }
 .draw-canvas { background:#f8fafc; border:1px solid var(--line); border-radius:12px; display:block; }
+/* Admin tournament module */
+.admin-section-head { display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; margin-bottom:16px; }
+.admin-section-head h3 { margin:0; }
+.admin-tournament-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+.admin-tournament-card { display:flex; flex-direction:column; gap:8px; }
+.admin-tournament-card h4 { margin:6px 0; font-size:1.1rem; }
+.admin-tournament-card .admin-form-actions { margin-top:auto; }
+.tournament-manage-box { width:min(920px,100%); }
+.manage-summary { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+.manage-tabs { display:flex; gap:6px; border-bottom:1px solid var(--line); margin-bottom:14px; }
+.manage-tabs button { padding:10px 14px; border:none; background:transparent; cursor:pointer; font-weight:600; color:var(--navy); border-bottom:2px solid transparent; }
+.manage-tabs button.is-active { border-bottom-color:var(--navy); }
+.manage-panel[hidden] { display:none; }
+.manage-entrant-list { max-height:320px; overflow:auto; }
+.manage-match-list { display:flex; flex-direction:column; gap:8px; margin-top:14px; }
