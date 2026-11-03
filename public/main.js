@@ -143,6 +143,35 @@ async function logout() {
   }
 }
 
+function openRecoveryModal() {
+  closeModal("loginModal");
+  showNotice("recoveryNotice", "", false);
+  openModal("recoveryModal");
+}
+
+async function recoverPassword(event) {
+  event.preventDefault();
+  const form = event.target;
+  try {
+    await api("/api/auth/recover", {
+      method: "POST",
+      body: JSON.stringify({
+        email: form.elements.namedItem("email").value,
+        phoneLast4: form.elements.namedItem("phoneLast4").value.trim(),
+        newPassword: form.elements.namedItem("newPassword").value
+      })
+    });
+    form.reset();
+    showNotice("recoveryNotice", "Contraseña restablecida. Ya puedes iniciar sesión con tu nueva clave.", false);
+    setTimeout(() => {
+      closeModal("recoveryModal");
+      openModal("loginModal");
+    }, 1800);
+  } catch (error) {
+    showNotice("recoveryNotice", error.message, true);
+  }
+}
+
 // ============ PRODUCTS & STRIPE ============
 async function loadProducts() {
   try {
@@ -2021,6 +2050,7 @@ document.addEventListener("languagechange", () => {
 document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("loginForm")?.addEventListener("submit", login);
   document.getElementById("registerForm")?.addEventListener("submit", register);
+  document.getElementById("recoveryForm")?.addEventListener("submit", recoverPassword);
   document.getElementById("resultForm")?.addEventListener("submit", submitResult);
   document.getElementById("challengeForm")?.addEventListener("submit", submitChallenge);
   document.getElementById("playerForm")?.addEventListener("submit", createPlayer);

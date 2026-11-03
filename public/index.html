@@ -299,6 +299,7 @@
         <button class="btn btn-primary full auth-submit" type="submit">Entrar a mi cuenta <span aria-hidden="true">→</span></button>
       </form>
       <div id="loginNotice" class="notice-bar auth-notice" role="alert"></div>
+      <p class="auth-register"><a href="#" onclick="openRecoveryModal()">¿Olvidaste tu contraseña?</a></p>
       <p class="auth-register">¿Aún no tienes cuenta? <a href="#" onclick="closeModal('loginModal');openModal('registerModal')">Crea una gratis</a></p>
       <p class="auth-security"><span aria-hidden="true">●</span> Tu cuenta está protegida.</p>
     </div>
@@ -357,6 +358,25 @@
       <button class="btn btn-primary full">Guardar resultado</button>
     </form>
     <div id="resultNotice" class="muted"></div>
+  </div>
+</div>
+
+<!-- RECOVERY MODAL -->
+<div class="modal" id="recoveryModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div><span class="eyebrow">Recuperar acceso</span><h2>Recuperar contraseña</h2></div>
+      <button class="close" onclick="closeModal('recoveryModal')">×</button>
+    </div>
+    <p class="muted">Ingresa tu email, los <b>últimos 4 dígitos</b> del celular con el que te registraste y tu nueva contraseña.</p>
+    <form id="recoveryForm">
+      <label class="full">Email<input name="email" type="email" required placeholder="tu@email.com"></label>
+      <label>Últimos 4 dígitos del celular<input name="phoneLast4" inputmode="numeric" pattern="\d{4}" maxlength="4" required placeholder="Ej. 0123"></label>
+      <label>Nueva contraseña<input name="newPassword" type="password" minlength="8" maxlength="128" required placeholder="Mínimo 8 caracteres"></label>
+      <button class="btn btn-primary full" type="submit">Restablecer contraseña</button>
+    </form>
+    <div id="recoveryNotice" class="notice-bar"></div>
+    <p class="auth-register">¿Ya recuerdas tu clave? <a href="#" onclick="closeModal('recoveryModal');openModal('loginModal')">Inicia sesión</a></p>
   </div>
 </div>
 

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { onRequestPost as register } from "../functions/api/auth/register.js";
 import { onRequestPost as login } from "../functions/api/auth/login.js";
+import { onRequestPost as recover } from "../functions/api/auth/recover.js";
 import { onRequestPost as checkout } from "../functions/api/stripe/checkout.js";
 import { onRequestGet as verifyCheckout } from "../functions/api/stripe/session/[session_id].js";
 import { onRequestPost as adminUsers } from "../functions/api/admin/users.js";
@@ -303,6 +304,83 @@ test("donations, account management, uploads, and player categories work end to 
       env
     });
     assert.equal((await clearedSettings.json()).whatsappUrl, "");
+
+    // --- Recuperación de contraseña con últimos 4 dígitos del celular ---
+    const recoveryAccount = await adminUsers({
+      request: adminRequest("https://league.example/api/admin/users", "POST", {
+        action: "create",
+        name: "Jugador Recupera",
+        email: "recupera@example.com",
+        password: "clave-vieja-123",
+        role: "user"
+      }),
+      env
+    });
+    assert.equal(recoveryAccount.status, 201);
+    const usersNow = JSON.parse(Buffer.from(github.files.get("users.json"), "base64").toString("utf8"));
+    const recoverUser = usersNow.find(item => item.email === "recupera@example.com");
+    recoverUser.phone = "+1 305 555 0123";
+    github.files.set("users.json", Buffer.from(JSON.stringify(usersNow)).toString("base64"));
+
+    const wrongDigits = await recover({
+      request: new Request("https://league.example/api/auth/recover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "recupera@example.com", phoneLast4: "9999", newPassword: "clave-nueva-456" })
+      }),
+      env
+    });
+    assert.equal(wrongDigits.status, 401);
+
+    const unknownEmail = await recover({
+      request: new Request("https://league.example/api/auth/recover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "nadie@example.com", phoneLast4: "0123", newPassword: "clave-nueva-456" })
+      }),
+      env
+    });
+    assert.equal(unknownEmail.status, 401);
+
+    const shortPassword = await recover({
+      request: new Request("https://league.example/api/auth/recover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "recupera@example.com", phoneLast4: "0123", newPassword: "corta" })
+      }),
+      env
+    });
+    assert.equal(shortPassword.status, 400);
+
+    const successfulRecovery = await recover({
+      request: new Request("https://league.example/api/auth/recover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "recupera@example.com", phoneLast4: "0123", newPassword: "clave-nueva-456" })
+      }),
+      env
+    });
+    assert.equal(successfulRecovery.status, 200);
+
+    const loginOldAfterRecovery = await login({
+      request: new Request("https://league.example/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "recupera@example.com", password: "clave-vieja-123" })
+      }),
+      env
+    });
+    assert.equal(loginOldAfterRecovery.status, 401);
+
+    const loginNewAfterRecovery = await login({
+      request: new Request("https://league.example/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "recupera@example.com", password: "clave-nueva-456" })
+      }),
+      env
+    });
+    assert.equal(loginNewAfterRecovery.status, 200);
   } finally {
     globalThis.fetch = originalFetch;
   }
