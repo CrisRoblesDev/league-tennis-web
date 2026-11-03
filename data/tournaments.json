@@ -126,13 +126,12 @@
     "description": "Modalidad Round Robin",
     "venue": "Aventura -Sunny Isles Beach -Hallandale - Hollywood",
     "format": "Round Robin por grupos · Best of 3",
-    "updated": "2026-11-03T03:06:44.731Z",
+    "updated": "2026-11-03T03:23:18.069Z",
     "formatType": "league",
     "matches": [
       {
         "id": "match-grupo.damas-1-1",
         "round": "Grupo Damas",
-        "week": 1,
         "playerAId": "player-2097de7a-ce8e-4ba3-8645-5f7e8f52cbc0",
         "playerBId": "player-76298acf-664b-4115-a7ab-b07211d56106",
         "date": "",
