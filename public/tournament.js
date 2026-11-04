@@ -253,14 +253,14 @@
       const groups = groupStage
         ? `<div class="round" ${admin ? `draggable="true" data-drag="stage" data-id="${esc(groupStage.id)}" data-drop="stage"` : ""}><div class="round-title">${
             admin
-              ? `<button type="button" data-action="edit-stage" data-id="${esc(groupStage.id)}" class="text-left hover:underline">${esc(groupStage.name)} ✎</button> ${btn("↑", "move-stage-up", groupStage.id)} ${btn("↓", "move-stage-down", groupStage.id)} ${btn("✕", "delete-stage", groupStage.id, "danger")}`
+              ? `<button type="button" data-action="edit-stage" data-id="${esc(groupStage.id)}" class="text-left hover:underline">${esc(groupStage.name)} ✎</button> ${btn("↑", "move-stage-up", groupStage.id)} ${btn("↓", "move-stage-down", groupStage.id)} ${btn("✕", "delete-stage", groupStage.id, "danger").replace("<button", "<button draggable=\"false\"")}`
               : esc(groupStage.name)
           }</div><div class="round-body">${
             tournament.groups.map((group, index) => `<div class="group-card ${admin ? "draggable" : ""}" ${admin ? `draggable="true" data-drag="group" data-drop="group" data-id="${esc(group.id)}"` : ""}><div class="flex justify-between gap-1 items-center mb-2"><strong class="text-sm">${
               admin
                 ? `<button data-action="edit-group" data-id="${esc(group.id)}" class="hover:underline" type="button">${esc(group.name)} ✎</button>`
                 : esc(group.name)
-            }</strong>${admin ? `<span>${btn("↑", "move-group-up", group.id)}${btn("↓", "move-group-down", group.id)}${btn("✕", "delete-group", group.id, "danger")}</span>` : ""}</div>${
+            }</strong>${admin ? `<span>${btn("↑", "move-group-up", group.id)}${btn("↓", "move-group-down", group.id)}${btn("✕", "delete-group", group.id, "danger").replace("<button", "<button draggable=\"false\"")}</span>` : ""}</div>${
               groupPlayers(tournament, index).map(id => `<div class="slot border-t border-[#dce5d8] ${admin ? "draggable" : ""}" ${admin ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${admin ? `<button type="button" data-action="edit-player" data-id="${esc(id)}" class="text-left hover:underline">${esc(name(id))}</button>` : esc(name(id))}</div>`).join("") || '<p class="muted text-xs">Sin jugadores</p>'
             }</div>`).join("") || '<p class="muted text-sm">Añade un grupo.</p>'
           }</div></div>`
@@ -268,7 +268,7 @@
 
       const columns = allRounds.map((round, roundIndex) => `<div class="round" ${admin ? `draggable="true" data-drag="stage" data-drop="stage" data-id="${esc(round.stage.id)}"` : ""}><div class="round-title">${
         admin
-          ? `<button type="button" data-action="edit-stage" data-id="${esc(round.stage.id)}" class="text-left hover:underline">${esc(round.stage.name)} ✎</button> ${btn("↑", "move-stage-up", round.stage.id)} ${btn("↓", "move-stage-down", round.stage.id)} ${btn("✕", "delete-stage", round.stage.id, "danger")}`
+          ? `<button type="button" data-action="edit-stage" data-id="${esc(round.stage.id)}" class="text-left hover:underline">${esc(round.stage.name)} ✎</button> ${btn("↑", "move-stage-up", round.stage.id)} ${btn("↓", "move-stage-down", round.stage.id)} ${btn("✕", "delete-stage", round.stage.id, "danger").replace("<button", "<button draggable=\"false\"")}`
           : esc(round.stage.name)
       }</div><div class="round-body">${
         Array.from({ length: round.count }, (_, slot) => {
