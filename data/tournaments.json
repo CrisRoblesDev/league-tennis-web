@@ -32,8 +32,8 @@
       {
         "id": "match-585f0e02-e100-4ca1-934d-ea995325a106",
         "round": "Jornada 1",
-        "playerAId": "player-e6f56afa-2d57-41e2-a158-6c5c8cf52664",
-        "playerBId": "player-76298acf-664b-4115-a7ab-b07211d56106",
+        "playerAId": "player-76298acf-664b-4115-a7ab-b07211d56106",
+        "playerBId": "player-e6f56afa-2d57-41e2-a158-6c5c8cf52664",
         "date": "2026-11-04",
         "court": "",
         "status": "scheduled",
@@ -41,12 +41,12 @@
         "winnerId": null,
         "auto": true,
         "sets": null,
-        "updated": "2026-11-04T03:02:23.247Z"
+        "updated": "2026-11-04T03:02:25.682Z"
       }
     ],
     "createdBy": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
     "created": "2026-11-02T03:19:21.917Z",
-    "updated": "2026-11-04T03:02:23.247Z",
+    "updated": "2026-11-04T03:02:25.682Z",
     "formatType": "knockout",
     "groups": null,
     "groupCount": null
