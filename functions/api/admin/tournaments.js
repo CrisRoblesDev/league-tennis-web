@@ -3,7 +3,7 @@ import { gRead, gWrite, requireAdmin, jsonResponse, MATCH_CATEGORIES } from "../
 const LEVELS = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0"];
 const STATUSES = ["registration", "scheduled", "in_progress", "completed", "cancelled"];
 const TOURNAMENT_GENDERS = ["hombres", "mujeres", "mixto"];
-const FORMAT_TYPES = ["knockout", "league"];
+const FORMAT_TYPES = ["knockout", "league", "round_robin", "groups_knockout"];
 
 function validDate(value) {
   if (value === "") return true;
@@ -58,13 +58,13 @@ function publicTournament(tournament, playerById) {
     ...details,
     entries: entries.map(entry => ({
       playerId: entry.playerId,
-      name: entry.playerName,
-      level: entry.level
+      name: playerById.get(entry.playerId)?.name || entry.playerName || entry.name || "Jugador",
+      level: playerById.get(entry.playerId)?.level || entry.level || ""
     })),
     matches: matches.map(match => ({
       ...match,
-      playerAName: playerById.get(match.playerAId)?.name || "Por definir",
-      playerBName: playerById.get(match.playerBId)?.name || "Por definir"
+      playerAName: playerById.get(match.playerAId)?.name || entries.find(entry => entry.playerId === match.playerAId)?.playerName || "Por definir",
+      playerBName: playerById.get(match.playerBId)?.name || entries.find(entry => entry.playerId === match.playerBId)?.playerName || "Por definir"
     }))
   };
 }
@@ -129,6 +129,9 @@ export async function onRequestPost({ request, env }) {
       entries.push({ playerId: player.id, userId: player.userId, created: new Date().toISOString() });
     }
   }
+  if (Number.isInteger(Number(body.maxParticipants)) && Number(body.maxParticipants) > 0 && entries.length > Number(body.maxParticipants)) {
+    return jsonResponse({ error: "Los participantes superan los cupos disponibles." }, 409);
+  }
 
   const tournament = {
     id: `tournament-${crypto.randomUUID()}`,
@@ -139,13 +142,21 @@ export async function onRequestPost({ request, env }) {
     startDate: body.startDate === undefined ? "" : body.startDate,
     endDate: body.endDate === undefined ? "" : body.endDate,
     venue: (body.venue || "").trim(),
-    format: (body.format || "Eliminación directa · Best of 3").trim(),
+    format: (body.format || (
+      ["league", "round_robin"].includes(body.formatType) ? "Round Robin · todos contra todos" :
+      body.formatType === "groups_knockout" ? "Fase de grupos + eliminación directa" :
+      "Eliminación directa · Best of 3"
+    )).trim(),
     category: MATCH_CATEGORIES.includes(body.category) ? body.category : "singles",
     gender: TOURNAMENT_GENDERS.includes(body.gender) ? body.gender : "mixto",
     formatType: FORMAT_TYPES.includes(body.formatType) ? body.formatType : "knockout",
     maxParticipants: body.maxParticipants ? Number(body.maxParticipants) : null,
     status: body.status,
     entries,
+    stageNames: body.stageNames && typeof body.stageNames === "object" ? {
+      groups: typeof body.stageNames.groups === "string" ? body.stageNames.groups.trim().slice(0, 80) : "Fase de grupos",
+      playoff: typeof body.stageNames.playoff === "string" ? body.stageNames.playoff.trim().slice(0, 80) : "Eliminatorias"
+    } : null,
     matches: [],
     createdBy: userId,
     created: new Date().toISOString()

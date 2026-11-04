@@ -115,6 +115,13 @@ export async function onRequestPatch({ request, env }) {
     if (!MODALITIES.includes(updates.gender)) return jsonResponse({ error: "Modalidad inválida." }, 400);
     player.gender = updates.gender;
   }
+  if (updates.manualPoints !== undefined) {
+    const manualPoints = Number(updates.manualPoints);
+    if (!Number.isInteger(manualPoints) || manualPoints < 0 || manualPoints > 1000000) {
+      return jsonResponse({ error: "Los puntos manuales deben ser un entero entre 0 y 1.000.000." }, 400);
+    }
+    player.manualPoints = manualPoints;
+  }
   const user = users.find(item => item.id === player.userId);
   if (user) {
     user.level = player.level;

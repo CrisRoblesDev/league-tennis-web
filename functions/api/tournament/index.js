@@ -47,8 +47,11 @@ export async function onRequestDelete(context) {
   const player = players.find(item => item.userId === userId);
   if (!player) return jsonResponse({ error: "No tienes perfil de jugador" }, 400);
 
+  const requestedId = new URL(request.url).searchParams.get("tournamentId");
   const month = new Date().toISOString().slice(0, 7);
-  const tournament = tournaments.find(item => item.month === month);
+  const tournament = requestedId
+    ? tournaments.find(item => item.id === requestedId)
+    : tournaments.find(item => item.month === month);
   if (!tournament) return jsonResponse({ error: "No hay torneo abierto este mes" }, 404);
   if (tournament.status !== "registration") {
     return jsonResponse({ error: "Las inscripciones de este torneo ya están cerradas" }, 409);
@@ -96,8 +99,13 @@ export async function onRequestPost(context) {
     await gWrite(env, "players", players);
   }
 
+  let body = {};
+  try { body = await request.json(); } catch { /* backward-compatible empty body */ }
+  const requestedId = typeof body.tournamentId === "string" ? body.tournamentId : "";
   const month = new Date().toISOString().slice(0, 7);
-  let tournament = tournaments.find(item => item.month === month);
+  let tournament = requestedId
+    ? tournaments.find(item => item.id === requestedId)
+    : tournaments.find(item => item.month === month);
   if (!tournament) {
     tournament = {
       id: `monthly-${month}`,
@@ -119,13 +127,17 @@ export async function onRequestPost(context) {
   if (tournament.status !== "registration") {
     return jsonResponse({ error: "Las inscripciones para este torneo ya están cerradas" }, 409);
   }
+  if ((tournament.entries || []).some(entry => entry.userId === userId || entry.playerId === player.id)) {
+    return jsonResponse({ ok: true, message: `Ya estás inscrito en ${tournament.title || month}` });
+  }
+  if (Number.isInteger(tournament.maxParticipants) && tournament.maxParticipants > 0 &&
+      (tournament.entries || []).length >= tournament.maxParticipants) {
+    return jsonResponse({ error: "El torneo ya completó todos sus cupos." }, 409);
+  }
   if (Array.isArray(tournament.levels) && tournament.levels.length && !tournament.levels.includes(player.level)) {
     return jsonResponse({ error: `Este torneo no tiene categoría abierta para nivel ${player.level}` }, 409);
   }
-  if (tournament.entries.some(entry => entry.userId === userId)) {
-    return jsonResponse({ ok: true, message: "Ya estás inscrito en el torneo de este mes" });
-  }
   tournament.entries.push({ userId, playerId: player.id, created: new Date().toISOString() });
   await gWrite(env, "tournaments", tournaments);
-  return jsonResponse({ ok: true, message: `Inscripción confirmada para ${month}` });
+  return jsonResponse({ ok: true, message: `Inscripción confirmada para ${tournament.title || month}`, remainingSlots: Number.isInteger(tournament.maxParticipants) ? Math.max(0, tournament.maxParticipants - tournament.entries.length) : null });
 }

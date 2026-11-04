@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { setSessionResp } from "../functions/_helpers.js";
+import { buildRanking, setSessionResp } from "../functions/_helpers.js";
 import { onRequestPut as updateTournament } from "../functions/api/admin/tournaments/[id].js";
+import { onRequestPatch as updateAdminPlayer } from "../functions/api/admin/players.js";
 
 function githubMock(seed) {
   const files = new Map(Object.entries(seed).map(([name, value]) => [name, JSON.stringify(value)]));
@@ -250,6 +251,31 @@ test("creating a fixture returns an editable match id and its result is saved wi
     assert.equal(saved.status, "completed");
     assert.equal(saved.winnerId, "a1");
     assert.equal(saved.date, "2026-11-12");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("admin can persist manual ranking points and automatic wins are added to that base", async () => {
+  const originalFetch = globalThis.fetch;
+  const github = githubMock(seedTournament());
+  globalThis.fetch = github.fetch;
+  try {
+    const session = await setSessionResp({ userId: "admin-1", user: { id: "admin-1", role: "admin" } }, env, new Request("https://league.example"));
+    const cookie = session.headers.get("Set-Cookie").split(";")[0];
+    const response = await updateAdminPlayer({
+      request: new Request("https://league.example/api/admin/players", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Cookie: cookie },
+        body: JSON.stringify({ playerId: "a1", updates: { manualPoints: 17 } })
+      }),
+      env
+    });
+    assert.equal(response.status, 200);
+    const storedPlayers = JSON.parse(github.files.get("players.json"));
+    assert.equal(storedPlayers.find(player => player.id === "a1").manualPoints, 17);
+    const ranking = buildRanking(storedPlayers, [{ status: "confirmed", winnerId: "a1", loserId: "a2" }], []);
+    assert.equal(ranking.find(player => player.id === "a1").points, 18);
   } finally {
     globalThis.fetch = originalFetch;
   }

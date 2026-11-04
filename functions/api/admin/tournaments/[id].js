@@ -5,7 +5,7 @@ const LEVELS = ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0"];
 const STATUSES = ["registration", "scheduled", "in_progress", "completed", "cancelled"];
 const MATCH_STATUSES = ["scheduled", "completed", "cancelled"];
 const TOURNAMENT_GENDERS = ["hombres", "mujeres", "mixto"];
-const FORMAT_TYPES = ["knockout", "league"];
+const FORMAT_TYPES = ["knockout", "league", "round_robin", "groups_knockout"];
 
 function roundName(totalRounds, roundIndex) {
   const remaining = totalRounds - roundIndex;
@@ -147,6 +147,7 @@ function buildLeagueSchedule(playerIds) {
       if (playerA === null || playerB === null) continue;
       matches.push({
         id: `match-${crypto.randomUUID()}`,
+        stageId: "groups",
         round: `Jornada ${roundIndex + 1}`,
         playerAId: roundIndex % 2 === 0 ? playerA : playerB,
         playerBId: roundIndex % 2 === 0 ? playerB : playerA,
@@ -344,6 +345,17 @@ export async function onRequestPut({ request, env, params }) {
     if (!FORMAT_TYPES.includes(body.formatType)) return jsonResponse({ error: "Tipo de competición inválido" }, 400);
     tournament.formatType = body.formatType;
   }
+  if (body.stageNames !== undefined) {
+    if (!body.stageNames || typeof body.stageNames !== "object" || Array.isArray(body.stageNames) ||
+        ["groups", "playoff"].some(key => body.stageNames[key] !== undefined &&
+          (typeof body.stageNames[key] !== "string" || body.stageNames[key].trim().length > 80))) {
+      return jsonResponse({ error: "Los nombres de las etapas no son válidos." }, 400);
+    }
+    tournament.stageNames = {
+      groups: body.stageNames.groups?.trim() || "Fase de grupos",
+      playoff: body.stageNames.playoff?.trim() || "Eliminatorias"
+    };
+  }
   if (body.maxParticipants !== undefined) {
     if (body.maxParticipants === null || body.maxParticipants === "") {
       tournament.maxParticipants = null;
@@ -384,10 +396,15 @@ export async function onRequestPut({ request, env, params }) {
       return jsonResponse({ error: "Se necesitan al menos 2 jugadores inscritos para generar el cuadro." }, 409);
     }
     tournament.formatType ||= "knockout";
-    tournament.matches = tournament.formatType === "league"
+    if (tournament.formatType === "groups_knockout" && tournament.groups?.length) {
+      tournament.matches = buildGroupMatches(tournament.groups);
+      tournament.formatType = "groups_knockout";
+    } else {
+      tournament.matches = ["league", "round_robin"].includes(tournament.formatType)
       ? buildLeagueSchedule(entries)
       : buildKnockoutDraw(entries, { bracketSize: tournament.bracketSize });
-    if (tournament.formatType === "knockout") autoAdvanceByes(tournament);
+    }
+    if (["knockout", "groups_knockout"].includes(tournament.formatType)) autoAdvanceByes(tournament);
     tournament.groups = null;
     tournament.groupCount = null;
     delete tournament.stages;
@@ -404,14 +421,14 @@ export async function onRequestPut({ request, env, params }) {
     const shuffled = [...entries].sort(() => Math.random() - 0.5);
     const groups = Array.from({ length: groupCount }, () => []);
     shuffled.forEach((playerId, index) => groups[index % groupCount].push(playerId));
-    tournament.formatType = "league";
+    if (!["groups_knockout", "round_robin"].includes(tournament.formatType)) tournament.formatType = "league";
     tournament.groupCount = groupCount;
     tournament.groups = groups.map((group, index) => ({
       name: `Grupo ${String.fromCharCode(65 + index)}`,
       entryPlayerIds: group
     }));
     tournament.matches = buildGroupMatches(tournament.groups);
-    tournament.stages = [{ id: "groups", name: "Fase de grupos", type: "groups" }];
+    tournament.stages = [{ id: "groups", name: tournament.stageNames?.groups || "Fase de grupos", type: "groups" }];
   }
   if (body.groups !== undefined) {
     // Grupos personalizados (creador de Main Draw por etapas): conserva los
@@ -433,20 +450,17 @@ export async function onRequestPut({ request, env, params }) {
         used.add(playerId);
         ids.push(playerId);
       }
-      if (ids.length < 2) continue;
       if (ids.length > 64) {
         return jsonResponse({ error: "Un grupo no puede tener más de 64 jugadores." }, 400);
       }
       customGroups.push({ name: raw.name.trim().slice(0, 60) || "Grupo", entryPlayerIds: ids });
     }
-    if (!customGroups.length) {
-      return jsonResponse({ error: "Los grupos necesitan al menos 2 jugadores inscritos cada uno." }, 400);
-    }
-    tournament.formatType = "league";
+    if (!customGroups.length) return jsonResponse({ error: "Crea al menos una etapa/grupo." }, 400);
+    if (!["groups_knockout", "round_robin"].includes(tournament.formatType)) tournament.formatType = "league";
     tournament.groupCount = customGroups.length;
     tournament.groups = customGroups;
     tournament.matches = buildGroupMatches(customGroups);
-    tournament.stages = [{ id: "groups", name: "Fase de grupos", type: "groups" }];
+    tournament.stages = [{ id: "groups", name: tournament.stageNames?.groups || "Fase de grupos", type: "groups" }];
   }
   if (body.advanceGroups !== undefined) {
     const config = body.advanceGroups === true ? {} : body.advanceGroups;
@@ -509,10 +523,10 @@ export async function onRequestPut({ request, env, params }) {
       ...(tournament.matches || []).filter(match => match.stageId !== "playoff"),
       ...playoffMatches
     ];
-    tournament.formatType = "league";
+    tournament.formatType = "groups_knockout";
     tournament.stages = [
-      { id: "groups", name: "Fase de grupos", type: "groups" },
-      { id: "playoff", name: "Eliminatorias", type: "knockout" }
+      { id: "groups", name: tournament.stageNames?.groups || "Fase de grupos", type: "groups" },
+      { id: "playoff", name: tournament.stageNames?.playoff || "Eliminatorias", type: "knockout" }
     ];
     tournament.qualifiedPlayerIds = seedPlayerIds;
     tournament.groupStandings = groupResults.map(result => ({
@@ -656,6 +670,9 @@ export async function onRequestPut({ request, env, params }) {
       return jsonResponse({ error: "El nivel del jugador no está habilitado para este torneo." }, 409);
     }
     tournament.entries ||= [];
+    if (Number.isInteger(tournament.maxParticipants) && tournament.entries.length >= tournament.maxParticipants) {
+      return jsonResponse({ error: "El torneo ya completó todos sus cupos." }, 409);
+    }
     if (tournament.entries.some(entry => entry.playerId === player.id)) {
       return jsonResponse({ error: "El jugador ya está inscrito." }, 409);
     }
@@ -743,7 +760,7 @@ export async function onRequestPut({ request, env, params }) {
     if (match.id !== undefined && matchIndex < 0) return jsonResponse({ error: "Partido no encontrado" }, 404);
     const matchRecord = {
       id: matchIndex >= 0 ? tournament.matches[matchIndex].id : `match-${crypto.randomUUID()}`,
-      stageId: match.stageId || (match.round.trim().startsWith("Grupo ") || tournament.formatType === "league" ? "groups" : (tournament.groups?.length ? "playoff" : "knockout")),
+      stageId: match.stageId || (match.round.trim().startsWith("Grupo ") || ["league", "round_robin"].includes(tournament.formatType) ? "groups" : (tournament.groups?.length ? "playoff" : "knockout")),
       round: match.round.trim().slice(0, 80),
       playerAId: isPlaceholder ? null : match.playerAId,
       playerBId: isPlaceholder ? null : match.playerBId,
@@ -823,7 +840,7 @@ export async function onRequestGet({ request, env, params }) {
   }));
   let standings = null;
   let groupStandings = tournament.groupStandings || [];
-  if (tournament.formatType === "league") {
+  if (["league", "round_robin", "groups_knockout"].includes(tournament.formatType)) {
     const groupResults = (tournament.groups || []).map(group => {
       const matches = (tournament.matches || []).filter(match =>
         String(match.round || "").startsWith(`${group.name} ·`)

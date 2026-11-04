@@ -314,7 +314,7 @@ export function rankPlayers(players, results) {
   const ranked = players.map(player => ({
     ...player,
     matches: Number.isFinite(player.matches) ? player.matches : 0,
-    points: Number.isFinite(player.points) ? player.points : 0
+    points: Number.isFinite(player.manualPoints) ? player.manualPoints : (Number.isFinite(player.points) ? player.points : 0)
   }));
   const byId = new Map(ranked.map(player => [player.id, player]));
 
@@ -360,7 +360,7 @@ export function buildRanking(playersList, results, tournaments = [], tournamentI
   const ranked = playersList.map(player => ({
     ...player,
     matches: Number.isFinite(player.matches) ? player.matches : 0,
-    points: Number.isFinite(player.points) ? player.points : 0
+    points: Number.isFinite(player.manualPoints) ? player.manualPoints : (Number.isFinite(player.points) ? player.points : 0)
   }));
   const byId = new Map(ranked.map(player => [player.id, player]));
   const tally = (winnerId, loserId) => {

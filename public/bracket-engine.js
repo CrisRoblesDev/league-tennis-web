@@ -32,7 +32,11 @@ const BracketEngine = {
     if (!this.el || !this.tournament) return;
     if (this.observer) this.observer.disconnect();
     const t = this.tournament;
-    const groups = t.groups || [];
+    const isStandaloneRoundRobin = ["league", "round_robin"].includes(t.formatType) && !(t.groups || []).length;
+    const groups = (t.groups || []).length ? t.groups : (isStandaloneRoundRobin ? [{
+      name: t.stageNames?.groups || "Liga general",
+      entryPlayerIds: (t.entries || []).map(entry => entry.playerId)
+    }] : []);
     const playoffs = (t.matches || []).filter(match => match.stageId === "playoff");
     const plainKnockout = !groups.length;
     const rounds = this.getRounds(plainKnockout ? (t.matches || []) : playoffs);
@@ -58,7 +62,7 @@ const BracketEngine = {
       <div class="bracket-engine__stage-wrap" id="beStageWrap">
       <div class="bracket-engine__stage" id="bracketStage" style="--be-zoom:${this.zoom}">
           <svg class="be-connectors" aria-hidden="true"></svg>
-          ${groups.length ? this.renderGroupStages(groups, playoffs) : ""}
+          ${groups.length ? this.renderGroupStages(groups, playoffs, isStandaloneRoundRobin) : ""}
           ${rounds.map(round => `
             <section class="bracket-engine__round" data-round="${escapeHtml(round.name)}">
               <h3 class="bracket-engine__round-title">${escapeHtml(round.name)}</h3>
@@ -100,7 +104,7 @@ const BracketEngine = {
     return entry?.name || `Jugador ${String(id).slice(-4)}`;
   },
 
-  renderGroupStages(groups, playoffs) {
+  renderGroupStages(groups, playoffs, isStandaloneRoundRobin = false) {
     const stored = this.tournament.groupStandings || [];
     const isQualified = new Set(this.tournament.qualifiedPlayerIds || []);
     return groups.map(group => {
@@ -120,11 +124,13 @@ const BracketEngine = {
             }).join("")}</tbody>
           </table>
           <div class="be-group-fixtures">${(this.tournament.matches || []).filter(match =>
-            (match.stageId === "groups" || !match.stageId) && String(match.round || "").startsWith(`${group.name} ·`)
+            match.stageId !== "playoff" && (isStandaloneRoundRobin || String(match.round || "").startsWith(`${group.name} ·`))
           ).map(match => `<div class="be-fixture"><span>${escapeHtml(this.playerName(match.playerAId))}</span><b>${escapeHtml(match.score || "vs")}</b><span>${escapeHtml(this.playerName(match.playerBId))}</span><small>${escapeHtml(match.date || match.round || "")}</small></div>`).join("")}</div>
         </div>
       </section>`;
-    }).join("") + (playoffs.length ? '<div class="be-stage-divider"><span>Fase final</span></div>' : '<div class="be-stage-pending">Finaliza todos los partidos de grupo para habilitar la fase final.</div>');
+    }).join("") + (playoffs.length
+      ? '<div class="be-stage-divider"><span>Fase final</span></div>'
+      : (isStandaloneRoundRobin ? '<div class="be-stage-pending">Formato Round Robin: la clasificación se define con la tabla de esta liga.</div>' : '<div class="be-stage-pending">Finaliza todos los partidos de grupo para habilitar la fase final.</div>'));
   },
 
   calculateGroupTable(group) {
@@ -132,7 +138,9 @@ const BracketEngine = {
       id, name: this.playerName(id), played: 0, won: 0, lost: 0, setsWon: 0, setsLost: 0, points: 0
     }]));
     (this.tournament.matches || []).filter(match =>
-      (match.stageId === "groups" || !match.stageId) && String(match.round || "").startsWith(`${group.name} ·`) && match.status === "completed"
+      match.stageId !== "playoff" &&
+      (this.tournament.groups?.length ? String(match.round || "").startsWith(`${group.name} ·`) : true) &&
+      match.status === "completed"
     ).forEach(match => {
       const a = rows.get(match.playerAId), b = rows.get(match.playerBId);
       if (!a || !b) return;
