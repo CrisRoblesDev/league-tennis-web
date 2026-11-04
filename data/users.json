@@ -342,17 +342,6 @@
     "membershipActive": false
   },
   {
-    "id": "user-0a14d870-7d6d-44c9-a9ec-a35a863a14f5",
-    "name": "Felipe camposano",
-    "email": "Felipe@kamkos.com",
-    "password": "pbkdf2$100000$-QqUqli8XCCzgxrgJX-X1Q$4vn26OpJ9_e_2xwxrmg6iXsc9gD2LWTfP3pg23hLJBg",
-    "level": "",
-    "zone": "",
-    "role": "user",
-    "created": "2026-11-04T16:28:24.328Z",
-    "membershipActive": false
-  },
-  {
     "id": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
     "name": "Andres melnick",
     "email": "Am160284@gmail.com",
@@ -427,17 +416,6 @@
     "zone": "",
     "role": "user",
     "created": "2026-11-04T16:28:24.446Z",
-    "membershipActive": false
-  },
-  {
-    "id": "user-f71eb563-b91d-4c1c-a91c-4fd26e01f417",
-    "name": "Rodrigo silva",
-    "email": "rdjsscc@icloud.com",
-    "password": "pbkdf2$100000$VJVuPLvXuARrH29iS7H0fg$ivMIrWuorKbGA3X65Y_3rU6TW0kgDPPtJlvFwrg0ULM",
-    "level": "",
-    "zone": "",
-    "role": "user",
-    "created": "2026-11-04T16:28:24.463Z",
     "membershipActive": false
   }
 ]
