@@ -97,7 +97,7 @@ function buildKnockoutDraw(playerIds, options = {}) {
       const match = {
         id: `match-${crypto.randomUUID()}`,
         ...(options.stageId ? { stageId: options.stageId } : {}),
-        round: roundName(totalRounds, roundIndex),
+        round: options.roundNames?.[roundIndex]?.trim() || roundName(totalRounds, roundIndex),
         playerAId: null,
         playerBId: null,
         date: "",
@@ -110,15 +110,6 @@ function buildKnockoutDraw(playerIds, options = {}) {
       if (roundIndex === 0) {
         match.playerAId = seeding[index * 2];
         match.playerBId = seeding[index * 2 + 1];
-        if (!match.playerAId && match.playerBId) {
-          match.status = "completed";
-          match.winnerId = match.playerBId;
-          match.score = "BYE";
-        } else if (!match.playerBId && match.playerAId) {
-          match.status = "completed";
-          match.winnerId = match.playerAId;
-          match.score = "BYE";
-        }
       }
       currentRound.push(match);
       matches.push(match);
@@ -176,22 +167,6 @@ function advanceWinner(tournament, completedMatch) {
   if (completedMatch.nextSlot === "B") next.playerBId = completedMatch.winnerId;
   else next.playerAId = completedMatch.winnerId;
   next.updated = new Date().toISOString();
-}
-
-function autoAdvanceByes(tournament) {
-  for (const match of tournament.matches || []) {
-    if (match.stageId === "groups") continue;
-    const hasA = Boolean(match.playerAId);
-    const hasB = Boolean(match.playerBId);
-    if (match.status !== "completed" && hasA !== hasB) {
-      match.status = "completed";
-      match.winnerId = hasA ? match.playerAId : match.playerBId;
-      match.score = "BYE";
-    }
-    if (match.status === "completed" && match.score === "BYE" && match.winnerId) {
-      advanceWinner(tournament, match);
-    }
-  }
 }
 
 function clearAdvancedWinner(tournament, sourceMatch, previousWinner) {
@@ -348,12 +323,15 @@ export async function onRequestPut({ request, env, params }) {
   if (body.stageNames !== undefined) {
     if (!body.stageNames || typeof body.stageNames !== "object" || Array.isArray(body.stageNames) ||
         ["groups", "playoff"].some(key => body.stageNames[key] !== undefined &&
-          (typeof body.stageNames[key] !== "string" || body.stageNames[key].trim().length > 80))) {
+          (typeof body.stageNames[key] !== "string" || body.stageNames[key].trim().length > 80)) ||
+        (body.stageNames.rounds !== undefined && (!Array.isArray(body.stageNames.rounds) || body.stageNames.rounds.length > 8 ||
+          body.stageNames.rounds.some(name => typeof name !== "string" || !name.trim() || name.trim().length > 60)))) {
       return jsonResponse({ error: "Los nombres de las etapas no son válidos." }, 400);
     }
     tournament.stageNames = {
       groups: body.stageNames.groups?.trim() || "Fase de grupos",
-      playoff: body.stageNames.playoff?.trim() || "Eliminatorias"
+      playoff: body.stageNames.playoff?.trim() || "Eliminatorias",
+      rounds: Array.isArray(body.stageNames.rounds) ? body.stageNames.rounds.map(name => name.trim()) : (tournament.stageNames?.rounds || [])
     };
   }
   if (body.maxParticipants !== undefined) {
@@ -388,7 +366,6 @@ export async function onRequestPut({ request, env, params }) {
       return jsonResponse({ error: "Sembrado contiene jugadores incompletos." }, 400);
     }
     tournament.matches = buildKnockoutDraw(seedPlayerIds, { doShuffle: false, bracketSize: body.bracketSize || tournament.bracketSize });
-    autoAdvanceByes(tournament);
   }
   if (body.generateDraw === true) {
     const entries = (tournament.entries || []).map(entry => entry.playerId);
@@ -402,9 +379,8 @@ export async function onRequestPut({ request, env, params }) {
     } else {
       tournament.matches = ["league", "round_robin"].includes(tournament.formatType)
       ? buildLeagueSchedule(entries)
-      : buildKnockoutDraw(entries, { bracketSize: tournament.bracketSize });
+      : buildKnockoutDraw(entries, { bracketSize: tournament.bracketSize, roundNames: tournament.stageNames?.rounds });
     }
-    if (["knockout", "groups_knockout"].includes(tournament.formatType)) autoAdvanceByes(tournament);
     tournament.groups = null;
     tournament.groupCount = null;
     delete tournament.stages;
@@ -517,6 +493,7 @@ export async function onRequestPut({ request, env, params }) {
     const playoffMatches = buildKnockoutDraw(seedPlayerIds, {
       doShuffle: false,
       bracketSize: config.bracketSize || tournament.bracketSize,
+      roundNames: config.roundNames || tournament.stageNames?.rounds,
       stageId: "playoff"
     });
     tournament.matches = [
@@ -535,7 +512,6 @@ export async function onRequestPut({ request, env, params }) {
       qualifiedPlayerIds: result.standings.slice(0, qualifiersPerGroup).map(row => row.id)
     }));
     tournament.qualifiersPerGroup = qualifiersPerGroup;
-    autoAdvanceByes(tournament);
   }
   if (body.bracketSlotUpdate !== undefined) {
     const update = body.bracketSlotUpdate;
@@ -737,9 +713,11 @@ export async function onRequestPut({ request, env, params }) {
 
   if (body.match !== undefined) {
     const match = body.match;
+    if (!match || typeof match !== "object" || Array.isArray(match)) {
+      return jsonResponse({ error: "Partido inválido: ambos jugadores deben estar inscritos en este torneo." }, 400);
+    }
     const isPlaceholder = match.playerAId === null && match.playerBId === null;
-    if (!match || typeof match !== "object" ||
-        (!isPlaceholder && (typeof match.playerAId !== "string" || typeof match.playerBId !== "string" ||
+    if ((!isPlaceholder && (typeof match.playerAId !== "string" || typeof match.playerBId !== "string" ||
           match.playerAId === match.playerBId ||
           !tournament.entries?.some(entry => entry.playerId === match.playerAId) ||
           !tournament.entries?.some(entry => entry.playerId === match.playerBId))) ||

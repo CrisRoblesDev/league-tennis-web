@@ -1795,7 +1795,7 @@ function openDrawModal(tournamentId) {
 let wizardState = {
   step: 1,
   tournament: { title: "", month: "", status: "registration", formatType: "knockout", category: "singles", gender: "mixto", startDate: "", endDate: "", maxParticipants: null, venue: "", description: "", levels: [] },
-  stageNames: { groups: "Fase de grupos", playoff: "Eliminatorias" },
+  stageNames: { groups: "Fase de grupos", playoff: "Eliminatorias", rounds: [] },
   qualifiersPerGroup: 2,
   groups: [],           // [{ name: "Grupo A", players: [playerId, ...] }]
   originalGroups: [],
@@ -1815,7 +1815,7 @@ function openTournamentWizard(tournamentId) {
   wizardState = {
     step: 1,
     tournament: { title: "", month: new Date().toISOString().slice(0,7), status: "registration", formatType: "knockout", category: "singles", gender: "mixto", startDate: "", endDate: "", maxParticipants: null, venue: "", description: "", levels: [] },
-    stageNames: { groups: "Fase de grupos", playoff: "Eliminatorias" },
+    stageNames: { groups: "Fase de grupos", playoff: "Eliminatorias", rounds: [] },
     qualifiersPerGroup: 2,
     groups: [],
     originalGroups: [],
@@ -1827,7 +1827,11 @@ function openTournamentWizard(tournamentId) {
     const t = adminTournaments.find(item => item.id === tournamentId);
     if (t) {
       wizardState.tournament = { ...t };
-      wizardState.stageNames = { groups: t.stageNames?.groups || "Fase de grupos", playoff: t.stageNames?.playoff || "Eliminatorias" };
+      wizardState.stageNames = {
+        groups: t.stageNames?.groups || "Fase de grupos",
+        playoff: t.stageNames?.playoff || "Eliminatorias",
+        rounds: Array.isArray(t.stageNames?.rounds) ? [...t.stageNames.rounds] : []
+      };
       wizardState.qualifiersPerGroup = t.qualifiersPerGroup || 2;
       const entryIds = (t.entries || []).map(e => e.playerId);
       const groups = (t.groups || []).map(g => ({ name: g.name, players: [...(g.entryPlayerIds || g.players || [])] }));
@@ -1941,6 +1945,9 @@ function renderWizard() {
     </div>
   `;
   if (wizardState.step === 2) bindWizardDragDrop(content);
+  if (wizardState.step === 3 && wizardState.previewTournament && window.BracketEngine) {
+    window.BracketEngine.init("wizardMainDrawPreview", wizardState.previewTournament, { readOnly: true });
+  }
 }
 
 // ---------- Paso 1: Datos ----------
@@ -1974,6 +1981,7 @@ function renderWizardStep1() {
 function renderWizardStep2() {
   ensureWizardGroups();
   const isGroupsKnockout = wizardState.tournament.formatType === "groups_knockout";
+  const hasKnockoutStages = ["knockout", "groups_knockout"].includes(wizardState.tournament.formatType);
   const levels = wizardState.tournament.levels || [];
   const allPlayers = players.filter(player => !levels.length || levels.includes(player.level))
     .map(p => ({ id: p.id, name: p.name, level: p.level }));
@@ -1986,6 +1994,13 @@ function renderWizardStep2() {
       <label>Nombre de la etapa de grupos/liga<input value="${escapeHtml(wizardState.stageNames.groups)}" maxlength="80" onchange="wizardSetStageName('groups',this.value)"></label>
       ${isGroupsKnockout ? `<label>Nombre de la etapa final<input value="${escapeHtml(wizardState.stageNames.playoff)}" maxlength="80" onchange="wizardSetStageName('playoff',this.value)"></label>` : ""}
     </div>
+    ${hasKnockoutStages ? `<div class="wizard-round-settings">
+      <div class="wizard-round-settings__head"><b>Etapas del Main Draw</b><button class="btn btn-secondary btn-sm" type="button" onclick="wizardAddStage()">+ Añadir etapa</button></div>
+      <p class="muted">Personaliza los nombres de las rondas. Si no agregas nombres, se usarán los nombres predeterminados.</p>
+      <div class="wizard-round-settings__list">${wizardState.stageNames.rounds.map((name, index) => `
+        <label>Etapa ${index + 1}<span><input value="${escapeHtml(name)}" maxlength="60" onchange="wizardRenameStage(${index},this.value)"><button class="btn btn-sm btn-danger" type="button" aria-label="Eliminar etapa ${index + 1}" onclick="wizardRemoveStage(${index})">×</button></span></label>
+      `).join("")}</div>
+    </div>` : ""}
     ${isGroupsKnockout ? `<div class="group-count-control">
       <label>Número de grupos<input type="number" id="wizardGroupCount" min="2" max="16" value="${wizardState.groups.length}"></label>
       <button class="btn btn-dark btn-sm" type="button" onclick="wizardRegenerateGroups()">Aplicar cantidad</button>
@@ -2022,6 +2037,23 @@ function renderWizardStep2() {
 
 function wizardSetStageName(key, value) {
   if (key === "groups" || key === "playoff") wizardState.stageNames[key] = String(value || "").trim().slice(0, 80);
+}
+
+function wizardAddStage() {
+  if (wizardState.stageNames.rounds.length >= 8) { showToast("El máximo es 8 etapas."); return; }
+  wizardState.stageNames.rounds.push(`Etapa ${wizardState.stageNames.rounds.length + 1}`);
+  renderWizard();
+}
+
+function wizardRenameStage(index, value) {
+  if (wizardState.stageNames.rounds[index] !== undefined) {
+    wizardState.stageNames.rounds[index] = String(value || "").trim().slice(0, 60) || `Etapa ${index + 1}`;
+  }
+}
+
+function wizardRemoveStage(index) {
+  wizardState.stageNames.rounds.splice(index, 1);
+  renderWizard();
 }
 
 function wizardRenameGroup(index, value) {
@@ -2183,122 +2215,24 @@ function distributeByes(playerIds, bracketSize) {
   return seeding;
 }
 
-// ---------- Paso 4: Main Draw Visual ----------
-function renderWizardRoundRobinFixtures(group) {
-  const rotation = group.players.map(id => ({ id, name: players.find(player => player.id === id)?.name || "Jugador" }));
-  if (rotation.length < 2) return '<small>Los cruces aparecerán cuando haya al menos dos inscritos.</small>';
-  if (rotation.length % 2) rotation.push(null);
-  const jornadas = [];
-  for (let round = 0; round < rotation.length - 1; round++) {
-    const fixtures = [];
-    for (let index = 0; index < rotation.length / 2; index++) {
-      const a = rotation[index], b = rotation[rotation.length - 1 - index];
-      if (a && b) fixtures.push(`<div class="wizard-preview-fixture"><span>${escapeHtml(a.name)}</span><b>vs</b><span>${escapeHtml(b.name)}</span></div>`);
-    }
-    if (fixtures.length) jornadas.push(`<div class="wizard-preview-round"><b>Jornada ${round + 1}</b>${fixtures.join("")}</div>`);
-    if (rotation.length > 2) {
-      const fixed = rotation[0], rest = rotation.slice(1);
-      rest.unshift(rest.pop());
-      rotation.splice(0, rotation.length, fixed, ...rest);
-    }
-  }
-  return `<div class="wizard-preview-fixtures">${jornadas.join("")}</div>`;
-}
-
-function renderWizardStep4() {
-  const t = wizardState.tournament;
-  const assignedIds = [...new Set(wizardState.groups.flatMap(group => group.players))];
-  const registeredIds = [...new Set([...wizardState.initialEntryIds, ...assignedIds])];
-  const targetCount = Math.max(registeredIds.length, Number(t.maxParticipants) || registeredIds.length);
-  const previewEntries = registeredIds.map(playerId => {
-    const p = players.find(player => player.id === playerId);
-    return { playerId, name: p?.name || "Jugador", level: p?.level || "" };
-  });
-  const unfilledCount = Math.max(0, targetCount - registeredIds.length);
-  const isGroupsKnockout = t.formatType === "groups_knockout";
-  const isRoundRobin = ["round_robin", "league"].includes(t.formatType);
-  let previewHtml = "";
-  wizardState.matches = [];
-
-  if (isGroupsKnockout) {
-    const groupCards = wizardState.groups.map(group => `
-      <article class="wizard-preview-group">
-        <h4>${escapeHtml(group.name)}</h4>
-        <ol>${group.players.map(playerId => `<li>${escapeHtml(players.find(player => player.id === playerId)?.name || "Jugador")}</li>`).join("") || "<li>Esperando inscripciones</li>"}</ol>
-        <small>${group.players.length} asignados${t.maxParticipants ? ` · cupos del torneo: ${t.maxParticipants}` : ""}</small>
-        ${renderWizardRoundRobinFixtures(group)}
-      </article>`).join("");
-    const qualifiers = [];
-    wizardState.groups.forEach(group => {
-      for (let place = 1; place <= wizardState.qualifiersPerGroup; place++) {
-        const playerId = `preview-${group.name}-${place}`;
-        qualifiers.push(playerId);
-        previewEntries.push({ playerId, name: `${place}° ${group.name}`, level: "Clasifica" });
-      }
-    });
-    const playoff = buildWizardPreviewBracket(qualifiers, previewEntries, Math.max(2, qualifiers.length), wizardState.stageNames.playoff);
-    previewHtml = `<div class="wizard-preview-stages">
-      <section><header class="wizard-preview-stage-title"><span>1</span><div><b>${escapeHtml(wizardState.stageNames.groups)}</b><small>Round Robin por grupo · sin resultados</small></div></header><div class="wizard-preview-groups">${groupCards}</div></section>
-      <section><header class="wizard-preview-stage-title"><span>2</span><div><b>${escapeHtml(wizardState.stageNames.playoff)}</b><small>Avanzarán ${wizardState.qualifiersPerGroup} por grupo al finalizar los encuentros</small></div></header>${playoff}</section>
-    </div>`;
-  } else if (isRoundRobin) {
-    const groupsHtml = wizardState.groups.map(group => `
-      <article class="wizard-preview-group"><h4>${escapeHtml(group.name)}</h4>
-        <ol>${group.players.map(playerId => `<li>${escapeHtml(players.find(player => player.id === playerId)?.name || "Jugador")}</li>`).join("") || "<li>Esperando inscripciones</li>"}</ol>
-        ${renderWizardRoundRobinFixtures(group)}
-      </article>`).join("");
-    previewHtml = `<section><header class="wizard-preview-stage-title"><span>1</span><div><b>${escapeHtml(wizardState.stageNames.groups)}</b><small>Todos contra todos · tabla de posiciones por grupo</small></div></header><div class="wizard-preview-groups">${groupsHtml}</div></section>`;
-  } else {
-    const playerIds = [...registeredIds];
-    const reservedIds = [];
-    for (let index = 0; index < unfilledCount; index++) {
-      const id = `preview-slot-${index + 1}`;
-      reservedIds.push(id);
-      previewEntries.push({ playerId: id, name: `Cupo ${index + 1} · por inscribir`, level: "" });
-    }
-    const pool = [...playerIds, ...reservedIds];
-    const bracketCount = pool.length || 0;
-    previewHtml = bracketCount >= 2
-      ? buildWizardPreviewBracket(pool, previewEntries, bracketCount, "Eliminación directa")
-      : '<div class="draw-empty">Configura los cupos o espera a que se inscriban al menos dos participantes para previsualizar el cuadro.</div>';
-  }
-
-  return `
-    <div class="wizard-summary">
-      <h4>Resumen del torneo</h4>
-      <div class="wizard-summary-grid">
-        <div class="wizard-summary-item"><span class="label">Nombre</span><span class="value">${escapeHtml(t.title || "-")}</span></div>
-        <div class="wizard-summary-item"><span class="label">Mes</span><span class="value">${escapeHtml(t.month || "-")}</span></div>
-        <div class="wizard-summary-item"><span class="label">Formato</span><span class="value">${t.formatType === "groups_knockout" ? "Grupos + eliminación" : isRoundRobin ? "Round Robin" : "Eliminación directa"}</span></div>
-        <div class="wizard-summary-item"><span class="label">Participantes</span><span class="value">${registeredIds.length}${t.maxParticipants ? ` / ${t.maxParticipants} cupos` : ""}</span></div>
-        <div class="wizard-summary-item"><span class="label">Stages</span><span class="value">${isGroupsKnockout ? wizardState.groups.length + 1 : wizardState.groups.length}</span></div>
-      </div>
-    </div>
-    <div class="main-draw-preview">
-      <h4 class="wizard-preview-heading">Previsualización del Main Draw · sin resultados</h4>
-      <p class="wizard-preview-note">El cuadro se completará con los participantes inscritos. Los ganadores avanzarán al registrar resultados.</p>
-      ${previewHtml}
-    </div>
-  `;
-}
-
-function buildWizardPreviewBracket(playerIds, previewEntries, count, title) {
-  if (count < 2) return '<div class="draw-empty">El cuadro necesita dos cupos como mínimo.</div>';
-  const size = computeBracketSize(count);
+// ---------- Paso 3: Main Draw Visual ----------
+function buildWizardPreviewMatches(playerIds, stageId, roundNames = []) {
+  if (playerIds.length < 2) return [];
+  const size = computeBracketSize(playerIds.length);
   const slots = [...playerIds];
   while (slots.length < size) slots.push(null);
   const totalRounds = Math.log2(size);
   const matches = [];
   let previous = [];
   for (let round = 0; round < totalRounds; round++) {
-    const number = size / (2 ** (round + 1));
     const current = [];
-    for (let index = 0; index < number; index++) {
+    for (let index = 0; index < size / (2 ** (round + 1)); index++) {
       const match = {
-        id: `preview-${round}-${index}`,
-        round: roundName(totalRounds, round),
-        playerAId: round === 0 ? (slots[index * 2] || null) : null,
-        playerBId: round === 0 ? (slots[index * 2 + 1] || null) : null,
+        id: `preview-${stageId}-${round}-${index}`,
+        stageId,
+        round: roundNames[round]?.trim() || roundName(totalRounds, round),
+        playerAId: round === 0 ? slots[index * 2] || null : null,
+        playerBId: round === 0 ? slots[index * 2 + 1] || null : null,
         status: "scheduled",
         score: "",
         winnerId: null
@@ -2312,7 +2246,110 @@ function buildWizardPreviewBracket(playerIds, previewEntries, count, title) {
     });
     previous = current;
   }
-  return `<div class="wizard-preview-bracket-title">${escapeHtml(title)}</div>${renderModernBracket(matches, "knockout", previewEntries, { stages: [...new Set(matches.map(match => match.round))] })}`;
+  return matches;
+}
+
+function buildWizardGroupPreviewMatches(groups) {
+  const matches = [];
+  groups.forEach(group => {
+    const rotation = [...group.players];
+    if (rotation.length % 2) rotation.push(null);
+    for (let round = 0; round < rotation.length - 1; round++) {
+      for (let index = 0; index < rotation.length / 2; index++) {
+        const playerAId = rotation[index];
+        const playerBId = rotation[rotation.length - 1 - index];
+        if (!playerAId || !playerBId) continue;
+        matches.push({
+          id: `preview-group-${group.name}-${round}-${index}`,
+          stageId: "groups",
+          round: `${group.name} · Jornada ${round + 1}`,
+          playerAId,
+          playerBId,
+          status: "scheduled",
+          score: "",
+          winnerId: null
+        });
+      }
+      if (rotation.length > 2) {
+        const fixed = rotation[0];
+        const rest = rotation.slice(1);
+        rest.unshift(rest.pop());
+        rotation.splice(0, rotation.length, fixed, ...rest);
+      }
+    }
+  });
+  return matches;
+}
+
+function renderWizardStep4() {
+  const t = wizardState.tournament;
+  const assignedIds = [...new Set(wizardState.groups.flatMap(group => group.players))];
+  const registeredIds = [...new Set([...wizardState.initialEntryIds, ...assignedIds])];
+  const targetCount = Math.max(registeredIds.length, Number(t.maxParticipants) || registeredIds.length);
+  const previewEntries = registeredIds.map(playerId => {
+    const player = players.find(item => item.id === playerId);
+    return { playerId, name: player?.name || "Jugador", level: player?.level || "" };
+  });
+  const previewGroups = ["groups_knockout", "round_robin", "league"].includes(t.formatType)
+    ? wizardState.groups.map(group => ({ name: group.name, entryPlayerIds: [...group.players] }))
+    : [];
+  let matches = [];
+
+  if (previewGroups.length) {
+    matches = buildWizardGroupPreviewMatches(wizardState.groups);
+  }
+  if (t.formatType === "groups_knockout") {
+    const qualifiers = [];
+    wizardState.groups.forEach(group => {
+      for (let place = 1; place <= wizardState.qualifiersPerGroup; place++) {
+        const playerId = `preview-qualified-${group.name}-${place}`;
+        qualifiers.push(playerId);
+        previewEntries.push({ playerId, name: `${place}° ${group.name}`, level: "Clasifica" });
+      }
+    });
+    matches.push(...buildWizardPreviewMatches(qualifiers, "playoff", wizardState.stageNames.rounds));
+  } else if (["knockout"].includes(t.formatType)) {
+    const slots = [...registeredIds];
+    for (let index = registeredIds.length; index < targetCount; index++) {
+      const playerId = `preview-slot-${index - registeredIds.length + 1}`;
+      slots.push(playerId);
+      previewEntries.push({ playerId, name: `Cupo ${index - registeredIds.length + 1} · por inscribir`, level: "" });
+    }
+    matches = buildWizardPreviewMatches(slots, "knockout", wizardState.stageNames.rounds);
+  }
+
+  wizardState.previewTournament = {
+    title: t.title || "Vista previa del torneo",
+    month: t.month,
+    formatType: t.formatType,
+    category: t.category,
+    entries: previewEntries,
+    groups: previewGroups,
+    matches,
+    stageNames: wizardState.stageNames
+  };
+  const isRoundRobin = ["round_robin", "league"].includes(t.formatType);
+  const stageCount = t.formatType === "groups_knockout"
+    ? previewGroups.length + 1
+    : previewGroups.length || (matches.length ? new Set(matches.map(match => match.round)).size : 0);
+
+  return `
+    <div class="wizard-summary">
+      <h4>Resumen del torneo</h4>
+      <div class="wizard-summary-grid">
+        <div class="wizard-summary-item"><span class="label">Nombre</span><span class="value">${escapeHtml(t.title || "-")}</span></div>
+        <div class="wizard-summary-item"><span class="label">Mes</span><span class="value">${escapeHtml(t.month || "-")}</span></div>
+        <div class="wizard-summary-item"><span class="label">Formato</span><span class="value">${t.formatType === "groups_knockout" ? "Grupos + eliminación" : isRoundRobin ? "Round Robin" : "Eliminación directa"}</span></div>
+        <div class="wizard-summary-item"><span class="label">Participantes</span><span class="value">${registeredIds.length}${t.maxParticipants ? ` / ${t.maxParticipants} cupos` : ""}</span></div>
+        <div class="wizard-summary-item"><span class="label">Stages</span><span class="value">${stageCount}</span></div>
+      </div>
+    </div>
+    <div class="main-draw-preview">
+      <h4 class="wizard-preview-heading">Previsualización del Main Draw · sin resultados</h4>
+      <p class="wizard-preview-note">El cuadro se completará con los participantes inscritos. Los ganadores avanzarán al registrar resultados.</p>
+      <div id="wizardMainDrawPreview" class="bracket-engine__root"></div>
+    </div>
+  `;
 }
 
 // ---------- Guardar ----------
@@ -2342,9 +2379,12 @@ async function saveWizardTournament() {
     : entryIds.length !== wizardState.initialEntryIds.length || entryIds.some(id => !wizardState.initialEntryIds.includes(id));
   const oldStageNames = {
     groups: t.stageNames?.groups || "Fase de grupos",
-    playoff: t.stageNames?.playoff || "Eliminatorias"
+    playoff: t.stageNames?.playoff || "Eliminatorias",
+    rounds: t.stageNames?.rounds || []
   };
-  const stageNamesChanged = oldStageNames.groups !== wizardState.stageNames.groups || oldStageNames.playoff !== wizardState.stageNames.playoff;
+  const stageNamesChanged = oldStageNames.groups !== wizardState.stageNames.groups ||
+    oldStageNames.playoff !== wizardState.stageNames.playoff ||
+    JSON.stringify(oldStageNames.rounds) !== JSON.stringify(wizardState.stageNames.rounds);
   t.stageNames = { ...wizardState.stageNames };
   const existingId = t.id || "";
 
@@ -2513,7 +2553,7 @@ async function openTournamentManage(tournamentId) {
     </div>
 
     <div class="manage-panel" data-manage-panel="matches" hidden>
-      ${entrants.length >= 2 ? `<form id="admin-match-form-${escapeHtml(tournament.id)}" class="admin-match-form panel-form" onsubmit="saveTournamentMatch(event,'${escapeHtml(tournament.id)}')">
+      ${entrants.length >= 2 ? `<form id="admin-match-form-${escapeHtml(tournament.id)}" class="admin-match-form panel-form">
         <input type="hidden" name="matchId">
         <b class="full">Programar partido</b>
         <label>Jugador A<select name="playerAId" required><option value="">Selecciona jugador</option>${entrants.map(entry => `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`).join("")}</select></label>

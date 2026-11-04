@@ -168,7 +168,7 @@ test("inline bracket slot updates persist the participant and invalidate the sta
   }
 });
 
-test("an oversized bracket creates empty slots without BYE-vs-BYE and propagates single-player byes", async () => {
+test("an oversized bracket creates empty slots without assigning automatic winners", async () => {
   const originalFetch = globalThis.fetch;
   const seed = seedTournament();
   seed["tournaments.json"][0].entries = seed["tournaments.json"][0].entries.slice(0, 3);
@@ -192,8 +192,8 @@ test("an oversized bracket creates empty slots without BYE-vs-BYE and propagates
     assert.equal(response.status, 200);
     const tournament = (await response.json()).tournament;
     assert.equal(tournament.matches.length, 7);
-    assert.ok(tournament.matches.filter(match => match.score === "BYE").every(match => Boolean(match.playerAId) !== Boolean(match.playerBId)));
-    assert.ok(tournament.matches.some(match => match.round === "Final" && match.status === "completed" && match.winnerId));
+    assert.ok(tournament.matches.every(match => match.status === "scheduled" && match.winnerId === null && match.score === ""));
+    assert.ok(tournament.matches.some(match => match.round === "Final" && !match.playerAId && !match.playerBId));
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -210,6 +210,16 @@ test("creating a fixture returns an editable match id and its result is saved wi
   try {
     const session = await setSessionResp({ userId: "admin-1", user: { id: "admin-1", role: "admin" } }, env, new Request("https://league.example"));
     const cookie = session.headers.get("Set-Cookie").split(";")[0];
+    const invalidMatchResponse = await updateTournament({
+      request: new Request("https://league.example/api/admin/tournaments/tournament-1", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Cookie: cookie },
+        body: JSON.stringify({ match: null })
+      }),
+      env,
+      params: { id: "tournament-1" }
+    });
+    assert.equal(invalidMatchResponse.status, 400);
     const createResponse = await updateTournament({
       request: new Request("https://league.example/api/admin/tournaments/tournament-1", {
         method: "PUT",

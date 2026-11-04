@@ -43,6 +43,16 @@ function validateTournament(body) {
   if (body.formatType !== undefined && !FORMAT_TYPES.includes(body.formatType)) {
     return "El tipo de competición no es válido.";
   }
+  if (body.stageNames !== undefined) {
+    if (!body.stageNames || typeof body.stageNames !== "object" || Array.isArray(body.stageNames) ||
+        ["groups", "playoff"].some(key => body.stageNames[key] !== undefined &&
+          (typeof body.stageNames[key] !== "string" || body.stageNames[key].trim().length > 80)) ||
+        (body.stageNames.rounds !== undefined && (!Array.isArray(body.stageNames.rounds) ||
+          body.stageNames.rounds.length > 8 ||
+          body.stageNames.rounds.some(name => typeof name !== "string" || !name.trim() || name.trim().length > 60)))) {
+      return "Los nombres de las etapas no son válidos.";
+    }
+  }
   if (body.maxParticipants !== undefined && body.maxParticipants !== null && body.maxParticipants !== "") {
     const value = Number(body.maxParticipants);
     if (!Number.isInteger(value) || value < 2 || value > 256) {
@@ -155,7 +165,8 @@ export async function onRequestPost({ request, env }) {
     entries,
     stageNames: body.stageNames && typeof body.stageNames === "object" ? {
       groups: typeof body.stageNames.groups === "string" ? body.stageNames.groups.trim().slice(0, 80) : "Fase de grupos",
-      playoff: typeof body.stageNames.playoff === "string" ? body.stageNames.playoff.trim().slice(0, 80) : "Eliminatorias"
+      playoff: typeof body.stageNames.playoff === "string" ? body.stageNames.playoff.trim().slice(0, 80) : "Eliminatorias",
+      rounds: Array.isArray(body.stageNames.rounds) ? body.stageNames.rounds.map(name => name.trim()) : []
     } : null,
     matches: [],
     createdBy: userId,

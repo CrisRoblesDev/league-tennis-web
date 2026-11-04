@@ -265,6 +265,25 @@ test("registration, login, Stripe checkout, and payment reconciliation use the c
     });
     assert.equal(tournamentResponse.status, 201);
     const { tournament } = await tournamentResponse.json();
+    const roundRobinResponse = await createTournament({
+      request: adminRequest("https://league.example/api/admin/tournaments", "POST", {
+        title: "Round Robin Cup",
+        month: new Date().toISOString().slice(0, 7),
+        levels: ["3.5"],
+        status: "registration",
+        formatType: "round_robin",
+        stageNames: { groups: "Liga principal", playoff: "Final", rounds: ["Primera etapa"] }
+      }),
+      env
+    });
+    assert.equal(roundRobinResponse.status, 201);
+    const roundRobin = (await roundRobinResponse.json()).tournament;
+    assert.equal(roundRobin.formatType, "round_robin");
+    assert.deepEqual(roundRobin.stageNames, {
+      groups: "Liga principal", playoff: "Final", rounds: ["Primera etapa"]
+    });
+    const withoutRoundRobin = JSON.parse(github.files.get("tournaments.json")).filter(item => item.id !== roundRobin.id);
+    github.files.set("tournaments.json", JSON.stringify(withoutRoundRobin));
     github.files.set("players.json", JSON.stringify([
       { id: "player-a", userId: "user-a", name: "Player A", level: "3.5", zone: "Aventura / Sunny Isles" },
       { id: "player-b", userId: "user-b", name: "Player B", level: "3.5", zone: "Aventura / Sunny Isles" }

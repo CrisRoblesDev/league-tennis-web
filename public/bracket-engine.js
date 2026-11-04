@@ -32,7 +32,8 @@ const BracketEngine = {
     if (!this.el || !this.tournament) return;
     if (this.observer) this.observer.disconnect();
     const t = this.tournament;
-    const isStandaloneRoundRobin = ["league", "round_robin"].includes(t.formatType) && !(t.groups || []).length;
+    const isStandaloneRoundRobin = ["league", "round_robin"].includes(t.formatType) &&
+      !(t.matches || []).some(match => match.stageId === "playoff");
     const groups = (t.groups || []).length ? t.groups : (isStandaloneRoundRobin ? [{
       name: t.stageNames?.groups || "Liga general",
       entryPlayerIds: (t.entries || []).map(entry => entry.playerId)
@@ -62,7 +63,7 @@ const BracketEngine = {
       <div class="bracket-engine__stage-wrap" id="beStageWrap">
       <div class="bracket-engine__stage" id="bracketStage" style="--be-zoom:${this.zoom}">
           <svg class="be-connectors" aria-hidden="true"></svg>
-          ${groups.length ? this.renderGroupStages(groups, playoffs, isStandaloneRoundRobin) : ""}
+          ${groups.length ? `<div class="be-stage-label">${escapeHtml(t.stageNames?.groups || (isStandaloneRoundRobin ? "Round Robin" : "Fase de grupos"))}</div>${this.renderGroupStages(groups, playoffs, isStandaloneRoundRobin)}` : ""}
           ${rounds.map(round => `
             <section class="bracket-engine__round" data-round="${escapeHtml(round.name)}">
               <h3 class="bracket-engine__round-title">${escapeHtml(round.name)}</h3>
@@ -129,7 +130,7 @@ const BracketEngine = {
         </div>
       </section>`;
     }).join("") + (playoffs.length
-      ? '<div class="be-stage-divider"><span>Fase final</span></div>'
+      ? `<div class="be-stage-divider"><span>${escapeHtml(this.tournament.stageNames?.playoff || "Fase final")}</span></div>`
       : (isStandaloneRoundRobin ? '<div class="be-stage-pending">Formato Round Robin: la clasificación se define con la tabla de esta liga.</div>' : '<div class="be-stage-pending">Finaliza todos los partidos de grupo para habilitar la fase final.</div>'));
   },
 

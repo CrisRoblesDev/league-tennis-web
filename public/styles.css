@@ -1409,6 +1409,14 @@ html[dir="rtl"] .admin-record-head { direction: rtl; }
 .wizard-stage-settings { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin:0 0 14px; }
 .wizard-stage-settings label { display:grid; gap:5px; font-size:12px; font-weight:800; color:#475467; }
 .wizard-stage-settings input { width:100%; min-width:0; border:1px solid #d0d5dd; border-radius:10px; padding:9px 11px; }
+.wizard-round-settings { margin:12px 0 16px; padding:12px; border:1px solid #e4e7ec; border-radius:10px; background:#f8fafc; }
+.wizard-round-settings__head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.wizard-round-settings > p { margin:6px 0 10px; font-size:12px; }
+.wizard-round-settings__list { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:8px; }
+.wizard-round-settings__list label { display:grid; gap:4px; font-size:11px; font-weight:800; color:#667085; }
+.wizard-round-settings__list label span { display:flex; gap:5px; }
+.wizard-round-settings__list input { min-width:0; flex:1; padding:7px 9px; border:1px solid #d0d5dd; border-radius:8px; }
+.wizard-round-settings__list .btn { flex-shrink:0; }
 .wizard-registration-capacity { margin:8px 0 14px; padding:12px 14px; background:#f8fafc; border:1px solid #e4e7ec; border-radius:10px; color:#475467; font-size:13px; }
 .wizard-dnd-help { color:#667085; font-size:12px; margin:0 0 10px; }
 .group-stage-card.is-drop-target { border-color:#1e9b61; box-shadow:0 0 0 3px rgba(30,155,97,.14); background:#f4fff8; }
@@ -1426,6 +1434,7 @@ html[dir="rtl"] .admin-record-head { direction: rtl; }
 .wizard-preview-stage-title div { display:grid; gap:2px; }
 .wizard-preview-stage-title b { color:#101828; }
 .wizard-preview-stage-title small { color:#667085; }
+.be-stage-label { padding:10px 12px; margin:4px 0 10px; border-radius:10px; background:#f2f4f7; color:#344054; font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:.06em; }
 .wizard-preview-groups { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
 .wizard-preview-group { min-width:0; padding:12px; border:1px solid #e4e7ec; border-left:4px solid #ccff00; border-radius:12px; background:#fff; }
 .wizard-preview-group h4 { margin:0 0 8px; }
