@@ -38,7 +38,7 @@
         "id": "match-585f0e02-e100-4ca1-934d-ea995325a106",
         "stageId": "knockout",
         "round": "Jornada 1",
-        "playerAId": "player-76298acf-664b-4115-a7ab-b07211d56106",
+        "playerAId": "player-0ad5bb26-92b4-4da7-a28b-3cab8e767e06",
         "playerBId": "player-e6f56afa-2d57-41e2-a158-6c5c8cf52664",
         "date": "2026-11-04",
         "court": "",
@@ -48,13 +48,13 @@
         "auto": true,
         "sets": null,
         "superTiebreak": false,
-        "updated": "2026-11-04T03:50:48.094Z"
+        "updated": "2026-11-04T03:50:57.643Z"
       },
       {
         "id": "match-ed6b639b-a7fc-4ec2-855b-992f4a257f4f",
         "stageId": "knockout",
         "round": "Etapa 2",
-        "playerAId": "player-0ad5bb26-92b4-4da7-a28b-3cab8e767e06",
+        "playerAId": "player-76298acf-664b-4115-a7ab-b07211d56106",
         "playerBId": "player-e6f56afa-2d57-41e2-a158-6c5c8cf52664",
         "date": "2026-11-05",
         "court": "",
@@ -63,12 +63,12 @@
         "winnerId": null,
         "sets": null,
         "superTiebreak": false,
-        "updated": "2026-11-04T03:50:48.094Z"
+        "updated": "2026-11-04T03:50:57.643Z"
       }
     ],
     "createdBy": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
     "created": "2026-11-02T03:19:21.917Z",
-    "updated": "2026-11-04T03:50:48.094Z",
+    "updated": "2026-11-04T03:50:57.643Z",
     "formatType": "knockout",
     "groups": null,
     "groupCount": null
