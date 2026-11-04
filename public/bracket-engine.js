@@ -6,10 +6,12 @@ const BracketEngine = {
   zoom: 1,
   draggedSlot: null,
   observer: null,
+  readOnly: false,
 
-  init(containerId, tournament) {
+  init(containerId, tournament, options = {}) {
     this.el = document.getElementById(containerId);
     this.tournament = tournament;
+    this.readOnly = options.readOnly === true;
     this.zoom = 1;
     if (!this.el || !tournament) return;
     this.render();
@@ -43,16 +45,16 @@ const BracketEngine = {
           <span class="bracket-engine__subtitle">${escapeHtml(t.month || "")} · ${escapeHtml(CATEGORY_LABELS[t.category || "singles"] || "Singles")}</span>
         </div>
         <div class="bracket-engine__right">
-          ${groups.length ? `<label class="be-qualifier-control">Clasifican por grupo
+          ${groups.length && !this.readOnly ? `<label class="be-qualifier-control">Clasifican por grupo
             <select id="beQualifiersPerGroup">${[1,2,3,4].map(n => `<option value="${n}" ${n === qualifiedCount ? "selected" : ""}>${n}</option>`).join("")}</select>
           </label><button class="btn btn-sm btn-primary" data-be-action="advance">${playoffs.length ? "Actualizar eliminatorias" : "Generar eliminatorias"}</button>` : ""}
-          ${plainKnockout ? '<button class="btn btn-sm btn-secondary" data-be-action="size">Tamaño del cuadro</button>' : ""}
+          ${plainKnockout && !this.readOnly ? '<button class="btn btn-sm btn-secondary" data-be-action="size">Tamaño del cuadro</button>' : ""}
           <button class="btn btn-sm btn-secondary" data-be-action="zoom-in" aria-label="Acercar">+</button>
           <button class="btn btn-sm btn-secondary" data-be-action="zoom-out" aria-label="Alejar">−</button>
           <button class="btn btn-sm btn-dark" data-be-action="export">Exportar SVG</button>
         </div>
       </div>
-      <div class="bracket-engine__help">Haz clic en un participante para cambiarlo, en el marcador para editarlo o arrastra dos casillas para intercambiar el sembrado.</div>
+      <div class="bracket-engine__help">${this.readOnly ? "Vista de consulta: grupos, enfrentamientos y avance de rondas." : "Haz clic en un participante para cambiarlo, en el marcador para editarlo o arrastra dos casillas para intercambiar el sembrado."}</div>
       <div class="bracket-engine__stage-wrap" id="beStageWrap">
       <div class="bracket-engine__stage" id="bracketStage" style="--be-zoom:${this.zoom}">
           <svg class="be-connectors" aria-hidden="true"></svg>
@@ -153,21 +155,31 @@ const BracketEngine = {
   renderMatch(match, index, draggable) {
     const slot = (side, playerId) => {
       const winner = match.status === "completed" && match.winnerId === playerId && playerId;
-      return `<div role="group" tabindex="0" class="be-row ${winner ? "is-winner" : ""}" data-slot="${side}" data-match-id="${escapeHtml(match.id)}" data-player-id="${escapeHtml(playerId || "")}" ${draggable ? 'draggable="true"' : ""}>
-        <span class="be-seed">${index + 1}</span><button type="button" class="be-name-button">${escapeHtml(this.playerName(playerId))}</button>${winner ? '<span class="be-check">✓</span>' : '<span class="be-edit-hint">Editar</span>'}
+      return `<div ${this.readOnly ? "" : 'role="group" tabindex="0"'} class="be-row ${winner ? "is-winner" : ""} ${this.readOnly ? "is-readonly" : ""}" data-slot="${side}" data-match-id="${escapeHtml(match.id)}" data-player-id="${escapeHtml(playerId || "")}" ${!this.readOnly && draggable ? 'draggable="true"' : ""}>
+        <span class="be-seed">${index + 1}</span>${this.readOnly ? `<span class="be-name-button">${escapeHtml(this.playerName(playerId))}</span>` : `<button type="button" class="be-name-button">${escapeHtml(this.playerName(playerId))}</button>`}${winner ? '<span class="be-check">✓</span>' : (this.readOnly ? "" : '<span class="be-edit-hint">Editar</span>')}
       </div>`;
     };
     const matchId = escapeHtml(match.id);
     const setsText = match.score && match.score !== "BYE" ? match.score : "";
     return `<article class="bracket-engine__match" data-stage-id="${escapeHtml(match.stageId || "knockout")}" data-match-id="${matchId}" ${match.nextMatchId ? `data-next-match-id="${escapeHtml(match.nextMatchId)}" data-next-slot="${escapeHtml(match.nextSlot || "A")}"` : ""}>
       ${slot("A", match.playerAId)}${slot("B", match.playerBId)}
-      <div class="be-inline-score" data-score-for="${matchId}">
-        <button type="button" class="be-score-button" data-edit-score="${matchId}">${escapeHtml(setsText || match.date || (match.score === "BYE" ? "BYE" : "Editar marcador / fecha"))}</button>
+        <div class="be-inline-score" data-score-for="${matchId}">
+        ${this.readOnly
+          ? `<div class="be-score-readonly">${escapeHtml(setsText || (match.score === "BYE" ? "BYE" : "Por jugar"))}${match.date ? ` · ${escapeHtml(match.date)}` : ""}${match.court ? ` · ${escapeHtml(match.court)}` : ""}</div>`
+          : `<button type="button" class="be-score-button" data-edit-score="${matchId}">${escapeHtml(setsText || match.date || (match.score === "BYE" ? "BYE" : "Editar marcador / fecha"))}</button>`}
       </div>
     </article>`;
   },
 
   attachEvents() {
+    if (this.readOnly) {
+      this.el.querySelectorAll("[data-be-action]").forEach(button => button.addEventListener("click", () => {
+        if (button.dataset.beAction === "zoom-in") { this.zoom = Math.min(1.8, this.zoom + .1); this.render(); }
+        if (button.dataset.beAction === "zoom-out") { this.zoom = Math.max(.5, this.zoom - .1); this.render(); }
+        if (button.dataset.beAction === "export") this.exportSvg();
+      }));
+      return;
+    }
     this.el.querySelectorAll("[data-edit-score]").forEach(button => button.addEventListener("click", () => this.openInlineScore(button.dataset.editScore)));
     this.el.querySelectorAll(".be-row").forEach(row => {
       row.addEventListener("click", event => {

@@ -1203,15 +1203,106 @@ function renderTournaments() {
       ${tournament.venue ? `<p class="muted">Cancha: ${escapeHtml(tournament.venue)}</p>` : ""}
       <p class="muted">${escapeHtml(tournament.format || "Formato por anunciar")}</p>
       <p><b>${entries.length}</b> inscritos${tournament.levels?.length ? ` · Niveles ${escapeHtml(tournament.levels.join(", "))}` : ""}</p>
-      ${entries.length ? `<details><summary>Ver jugadores inscritos</summary><ul class="tournament-entries">${entries.map(entry =>
-        `<li>${escapeHtml(entry.name)} <span class="muted">${escapeHtml(entry.level)}</span></li>`
-      ).join("")}</ul></details>` : ""}
+      ${entries.length ? `<p class="muted">${entries.length} participantes inscritos</p>` : ""}
       ${(tournament.category && tournament.category !== "singles") || (tournament.gender && tournament.gender !== "mixto") ?
         `<p class="muted">${escapeHtml(CATEGORY_LABELS[tournament.category || "singles"] || "Singles")}${tournament.gender && tournament.gender !== "mixto" ? ` · ${escapeHtml(GENDER_LABELS[tournament.gender] || tournament.gender)}` : ""}</p>` : ""}
-      ${(tournament.matches || []).length || entries.length >= 2 ? renderTournamentMatches(tournament.matches, entries, tournament.formatType, tournament.groups || [], tournament.groupStandings || []) : ""}
+      ${(tournament.matches || []).length || (tournament.groups || []).length || entries.length >= 2 ? `<button class="btn btn-dark tournament-view-button" type="button" onclick="openPublicTournamentModal('${escapeHtml(tournament.id)}')">Ver grupos, partidos y Main Draw</button>` : ""}
       ${canJoin ? '<button class="btn btn-dark" onclick="joinTournament()">Inscribirse</button>' : ""}
     </article>`;
   }).join("");
+}
+
+function renderPublicTournamentGroups(tournament) {
+  const groups = tournament.groups || [];
+  const matches = tournament.matches || [];
+  const standings = tournament.groupStandings || [];
+  if (!groups.length) return '<p class="muted">Este torneo no tiene fase de grupos.</p>';
+  return `<div class="public-group-grid">${groups.map(group => {
+    const result = standings.find(item => item.name === group.name);
+    const rows = result?.standings || group.entryPlayerIds.map((playerId, index) => ({
+      id: playerId,
+      name: tournament.entries?.find(entry => entry.playerId === playerId)?.name || "Jugador",
+      position: index + 1,
+      played: 0,
+      won: 0,
+      lost: 0,
+      points: 0
+    }));
+    const qualified = new Set(result?.qualifiedPlayerIds || []);
+    const fixtures = matches.filter(match =>
+      (match.stageId === "groups" || !match.stageId) && String(match.round || "").startsWith(`${group.name} ·`)
+    );
+    return `<article class="public-group-card">
+      <h5>${escapeHtml(group.name)}</h5>
+      <table><thead><tr><th>#</th><th>Jugador</th><th>PJ</th><th>G</th><th>P</th><th>Pts</th></tr></thead><tbody>
+        ${rows.map((row, index) => `<tr class="${qualified.has(row.id) ? "is-qualified" : ""}">
+          <td>${row.position || index + 1}</td><td>${escapeHtml(row.name)}${qualified.has(row.id) ? " ✓" : ""}</td>
+          <td>${row.played || 0}</td><td>${row.won || 0}</td><td>${row.lost || 0}</td><td>${row.points || 0}</td>
+        </tr>`).join("")}
+      </tbody></table>
+      <div class="public-group-matches">${fixtures.map(match => `<div>
+        <span>${escapeHtml(match.playerAName || "Por definir")}</span><b>${escapeHtml(match.score || "vs")}</b>
+        <span>${escapeHtml(match.playerBName || "Por definir")}</span>
+        <small>${escapeHtml(match.round || "")}${match.date ? ` · ${escapeHtml(match.date)}` : ""}</small>
+      </div>`).join("") || '<p class="muted">Aún no hay partidos.</p>'}</div>
+    </article>`;
+  }).join("")}</div>`;
+}
+
+function renderPublicTournamentMatches(tournament) {
+  const matches = tournament.matches || [];
+  if (!matches.length) return '<p class="muted">Aún no hay enfrentamientos programados.</p>';
+  return `<div class="public-match-list">${matches.map(match => `<article class="public-match-card">
+    <div class="public-match-card__meta"><b>${escapeHtml(match.round || (match.stageId === "playoff" ? "Eliminatorias" : "Partido"))}</b>
+      <span class="tag ${match.status === "completed" ? "tag-green" : match.status === "cancelled" ? "tag-red" : "tag-blue"}">${match.status === "completed" ? "Finalizado" : match.status === "cancelled" ? "Cancelado" : "Programado"}</span>
+    </div>
+    <div class="public-match-card__players">
+      <span class="${match.status === "completed" && match.winnerId === match.playerAId ? "is-winner" : ""}">${escapeHtml(match.playerAName || "Por definir")}</span>
+      <b>${escapeHtml(match.score || "vs")}</b>
+      <span class="${match.status === "completed" && match.winnerId === match.playerBId ? "is-winner" : ""}">${escapeHtml(match.playerBName || "Por definir")}</span>
+    </div>
+    <small>${[match.date, match.court].filter(Boolean).map(escapeHtml).join(" · ") || "Fecha y cancha por anunciar"}</small>
+  </article>`).join("")}</div>`;
+}
+
+function openPublicTournamentModal(tournamentId) {
+  const tournament = tournaments.find(item => item.id === tournamentId);
+  if (!tournament) return;
+  const title = document.getElementById("drawModalTitle");
+  const container = document.getElementById("drawModalContainer");
+  if (!container) return;
+  if (title) title.textContent = tournament.title || `Campeonato · ${tournament.month}`;
+  const hasGroups = Boolean(tournament.groups?.length);
+  const tabs = `${hasGroups ? '<button type="button" data-public-tab="groups">Grupos</button>' : ""}
+    <button type="button" data-public-tab="matches">Enfrentamientos</button>
+    <button type="button" class="${hasGroups ? "" : "is-active"}" data-public-tab="draw">Main Draw</button>`;
+  container.innerHTML = `
+    <div class="draw-head">
+      <div class="draw-chips">
+        <span class="tag">${escapeHtml(tournamentStatusLabel(tournament.status))}</span>
+        <span class="tag">${(tournament.entries || []).length} participantes</span>
+        ${tournament.venue ? `<span class="tag">${escapeHtml(tournament.venue)}</span>` : ""}
+      </div>
+      <div class="public-tournament-tabs" role="tablist">${tabs}</div>
+    </div>
+    ${hasGroups ? `<section class="public-tournament-panel" data-public-panel="groups">${renderPublicTournamentGroups(tournament)}</section>` : ""}
+    <section class="public-tournament-panel" data-public-panel="matches" hidden>${renderPublicTournamentMatches(tournament)}</section>
+    <section class="public-tournament-panel" data-public-panel="draw" ${hasGroups ? "hidden" : ""}>
+      <div id="publicBracketEngineRoot" class="bracket-engine__root"></div>
+    </section>
+  `;
+  container.querySelectorAll("[data-public-tab]").forEach(button => button.addEventListener("click", () => {
+    const selected = button.dataset.publicTab;
+    container.querySelectorAll("[data-public-tab]").forEach(tab => tab.classList.toggle("is-active", tab === button));
+    container.querySelectorAll("[data-public-panel]").forEach(panel => { panel.hidden = panel.dataset.publicPanel !== selected; });
+    if (selected === "draw" && window.BracketEngine) {
+      window.BracketEngine.init("publicBracketEngineRoot", tournament, { readOnly: true });
+    }
+  }));
+  if (!hasGroups && window.BracketEngine) {
+    window.BracketEngine.init("publicBracketEngineRoot", tournament, { readOnly: true });
+  }
+  openModal("drawModal");
 }
 
 // ============ TOURNAMENT ============
@@ -2157,6 +2248,7 @@ async function openTournamentManage(tournamentId) {
     openModal("tournamentManageModal");
     return;
   }
+  window.activeManagedTournament = tournament;
   if (title) title.textContent = `Gestionar · ${tournament.title || tournament.month}`;
   const entrants = tournament.entries || [];
   const matches = tournament.matches || [];
@@ -2221,8 +2313,8 @@ async function openTournamentManage(tournamentId) {
       ${entrants.length >= 2 ? `<form id="admin-match-form-${escapeHtml(tournament.id)}" class="admin-match-form panel-form" onsubmit="saveTournamentMatch(event,'${escapeHtml(tournament.id)}')">
         <input type="hidden" name="matchId">
         <b class="full">Programar partido</b>
-        <label>Jugador A<select name="playerAId" required>${entrants.map(entry => `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`).join("")}</select></label>
-        <label>Jugador B<select name="playerBId" required>${entrants.map(entry => `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`).join("")}</select></label>
+        <label>Jugador A<select name="playerAId" required><option value="">Selecciona jugador</option>${entrants.map(entry => `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`).join("")}</select></label>
+        <label>Jugador B<select name="playerBId" required><option value="">Selecciona jugador</option>${entrants.map(entry => `<option value="${escapeHtml(entry.playerId)}">${escapeHtml(entry.name)}</option>`).join("")}</select></label>
         <label>Ronda<input name="round" required placeholder="Final"></label>
         <label>Fecha<input name="date" type="date"></label>
         <label>Estado<select name="status"><option value="scheduled">Programado</option><option value="completed">Finalizado</option><option value="cancelled">Cancelado</option></select></label>
@@ -2315,7 +2407,9 @@ function editTournament(tournamentId) {
 }
 
 function editTournamentMatch(tournamentId, matchId) {
-  const tournament = adminTournaments.find(item => item.id === tournamentId);
+  const tournament = window.activeManagedTournament?.id === tournamentId
+    ? window.activeManagedTournament
+    : adminTournaments.find(item => item.id === tournamentId);
   const match = tournament?.matches?.find(item => item.id === matchId);
   const form = document.getElementById(`admin-match-form-${tournamentId}`);
   if (!match || !form) return;
@@ -2324,8 +2418,8 @@ function editTournamentMatch(tournamentId, matchId) {
   const panel = document.querySelector('[data-manage-panel="matches"]');
   if (panel?.hidden && tabButton) tabButton.click();
   form.elements.namedItem("matchId").value = match.id;
-  form.elements.namedItem("playerAId").value = match.playerAId;
-  form.elements.namedItem("playerBId").value = match.playerBId;
+  form.elements.namedItem("playerAId").value = match.playerAId || "";
+  form.elements.namedItem("playerBId").value = match.playerBId || "";
   form.elements.namedItem("round").value = match.round;
   form.elements.namedItem("date").value = match.date || "";
   form.elements.namedItem("court").value = match.court || "";
@@ -2460,45 +2554,67 @@ async function removeTournamentEntry(tournamentId, playerId) {
 async function saveTournamentMatch(event, tournamentId) {
   event.preventDefault();
   const form = event.target;
+  const matchId = form.elements.namedItem("matchId").value;
   const playerAId = form.elements.namedItem("playerAId").value;
   const playerBId = form.elements.namedItem("playerBId").value;
+  if (!playerAId || !playerBId) {
+    showToast("Selecciona ambos participantes antes de guardar el enfrentamiento.");
+    return;
+  }
   if (playerAId === playerBId) {
     showToast("Elige dos jugadores distintos.");
     return;
   }
   const status = form.elements.namedItem("status").value;
   const scoreRaw = form.elements.namedItem("score").value.trim();
-  let matchResult = null;
-  if (status === "completed" && scoreRaw) {
-    const sets = scoreRaw.split(",").map(s => {
-      const t = s.trim().split("-");
-      const tb = s.trim().includes("*");
-      return [Number(t[0]), Number(t[1]), tb];
-    }).filter(s => s.length >= 2 && !isNaN(s[0]) && !isNaN(s[1]));
-    if (sets.length < 1 || sets.length > 3) {
+  let sets = null;
+  if (status === "completed") {
+    if (!scoreRaw) {
+      showToast("Ingresa el marcador antes de finalizar el partido.");
+      return;
+    }
+    sets = scoreRaw.split(",").map(raw => {
+      const parsed = raw.trim().match(/^(\d{1,2})-(\d{1,2})(\*)?$/);
+      return parsed ? [Number(parsed[1]), Number(parsed[2]), Boolean(parsed[3])] : null;
+    });
+    if (sets.length < 1 || sets.length > 3 || sets.some(set => !set)) {
       showToast("Marcador inválido. Usa hasta 3 sets (ej. 6-4, 4-6, 7-6*).");
       return;
     }
-    matchResult = { matchId: form.elements.namedItem("matchId").value || undefined, sets, superTiebreak: false, status: "completed" };
   }
   try {
-    await api(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}`, {
+    // Guarda primero los dos participantes y la programación como un partido
+    // pendiente; el resultado se aplica después al ID que confirma el servidor.
+    const saved = await api(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}`, {
       method: "PUT",
-      body: JSON.stringify(matchResult ? { matchResult } : {
+      body: JSON.stringify({
         match: {
-          ...(form.elements.namedItem("matchId").value ?
-            { id: form.elements.namedItem("matchId").value } : {}),
+          ...(matchId ? { id: matchId } : {}),
           playerAId,
           playerBId,
-          round: form.elements.namedItem("round").value,
+          round: form.elements.namedItem("round").value.trim(),
           date: form.elements.namedItem("date").value,
           court: form.elements.namedItem("court").value,
-          status,
-          winnerId: form.elements.namedItem("winnerId").value,
-          score: scoreRaw
+          status: status === "cancelled" ? "cancelled" : "scheduled",
+          winnerId: "",
+          score: ""
         }
       })
     });
+    if (status === "completed") {
+      const savedMatchId = matchId || saved.matchId;
+      if (!savedMatchId) throw new Error("Se guardó el partido pero no se pudo identificar para aplicar el resultado.");
+      await api(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}`, {
+        method: "PUT",
+        body: JSON.stringify({ matchResult: {
+          matchId: savedMatchId,
+          sets,
+          status: "completed",
+          date: form.elements.namedItem("date").value,
+          court: form.elements.namedItem("court").value
+        } })
+      });
+    }
     await refreshTournamentManage(tournamentId);
     showToast(status === "completed" ? "Resultado registrado." : "Partido programado");
   } catch (error) {

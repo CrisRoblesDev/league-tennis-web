@@ -197,3 +197,60 @@ test("an oversized bracket creates empty slots without BYE-vs-BYE and propagates
     globalThis.fetch = originalFetch;
   }
 });
+
+test("creating a fixture returns an editable match id and its result is saved without losing either player", async () => {
+  const originalFetch = globalThis.fetch;
+  const seed = seedTournament();
+  seed["tournaments.json"][0].formatType = "knockout";
+  seed["tournaments.json"][0].groups = null;
+  seed["tournaments.json"][0].matches = [];
+  const github = githubMock(seed);
+  globalThis.fetch = github.fetch;
+  try {
+    const session = await setSessionResp({ userId: "admin-1", user: { id: "admin-1", role: "admin" } }, env, new Request("https://league.example"));
+    const cookie = session.headers.get("Set-Cookie").split(";")[0];
+    const createResponse = await updateTournament({
+      request: new Request("https://league.example/api/admin/tournaments/tournament-1", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Cookie: cookie },
+        body: JSON.stringify({ match: {
+          playerAId: "a1", playerBId: "b2", round: "Semifinales",
+          date: "2026-11-12", court: "Cancha 1", status: "scheduled"
+        } })
+      }),
+      env,
+      params: { id: "tournament-1" }
+    });
+    assert.equal(createResponse.status, 200);
+    const created = await createResponse.json();
+    assert.ok(created.matchId);
+    const createdMatch = created.tournament.matches.find(match => match.id === created.matchId);
+    assert.equal(createdMatch.playerAId, "a1");
+    assert.equal(createdMatch.playerBId, "b2");
+
+    const resultResponse = await updateTournament({
+      request: new Request("https://league.example/api/admin/tournaments/tournament-1", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Cookie: cookie },
+        body: JSON.stringify({ matchResult: {
+          matchId: created.matchId,
+          sets: [[6, 3, false], [6, 4, false]],
+          status: "completed",
+          date: "2026-11-12",
+          court: "Cancha 1"
+        } })
+      }),
+      env,
+      params: { id: "tournament-1" }
+    });
+    assert.equal(resultResponse.status, 200);
+    const saved = (await resultResponse.json()).tournament.matches.find(match => match.id === created.matchId);
+    assert.equal(saved.playerAId, "a1");
+    assert.equal(saved.playerBId, "b2");
+    assert.equal(saved.status, "completed");
+    assert.equal(saved.winnerId, "a1");
+    assert.equal(saved.date, "2026-11-12");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

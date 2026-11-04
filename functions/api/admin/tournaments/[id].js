@@ -243,7 +243,9 @@ function relinkBracket(tournament) {
     if (!stageMap.has(stage)) stageMap.set(stage, []);
     stageMap.get(stage).push(match);
   });
-  const storedStages = (tournament.stages || []).map(stage => String(stage).trim()).filter(Boolean);
+  const storedStages = (tournament.stages || []).map(stage =>
+    typeof stage === "string" ? stage.trim() : String(stage?.name || "").trim()
+  ).filter(Boolean);
   const present = [...stageMap.keys()];
   const ordered = [
     ...storedStages.filter(stage => stageMap.has(stage)),
@@ -256,11 +258,9 @@ function relinkBracket(tournament) {
     // Solo conecta cuando la etapa siguiente tiene exactamente la mitad de partidos.
     if (next.length !== Math.floor(current.length / 2)) continue;
     current.forEach((match, matchIndex) => {
-      if (matchIndex >= next.length * 2) {
-        delete match.nextMatchId;
-        delete match.nextSlot;
-        return;
-      }
+      // Nunca reubiques enlaces existentes al añadir un partido: eso cambia
+      // qué participantes avanzan. Solo conecta partidos que todavía no tienen destino.
+      if (match.nextMatchId || matchIndex >= next.length * 2) return;
       match.nextMatchId = next[Math.floor(matchIndex / 2)].id;
       match.nextSlot = matchIndex % 2 === 0 ? "A" : "B";
     });
@@ -665,6 +665,7 @@ export async function onRequestPut({ request, env, params }) {
       created: new Date().toISOString()
     });
   }
+  let savedMatchId = null;
   if (body.matchResult !== undefined) {
     const r = body.matchResult;
     if (!r || typeof r !== "object" || Array.isArray(r) || typeof r.matchId !== "string") {
@@ -703,6 +704,9 @@ export async function onRequestPut({ request, env, params }) {
       updated: new Date().toISOString()
     };
     if (!validDate(updated.date || "")) return jsonResponse({ error: "Fecha inválida." }, 400);
+    if (match.winnerId && match.winnerId !== winnerId && match.nextMatchId) {
+      clearAdvancedWinner(tournament, match, match.winnerId);
+    }
     tournament.matches[matchIndex] = updated;
     if (status !== "completed" && updated.nextMatchId) {
       const nextMatch = (tournament.matches || []).find(match => match.id === updated.nextMatchId);
@@ -739,6 +743,7 @@ export async function onRequestPut({ request, env, params }) {
     if (match.id !== undefined && matchIndex < 0) return jsonResponse({ error: "Partido no encontrado" }, 404);
     const matchRecord = {
       id: matchIndex >= 0 ? tournament.matches[matchIndex].id : `match-${crypto.randomUUID()}`,
+      stageId: match.stageId || (match.round.trim().startsWith("Grupo ") || tournament.formatType === "league" ? "groups" : (tournament.groups?.length ? "playoff" : "knockout")),
       round: match.round.trim().slice(0, 80),
       playerAId: isPlaceholder ? null : match.playerAId,
       playerBId: isPlaceholder ? null : match.playerBId,
@@ -749,10 +754,15 @@ export async function onRequestPut({ request, env, params }) {
       winnerId: match.status === "completed" ? match.winnerId : null
     };
     const existing = matchIndex >= 0 ? tournament.matches[matchIndex] : null;
+    savedMatchId = matchRecord.id;
     if (existing) {
+      matchRecord.stageId = existing.stageId || matchRecord.stageId;
       matchRecord.nextMatchId = existing.nextMatchId;
       matchRecord.nextSlot = existing.nextSlot;
       matchRecord.auto = existing.auto;
+      const changed = existing.playerAId !== matchRecord.playerAId || existing.playerBId !== matchRecord.playerBId ||
+        existing.winnerId !== matchRecord.winnerId || matchRecord.status !== "completed";
+      if (changed && existing.winnerId && existing.nextMatchId) clearAdvancedWinner(tournament, existing, existing.winnerId);
     }
     if (matchIndex >= 0) tournament.matches[matchIndex] = matchRecord;
     else tournament.matches.push(matchRecord);
@@ -795,7 +805,7 @@ export async function onRequestPut({ request, env, params }) {
   relinkBracket(tournament);
   tournament.updated = new Date().toISOString();
   await gWrite(env, "tournaments", tournaments);
-  return jsonResponse({ tournament });
+  return jsonResponse({ tournament, ...(savedMatchId ? { matchId: savedMatchId } : {}) });
 }
 
 export async function onRequestGet({ request, env, params }) {
