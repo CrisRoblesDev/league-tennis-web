@@ -12,11 +12,6 @@
     "status": "abierto",
     "stages": [
       {
-        "id": "stage-groups",
-        "name": "Semana 1",
-        "kind": "bracket"
-      },
-      {
         "id": "stage-qf",
         "name": "Grupos",
         "kind": "groups"
