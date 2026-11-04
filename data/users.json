@@ -37,19 +37,6 @@
     "temporary": true
   },
   {
-    "id": "user-aa23fcfa-6c58-4588-bb92-9b6fb6f0407c",
-    "name": "Simone Matamalla",
-    "email": "simone.matamalla@temp.aventuratennisleague.com",
-    "password": "pbkdf2$100000$temp$placeholder",
-    "phone": null,
-    "level": "3.5",
-    "zone": "Aventura / Sunny Isles",
-    "role": "user",
-    "created": "2026-11-03T02:50:34.510Z",
-    "membershipActive": false,
-    "temporary": true
-  },
-  {
     "id": "user-f6f97712-6bcc-460a-82e8-0dda349b43c6",
     "name": "Kelly Rullier",
     "email": "kelly.rullier@temp.aventuratennisleague.com",
