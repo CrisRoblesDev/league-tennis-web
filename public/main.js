@@ -1126,19 +1126,44 @@ async function loadTournaments() {
   }
 }
 
-function renderTournamentMatches(matches, entries = [], formatType = "knockout") {
+function renderTournamentMatches(matches, entries = [], formatType = "knockout", groups = [], groupStandings = []) {
   if (!matches || !matches.length) {
     if (entries.length >= 2) {
       return '<p class="muted draw-pending">El cuadro se publicará cuando se programen los partidos.</p>';
     }
     return "";
   }
+  const groupMatches = matches.filter(match => match.stageId === "groups" || (groups.length && String(match.round || "").startsWith("Grupo ")));
+  const playoffMatches = groups.length ? matches.filter(match => match.stageId === "playoff") : matches;
   const rounds = new Map();
-  matches.forEach(match => {
+  playoffMatches.forEach(match => {
     const key = match.round || "Ronda";
     if (!rounds.has(key)) rounds.set(key, []);
     rounds.get(key).push(match);
   });
+  const groupSection = groups.length ? `<section class="public-group-stage"><h4>Fase de grupos</h4><div class="public-group-grid">${groups.map(group => {
+    const result = groupStandings.find(item => item.name === group.name);
+    const qualified = new Set(result?.qualifiedPlayerIds || []);
+    const standings = result?.standings || group.entryPlayerIds.map(playerId => ({
+      id: playerId,
+      name: entries.find(entry => entry.playerId === playerId)?.name || "Jugador",
+      played: 0, won: 0, points: 0
+    }));
+    return `<article class="public-group-card"><h5>${escapeHtml(group.name)}</h5><table><thead><tr><th>#</th><th>Jugador</th><th>PJ</th><th>G</th><th>Pts</th></tr></thead><tbody>${standings.map((row, index) => `
+      <tr class="${qualified.has(row.id) ? "is-qualified" : ""}"><td>${row.position || index + 1}</td><td>${escapeHtml(row.name)}${qualified.has(row.id) ? " ✓" : ""}</td><td>${row.played || 0}</td><td>${row.won || 0}</td><td>${row.points || 0}</td></tr>`).join("")}</tbody></table>
+      <div class="public-group-matches">${groupMatches.filter(match => String(match.round || "").startsWith(`${group.name} ·`)).map(match => `
+        <div><span>${escapeHtml(match.playerAName || "Por definir")}</span><b>${escapeHtml(match.score || "vs")}</b><span>${escapeHtml(match.playerBName || "Por definir")}</span>${match.date ? `<small>${escapeHtml(match.date)}</small>` : ""}</div>`).join("")}</div>
+    </article>`;
+  }).join("")}</div></section>` : "";
+  const playoffSection = groups.length ? `<section class="public-playoff-stage"><h4>Fase final</h4><div class="draw-written-rounds">${[...rounds.entries()].map(([round, roundMatches]) => `
+    <div class="draw-round"><h5>${escapeHtml(round)}</h5>${roundMatches.map(match => `
+      <div class="draw-match${match.status === "completed" ? " is-completed" : ""}${match.status === "cancelled" ? " is-cancelled" : ""}">
+        <span>${escapeHtml(match.playerAName || match.playerAId || "Por definir")}</span>
+        <span>${escapeHtml(match.playerBName || match.playerBId || "Por definir")}</span>
+        ${match.score ? `<b>${escapeHtml(match.score)}</b>` : `<small>${match.status === "cancelled" ? "Cancelado" : "Por jugar"}</small>`}
+        ${match.date ? `<small>${escapeHtml(match.date)}</small>` : ""}
+      </div>`).join("")}</div>`).join("")}</div></section>` : "";
+  if (groups.length) return `<div class="draw-written"><b class="draw-written-title">Main draw</b>${groupSection}${playoffSection}</div>`;
   return `<div class="draw-written"><b class="draw-written-title">Main draw</b><div class="draw-written-rounds">${[...rounds.entries()].map(([round, roundMatches]) => `
     <div class="draw-round"><h4>${escapeHtml(round)}</h4>${roundMatches.map(match => `
       <div class="draw-match${match.status === "completed" ? " is-completed" : ""}${match.status === "cancelled" ? " is-cancelled" : ""}">
@@ -1183,7 +1208,7 @@ function renderTournaments() {
       ).join("")}</ul></details>` : ""}
       ${(tournament.category && tournament.category !== "singles") || (tournament.gender && tournament.gender !== "mixto") ?
         `<p class="muted">${escapeHtml(CATEGORY_LABELS[tournament.category || "singles"] || "Singles")}${tournament.gender && tournament.gender !== "mixto" ? ` · ${escapeHtml(GENDER_LABELS[tournament.gender] || tournament.gender)}` : ""}</p>` : ""}
-      ${(tournament.matches || []).length || entries.length >= 2 ? renderTournamentMatches(tournament.matches, entries) : ""}
+      ${(tournament.matches || []).length || entries.length >= 2 ? renderTournamentMatches(tournament.matches, entries, tournament.formatType, tournament.groups || [], tournament.groupStandings || []) : ""}
       ${canJoin ? '<button class="btn btn-dark" onclick="joinTournament()">Inscribirse</button>' : ""}
     </article>`;
   }).join("");
@@ -2256,15 +2281,6 @@ async function openTournamentManage(tournamentId) {
       if (tab === "draw" && window.BracketEngine) {
         window.BracketEngine.init("bracketEngineRoot", tournament);
       }
-    });
-  });
-
-
-  content.querySelectorAll("[data-manage-tab]").forEach(button => {
-    button.addEventListener("click", () => {
-      const tab = button.dataset.manageTab;
-      content.querySelectorAll("[data-manage-tab]").forEach(b => b.classList.toggle("is-active", b === button));
-      content.querySelectorAll("[data-manage-panel]").forEach(panel => { panel.hidden = panel.dataset.managePanel !== tab; });
     });
   });
   bindManageForms(content, tournament);

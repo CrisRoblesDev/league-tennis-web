@@ -18,7 +18,9 @@ function roundName(totalRounds, roundIndex) {
 
 function computeBracketSize(n_players, preferredSize) {
   if (preferredSize && Number.isInteger(preferredSize) && preferredSize >= 2 && (preferredSize & (preferredSize - 1)) === 0) {
-    return Math.max(preferredSize, n_players);
+    let size = preferredSize;
+    while (size < n_players) size *= 2;
+    return size;
   }
   if (n_players < 2) return 0;
   let size = 1;
@@ -28,6 +30,11 @@ function computeBracketSize(n_players, preferredSize) {
 
 function distributeByes(players, bracketSize) {
   const nByes = bracketSize - players.length;
+  if (nByes > players.length) {
+    const slots = Array(bracketSize).fill(null);
+    players.forEach((playerId, index) => { slots[index] = playerId; });
+    return slots;
+  }
   const seeding = [];
   for (let i = 0; i < nByes; i++) {
     seeding.push(players[i], null);
@@ -53,6 +60,7 @@ function buildGroupMatches(groups) {
         if (playerA === null || playerB === null) continue;
         matches.push({
           id: `match-${crypto.randomUUID()}`,
+          stageId: "groups",
           round: `${group.name} · Jornada ${roundIndex + 1}`,
           playerAId: playerA,
           playerBId: playerB,
@@ -88,6 +96,7 @@ function buildKnockoutDraw(playerIds, options = {}) {
     for (let index = 0; index < count; index++) {
       const match = {
         id: `match-${crypto.randomUUID()}`,
+        ...(options.stageId ? { stageId: options.stageId } : {}),
         round: roundName(totalRounds, roundIndex),
         playerAId: null,
         playerBId: null,
@@ -158,7 +167,9 @@ function buildLeagueSchedule(playerIds) {
 }
 
 function advanceWinner(tournament, completedMatch) {
-  if (tournament.formatType !== "knockout" || !completedMatch.nextMatchId || !completedMatch.winnerId) return;
+  const isPlayoff = tournament.formatType === "knockout" ||
+    (completedMatch.stageId === "playoff" && Array.isArray(tournament.groups) && tournament.groups.length > 0);
+  if (!isPlayoff || !completedMatch.nextMatchId || !completedMatch.winnerId) return;
   const next = (tournament.matches || []).find(match => match.id === completedMatch.nextMatchId);
   if (!next) return;
   if (completedMatch.nextSlot === "B") next.playerBId = completedMatch.winnerId;
@@ -166,13 +177,55 @@ function advanceWinner(tournament, completedMatch) {
   next.updated = new Date().toISOString();
 }
 
+function autoAdvanceByes(tournament) {
+  for (const match of tournament.matches || []) {
+    if (match.stageId === "groups") continue;
+    const hasA = Boolean(match.playerAId);
+    const hasB = Boolean(match.playerBId);
+    if (match.status !== "completed" && hasA !== hasB) {
+      match.status = "completed";
+      match.winnerId = hasA ? match.playerAId : match.playerBId;
+      match.score = "BYE";
+    }
+    if (match.status === "completed" && match.score === "BYE" && match.winnerId) {
+      advanceWinner(tournament, match);
+    }
+  }
+}
+
+function clearAdvancedWinner(tournament, sourceMatch, previousWinner) {
+  let source = sourceMatch;
+  let winner = previousWinner;
+  const visited = new Set();
+  while (source?.nextMatchId && !visited.has(source.nextMatchId)) {
+    visited.add(source.nextMatchId);
+    const next = (tournament.matches || []).find(match => match.id === source.nextMatchId);
+    if (!next) return;
+    const field = source.nextSlot === "B" ? "playerBId" : "playerAId";
+    if (next[field] === winner) next[field] = null;
+    const downstreamWinner = next.winnerId;
+    next.winnerId = null;
+    next.score = "";
+    next.sets = null;
+    next.status = "scheduled";
+    next.updated = new Date().toISOString();
+    source = next;
+    winner = downstreamWinner;
+    if (!winner) return;
+  }
+}
+
 // Reconecta el cuadro por etapas: agrupa los partidos por ronda, empareja cada
 // etapa con la siguiente cuando el número de partidos encaja a la mitad y
 // repropaga los ganadores completados. Así los partidos creados a mano, por
 // etapas, se conectan como un Main Draw generado.
 function relinkBracket(tournament) {
-  if ((tournament.formatType || "knockout") !== "knockout") return;
-  const matches = tournament.matches || [];
+  const isMultiStage = Array.isArray(tournament.groups) && tournament.groups.length > 0;
+  if ((tournament.formatType || "knockout") !== "knockout" && !isMultiStage) return;
+  const allMatches = tournament.matches || [];
+  const matches = isMultiStage
+    ? allMatches.filter(match => match.stageId !== "groups" && !String(match.round || "").startsWith("Grupo "))
+    : allMatches;
   if (!matches.length) return;
   const matchIds = new Set(matches.map(match => match.id));
   // Limpia enlaces colgantes (partidos eliminados).
@@ -323,9 +376,7 @@ export async function onRequestPut({ request, env, params }) {
       return jsonResponse({ error: "Sembrado contiene jugadores incompletos." }, 400);
     }
     tournament.matches = buildKnockoutDraw(seedPlayerIds, { doShuffle: false, bracketSize: body.bracketSize || tournament.bracketSize });
-    tournament.matches.forEach(match => {
-      if (match.status === "completed" && match.winnerId) advanceWinner(tournament, match);
-    });
+    autoAdvanceByes(tournament);
   }
   if (body.generateDraw === true) {
     const entries = (tournament.entries || []).map(entry => entry.playerId);
@@ -336,11 +387,7 @@ export async function onRequestPut({ request, env, params }) {
     tournament.matches = tournament.formatType === "league"
       ? buildLeagueSchedule(entries)
       : buildKnockoutDraw(entries, { bracketSize: tournament.bracketSize });
-    if (tournament.formatType === "knockout") {
-      tournament.matches.forEach(match => {
-        if (match.status === "completed" && match.winnerId) advanceWinner(tournament, match);
-      });
-    }
+    if (tournament.formatType === "knockout") autoAdvanceByes(tournament);
     tournament.groups = null;
     tournament.groupCount = null;
     delete tournament.stages;
@@ -364,7 +411,7 @@ export async function onRequestPut({ request, env, params }) {
       entryPlayerIds: group
     }));
     tournament.matches = buildGroupMatches(tournament.groups);
-    delete tournament.stages;
+    tournament.stages = [{ id: "groups", name: "Fase de grupos", type: "groups" }];
   }
   if (body.groups !== undefined) {
     // Grupos personalizados (creador de Main Draw por etapas): conserva los
@@ -399,7 +446,176 @@ export async function onRequestPut({ request, env, params }) {
     tournament.groupCount = customGroups.length;
     tournament.groups = customGroups;
     tournament.matches = buildGroupMatches(customGroups);
-    delete tournament.stages;
+    tournament.stages = [{ id: "groups", name: "Fase de grupos", type: "groups" }];
+  }
+  if (body.advanceGroups !== undefined) {
+    const config = body.advanceGroups === true ? {} : body.advanceGroups;
+    if (!config || typeof config !== "object" || Array.isArray(config)) {
+      return jsonResponse({ error: "Configuración de clasificación inválida." }, 400);
+    }
+    const groups = tournament.groups || [];
+    if (groups.length < 2) return jsonResponse({ error: "Crea al menos dos grupos antes de generar las eliminatorias." }, 409);
+    const qualifiersPerGroup = Number(config.qualifiersPerGroup || 2);
+    if (!Number.isInteger(qualifiersPerGroup) || qualifiersPerGroup < 1 || qualifiersPerGroup > 4) {
+      return jsonResponse({ error: "Clasifican de 1 a 4 jugadores por grupo." }, 400);
+    }
+    const players = await gRead(env, "players");
+    const entries = tournament.entries || [];
+    const groupResults = groups.map(group => {
+      const groupMatches = (tournament.matches || []).filter(match =>
+        (match.stageId === "groups" || !match.stageId) && String(match.round || "").startsWith(`${group.name} ·`)
+      );
+      return {
+        group,
+        matches: groupMatches,
+        standings: computeStandings(group.entryPlayerIds.map(playerId => {
+          const entry = entries.find(item => item.playerId === playerId) || {};
+          const player = players.find(item => item.id === playerId) || {};
+          return { id: playerId, name: player.name || entry.playerName || playerId, level: player.level || entry.level || "" };
+        }), groupMatches)
+      };
+    });
+    if (groupResults.some(result => !result.matches.length)) {
+      return jsonResponse({ error: "Genera el calendario para todos los grupos antes de clasificar." }, 409);
+    }
+    const unfinished = groupResults.flatMap(result => result.matches.filter(match => match.status !== "completed"));
+    if (unfinished.length) {
+      return jsonResponse({ error: `Quedan ${unfinished.length} partido(s) de grupo sin finalizar.` }, 409);
+    }
+    if (groupResults.some(result => result.standings.length < qualifiersPerGroup)) {
+      return jsonResponse({ error: "Algún grupo no tiene suficientes participantes para esta clasificación." }, 409);
+    }
+
+    // Cruza los clasificados por puesto y revierte los grupos en puestos pares,
+    // evitando que dos jugadores del mismo grupo se enfrenten en primera ronda.
+    const rankedGroups = groupResults.map(result => result.standings.slice(0, qualifiersPerGroup));
+    const seedPlayerIds = [];
+    for (let groupIndex = 0; groupIndex < rankedGroups.length; groupIndex++) {
+      seedPlayerIds.push(rankedGroups[groupIndex][0].id);
+      if (qualifiersPerGroup >= 2) {
+        seedPlayerIds.push(rankedGroups[(groupIndex + 1) % rankedGroups.length][1].id);
+      }
+    }
+    for (let place = 2; place < qualifiersPerGroup; place++) {
+      const order = place % 2 === 0 ? rankedGroups : [...rankedGroups].reverse();
+      order.forEach(standings => seedPlayerIds.push(standings[place].id));
+    }
+    const playoffMatches = buildKnockoutDraw(seedPlayerIds, {
+      doShuffle: false,
+      bracketSize: config.bracketSize || tournament.bracketSize,
+      stageId: "playoff"
+    });
+    tournament.matches = [
+      ...(tournament.matches || []).filter(match => match.stageId !== "playoff"),
+      ...playoffMatches
+    ];
+    tournament.formatType = "league";
+    tournament.stages = [
+      { id: "groups", name: "Fase de grupos", type: "groups" },
+      { id: "playoff", name: "Eliminatorias", type: "knockout" }
+    ];
+    tournament.qualifiedPlayerIds = seedPlayerIds;
+    tournament.groupStandings = groupResults.map(result => ({
+      name: result.group.name,
+      standings: result.standings,
+      qualifiedPlayerIds: result.standings.slice(0, qualifiersPerGroup).map(row => row.id)
+    }));
+    tournament.qualifiersPerGroup = qualifiersPerGroup;
+    autoAdvanceByes(tournament);
+  }
+  if (body.bracketSlotUpdate !== undefined) {
+    const update = body.bracketSlotUpdate;
+    if (!update || typeof update !== "object" || Array.isArray(update) ||
+        typeof update.matchId !== "string" || !["A", "B"].includes(update.slot)) {
+      return jsonResponse({ error: "Actualización de participante inválida." }, 400);
+    }
+    const match = (tournament.matches || []).find(item => item.id === update.matchId);
+    if (!match || match.stageId === "groups") return jsonResponse({ error: "Partido de cuadro no encontrado." }, 404);
+    const field = update.slot === "A" ? "playerAId" : "playerBId";
+    const newPlayerId = update.playerId === null || update.playerId === "" ? null : update.playerId;
+    if (newPlayerId && !(tournament.entries || []).some(entry => entry.playerId === newPlayerId)) {
+      return jsonResponse({ error: "El jugador no está inscrito en este torneo." }, 400);
+    }
+    if (newPlayerId && newPlayerId === match[update.slot === "A" ? "playerBId" : "playerAId"]) {
+      return jsonResponse({ error: "Un jugador no puede ocupar ambos lados del partido." }, 400);
+    }
+    const previousWinner = match.winnerId;
+    const previousPlayerId = match[field];
+    const stageId = match.stageId || "knockout";
+    const otherSlotMatch = newPlayerId && (tournament.matches || []).find(candidate =>
+      candidate.id !== match.id &&
+      (candidate.stageId || "knockout") === stageId &&
+      candidate.round === match.round &&
+      [candidate.playerAId, candidate.playerBId].includes(newPlayerId)
+    );
+    if (otherSlotMatch) {
+      const otherField = otherSlotMatch.playerAId === newPlayerId ? "playerAId" : "playerBId";
+      const otherWinner = otherSlotMatch.winnerId;
+      otherSlotMatch[otherField] = previousPlayerId || null;
+      otherSlotMatch.status = "scheduled";
+      otherSlotMatch.winnerId = null;
+      otherSlotMatch.score = "";
+      otherSlotMatch.sets = null;
+      otherSlotMatch.updated = new Date().toISOString();
+      if (otherWinner && otherSlotMatch.nextMatchId) clearAdvancedWinner(tournament, otherSlotMatch, otherWinner);
+    }
+    match[field] = newPlayerId;
+    match.status = "scheduled";
+    match.winnerId = null;
+    match.score = "";
+    match.sets = null;
+    match.updated = new Date().toISOString();
+    if (previousWinner && previousWinner !== newPlayerId && match.nextMatchId) {
+      clearAdvancedWinner(tournament, match, previousWinner);
+    }
+  }
+  if (body.bracketSlotSwap !== undefined) {
+    const swap = body.bracketSlotSwap;
+    if (!swap || typeof swap !== "object" || !swap.from || !swap.to ||
+        typeof swap.from.matchId !== "string" || typeof swap.to.matchId !== "string" ||
+        !["A", "B"].includes(swap.from.slot) || !["A", "B"].includes(swap.to.slot)) {
+      return jsonResponse({ error: "Intercambio de sembrado inválido." }, 400);
+    }
+    const fromMatch = (tournament.matches || []).find(match => match.id === swap.from.matchId);
+    const toMatch = (tournament.matches || []).find(match => match.id === swap.to.matchId);
+    if (!fromMatch || !toMatch || fromMatch.stageId === "groups" || toMatch.stageId === "groups") {
+      return jsonResponse({ error: "No se encontraron las casillas del cuadro." }, 404);
+    }
+    const fromField = swap.from.slot === "A" ? "playerAId" : "playerBId";
+    const toField = swap.to.slot === "A" ? "playerAId" : "playerBId";
+    const fromWinner = fromMatch.winnerId;
+    const toWinner = toMatch.winnerId;
+    [fromMatch[fromField], toMatch[toField]] = [toMatch[toField], fromMatch[fromField]];
+    if ((fromMatch.playerAId && fromMatch.playerAId === fromMatch.playerBId) ||
+        (toMatch.playerAId && toMatch.playerAId === toMatch.playerBId)) {
+      [fromMatch[fromField], toMatch[toField]] = [toMatch[toField], fromMatch[fromField]];
+      return jsonResponse({ error: "Un jugador no puede ocupar ambos lados del mismo partido." }, 400);
+    }
+    for (const [match, previousWinner] of [[fromMatch, fromWinner], [toMatch, toWinner]]) {
+      match.status = "scheduled";
+      match.winnerId = null;
+      match.score = "";
+      match.sets = null;
+      match.updated = new Date().toISOString();
+      if (previousWinner && match.nextMatchId) clearAdvancedWinner(tournament, match, previousWinner);
+    }
+  }
+  if (body.matchScheduleUpdate !== undefined) {
+    const update = body.matchScheduleUpdate;
+    if (!update || typeof update !== "object" || Array.isArray(update) || typeof update.matchId !== "string") {
+      return jsonResponse({ error: "Actualización de partido inválida." }, 400);
+    }
+    const match = (tournament.matches || []).find(item => item.id === update.matchId);
+    if (!match) return jsonResponse({ error: "Partido no encontrado." }, 404);
+    if (update.date !== undefined) {
+      if (!validDate(update.date || "")) return jsonResponse({ error: "Fecha inválida." }, 400);
+      match.date = update.date || "";
+    }
+    if (update.court !== undefined) {
+      if (typeof update.court !== "string" || update.court.length > 120) return jsonResponse({ error: "Cancha inválida." }, 400);
+      match.court = update.court.trim();
+    }
+    match.updated = new Date().toISOString();
   }
   if (tournament.startDate && tournament.endDate && tournament.startDate > tournament.endDate) {
     return jsonResponse({ error: "La fecha de término debe ser igual o posterior al inicio." }, 400);
@@ -486,6 +702,7 @@ export async function onRequestPut({ request, env, params }) {
       superTiebreak: status === "completed" ? Boolean(r.superTiebreak) : match.superTiebreak,
       updated: new Date().toISOString()
     };
+    if (!validDate(updated.date || "")) return jsonResponse({ error: "Fecha inválida." }, 400);
     tournament.matches[matchIndex] = updated;
     if (status !== "completed" && updated.nextMatchId) {
       const nextMatch = (tournament.matches || []).find(match => match.id === updated.nextMatchId);
@@ -595,10 +812,25 @@ export async function onRequestGet({ request, env, params }) {
     level: playerById.get(e.playerId)?.level || ""
   }));
   let standings = null;
+  let groupStandings = tournament.groupStandings || [];
   if (tournament.formatType === "league") {
-    standings = computeStandings(entriesWithNames, tournament.matches || []);
+    const groupResults = (tournament.groups || []).map(group => {
+      const matches = (tournament.matches || []).filter(match =>
+        String(match.round || "").startsWith(`${group.name} ·`)
+      );
+      return {
+        name: group.name,
+        standings: computeStandings(group.entryPlayerIds.map(playerId => {
+          const entry = entriesWithNames.find(item => item.playerId === playerId) || {};
+          return { id: playerId, name: entry.name || "Jugador", level: entry.level || "" };
+        }), matches),
+        qualifiedPlayerIds: (tournament.groupStandings || []).find(item => item.name === group.name)?.qualifiedPlayerIds || []
+      };
+    });
+    groupStandings = groupResults;
+    standings = tournament.groups?.length ? null : computeStandings(entriesWithNames, tournament.matches || []);
   }
-  return jsonResponse({ tournament: { ...tournament, entries: entriesWithNames }, standings });
+  return jsonResponse({ tournament: { ...tournament, entries: entriesWithNames }, standings, groupStandings });
 }
 
 export async function onRequestDelete({ request, env, params }) {
