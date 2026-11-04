@@ -76,19 +76,6 @@
     "temporary": true
   },
   {
-    "id": "user-eac84b0f-aa21-4a26-95e8-e5ce5167e9b9",
-    "name": "Artemii Aukhmik",
-    "email": "artemii.aukhmik@temp.aventuratennisleague.com",
-    "password": "pbkdf2$100000$temp$placeholder",
-    "phone": null,
-    "level": "4.0",
-    "zone": "Aventura / Sunny Isles",
-    "role": "user",
-    "created": "2026-11-03T02:50:34.510Z",
-    "membershipActive": false,
-    "temporary": true
-  },
-  {
     "id": "user-9b9b2373-bf4b-47fc-9857-8afd9f3efef8",
     "name": "Diego Weiswein",
     "email": "diego.weiswein@temp.aventuratennisleague.com",
