@@ -52,18 +52,6 @@
       "user-c61dfedb-2943-4498-bf86-62592526fc8d"
     ],
     "requests": [],
-    "matches": [
-      {
-        "id": "xmw2at7zp1",
-        "stageId": "xmw2amz6t1",
-        "groupId": "xmw2amz6t4",
-        "a": "user-18574db8-0b20-451f-9693-ed7eb24e8a97",
-        "b": "user-aa23fcfa-6c58-4588-bb92-9b6fb6f0407c",
-        "date": "2026-11-04T12:55",
-        "sa": null,
-        "sb": null,
-        "slot": null
-      }
-    ]
+    "matches": []
   }
 ]
