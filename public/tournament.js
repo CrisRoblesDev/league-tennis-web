@@ -92,13 +92,6 @@
       notify.timer = setTimeout(() => { notice.hidden = true; }, 5000);
     }
 
-    function userPicker() {
-      if (!users.length) return "";
-      return `<div class="flex items-center flex-wrap gap-2"><label for="current-user" class="label !mb-0">Ver como</label><select id="current-user" class="field !w-auto">${users.map(user =>
-        `<option value="${esc(user.id)}" ${user.id === selectedUser ? "selected" : ""}>${esc(user.name)} · ${esc(user.role || "miembro")}</option>`
-      ).join("")}</select></div>`;
-    }
-
     function render() {
       if (page === "wizard" && adminView()) renderWizard();
       else if (page === "detail" && tNow()) renderDetail();
@@ -130,7 +123,7 @@
       app.innerHTML = `<div class="fade"><div class="flex flex-wrap justify-between items-end gap-4 mb-6"><div><p class="eyebrow text-[#598044] mb-2">${admin ? "CENTRO DE CONTROL" : "EN LA CANCHA"}</p><h2 class="display text-3xl md:text-4xl font-bold">${admin ? "Panel de torneos" : "Explora los torneos"}</h2><p class="muted mt-2">${admin ? "Organiza jugadores, partidos y cuadros." : "Consulta los cuadros e inscríbete para jugar."}</p></div>${
         admin
           ? `<div class="flex flex-wrap items-center gap-2"><span class="pill">${tournaments.length} torneos</span>${btn("+ Crear torneo", "wizard-start", "", "light")}</div>`
-          : userPicker()
+          : ""
       }</div><div class="grid md:grid-cols-2 gap-5">${
         tournaments.map((tournament, index) => `<article class="card overflow-hidden"><div class="h-2 ${index % 2 ? "bg-[#a3c979]" : "bg-[#d9f274]"}"></div><div class="p-6"><div class="flex justify-between gap-2 mb-5"><span class="eyebrow text-[#69845b]">TORNEO ${String(index + 1).padStart(2, "0")} · 2026</span>${pill(tournament.status)}</div><h3 class="display text-2xl font-bold mb-2">${esc(tournament.name)}</h3><p class="muted text-sm">${esc(tournament.description)}</p><div class="grid grid-cols-2 gap-3 my-5 py-4 border-y border-[#dce5d8] text-sm"><div><span class="muted block text-xs">Formato</span><strong>${esc((FORMATS[tournament.mode] || FORMATS.knockout).label)}</strong></div><div><span class="muted block text-xs">Inicio</span><strong>${date(tournament.date)}</strong></div><div><span class="muted block text-xs">Jugadores</span><strong>${tournament.participants.length} / ${tournament.capacity}</strong></div><div><span class="muted block text-xs">Sede</span><strong>${esc(tournament.venue || "Por definir")}</strong></div></div><div class="flex flex-wrap gap-2">${btn(admin ? "Gestionar" : "Ver torneo", "open", tournament.id, "")}${btn("Main Draw", "open-draw", tournament.id)}</div></div></article>`).join("")
       }</div>${ranking}</div>`;
@@ -139,7 +132,7 @@
     function renderDetail() {
       const tournament = tNow();
       const admin = adminView();
-      app.innerHTML = `<div class="fade"><button type="button" class="text-sm font-bold text-[#30634b] mb-5" data-action="back">← Todos los torneos</button><div class="card p-5 md:p-7 mb-5"><div class="flex justify-between flex-wrap gap-4"><div><p class="eyebrow text-[#668957] mb-2">${admin ? "ADMINISTRACIÓN" : "VISTA PÚBLICA"} · ${esc(tournament.category)}</p><h2 class="display text-3xl md:text-4xl font-bold">${esc(tournament.name)}</h2><p class="muted mt-2">${esc(tournament.description)}</p></div>${pill(tournament.status)}</div></div>${admin ? "" : `<div class="mb-5">${userPicker()}<p class="muted text-xs mt-2">Solo los miembros pueden inscribirse y jugar.</p></div>`}<nav class="tabs mb-5" aria-label="Secciones del torneo">${
+      app.innerHTML = `<div class="fade"><button type="button" class="text-sm font-bold text-[#30634b] mb-5" data-action="back">← Todos los torneos</button><div class="card p-5 md:p-7 mb-5"><div class="flex justify-between flex-wrap gap-4"><div><p class="eyebrow text-[#668957] mb-2">${admin ? "ADMINISTRACIÓN" : "VISTA PÚBLICA"} · ${esc(tournament.category)}</p><h2 class="display text-3xl md:text-4xl font-bold">${esc(tournament.name)}</h2><p class="muted mt-2">${esc(tournament.description)}</p></div>${pill(tournament.status)}</div></div>${admin ? "" : `<p class="muted text-xs mb-5">Solo los miembros pueden inscribirse y jugar.</p>`}<nav class="tabs mb-5" aria-label="Secciones del torneo">${
         [["summary", "Resumen"], ["players", admin ? "Participantes e inscripciones" : "Participantes"], ["matches", "Partidos"], ["draw", "Main Draw"]].map(([key, label]) =>
           `<button type="button" class="tab ${tab === key ? "active" : ""}" data-action="tab" data-id="${key}" aria-current="${tab === key ? "page" : "false"}">${label}</button>`
         ).join("")

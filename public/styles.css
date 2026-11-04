@@ -174,8 +174,8 @@ main { max-width: 1200px; margin: auto; padding: 0 5%; }
 .points-table td:last-child { text-align: right; }
 
 /* FILTERS */
-.filters { display: flex; gap: 12px; flex-wrap: wrap; margin: 18px 0; }
-.filters select, .filters input { border: 1px solid #d8dee4; background: var(--white); border-radius: var(--radius); padding: 11px 14px; color: var(--navy); font: inherit; min-width: 150px; font-size: 14px; }
+.filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 18px 0; align-items: stretch; }
+.filters select, .filters input { border: 1px solid #d8dee4; background: var(--white); border-radius: var(--radius); padding: 11px 14px; color: var(--navy); font: inherit; min-width: 0; width: 100%; font-size: 14px; }
 .filters select:focus, .filters input:focus { outline: 2px solid var(--green); outline-offset: -1px; }
 
 /* MAIN DRAW ESCRITO */.draw-written { margin-top: 14px; }
@@ -440,7 +440,7 @@ form select[multiple] { min-height: 120px; }
   .price-big { font-size: 32px; }
   .tag { font-size: 9px; padding: 4px 8px; }
   .step { padding: 14px; }
-  .filters { flex-direction: column; gap: 8px; }
+  .filters { grid-template-columns: 1fr; gap: 8px; }
   .filters select, .filters input { min-width: 0; width: 100%; }
   .ranking3d { height: 320px; }
   .ranking-head-actions { width: 100%; justify-content: space-between; }
