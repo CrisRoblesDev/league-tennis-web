@@ -16,7 +16,10 @@ function roundName(totalRounds, roundIndex) {
   return `Ronda ${roundIndex + 1}`;
 }
 
-function computeBracketSize(n_players) {
+function computeBracketSize(n_players, preferredSize) {
+  if (preferredSize && Number.isInteger(preferredSize) && preferredSize >= 2 && (preferredSize & (preferredSize - 1)) === 0) {
+    return Math.max(preferredSize, n_players);
+  }
   if (n_players < 2) return 0;
   let size = 1;
   while (size < n_players) size *= 2;
@@ -70,9 +73,11 @@ function buildGroupMatches(groups) {
   return matches;
 }
 
-function buildKnockoutDraw(playerIds) {
-  const size = computeBracketSize(playerIds.length);
-  const shuffled = [...playerIds].sort(() => Math.random() - 0.5);
+function buildKnockoutDraw(playerIds, options = {}) {
+  const size = computeBracketSize(playerIds.length, options.bracketSize);
+  const shuffled = options.doShuffle === false
+    ? [...playerIds]
+    : [...playerIds].sort(() => Math.random() - 0.5);
   const seeding = distributeByes(shuffled, size);
   const totalRounds = Math.log2(size);
   const matches = [];
@@ -297,6 +302,31 @@ export async function onRequestPut({ request, env, params }) {
       tournament.maxParticipants = value;
     }
   }
+  if (body.bracketSize !== undefined) {
+    if (body.bracketSize === null || body.bracketSize === "") {
+      tournament.bracketSize = null;
+    } else {
+      const value = Number(body.bracketSize);
+      if (!Number.isInteger(value) || value < 4 || value > 64 || (value & (value - 1)) !== 0) {
+        return jsonResponse({ error: "El tamaño del cuadro debe ser 4, 8, 16, 32 o 64." }, 400);
+      }
+      tournament.bracketSize = value;
+    }
+  }
+  if (Array.isArray(body.saveSeed) && body.saveSeed.length >= 2) {
+    const seedPlayerIds = body.saveSeed.filter(id => typeof id === "string");
+    if (seedPlayerIds.length < 2) {
+      return jsonResponse({ error: "El sembrado necesita al menos 2 jugadores." }, 400);
+    }
+    const validPlayerIds = new Set((tournament.entries || []).map(entry => entry.playerId));
+    if (!seedPlayerIds.every(id => validPlayerIds.has(id))) {
+      return jsonResponse({ error: "Sembrado contiene jugadores incompletos." }, 400);
+    }
+    tournament.matches = buildKnockoutDraw(seedPlayerIds, { doShuffle: false, bracketSize: body.bracketSize || tournament.bracketSize });
+    tournament.matches.forEach(match => {
+      if (match.status === "completed" && match.winnerId) advanceWinner(tournament, match);
+    });
+  }
   if (body.generateDraw === true) {
     const entries = (tournament.entries || []).map(entry => entry.playerId);
     if (entries.length < 2) {
@@ -305,7 +335,7 @@ export async function onRequestPut({ request, env, params }) {
     tournament.formatType ||= "knockout";
     tournament.matches = tournament.formatType === "league"
       ? buildLeagueSchedule(entries)
-      : buildKnockoutDraw(entries);
+      : buildKnockoutDraw(entries, { bracketSize: tournament.bracketSize });
     if (tournament.formatType === "knockout") {
       tournament.matches.forEach(match => {
         if (match.status === "completed" && match.winnerId) advanceWinner(tournament, match);

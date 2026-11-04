@@ -2243,15 +2243,22 @@ async function openTournamentManage(tournamentId) {
     </div>` : ""}
 
     <div class="manage-panel" data-manage-panel="draw" hidden>
-      ${(tournament.formatType || "knockout") === "knockout" ? `
-      <div class="manage-toolbar">
-        <button class="btn btn-primary btn-sm" onclick="addTournamentStage('${escapeHtml(tournament.id)}')">+ Añadir etapa</button>
-        <span class="muted">Crea partidos en cada etapa; cuando encajan los conteos, se conectan solos y los ganadores avanzan.</span>
-      </div>` : ""}
-      ${renderModernBracket(matches, tournament.formatType || "knockout", entrants, { admin: true, tournamentId: tournament.id, stages: tournament.stages })}
+      <div id="bracketEngineRoot" class="bracket-engine__root"></div>
       <details class="matching-details"><summary>Ver lista de partidos</summary>${renderMatchesListHtml(matches)}</details>
     </div>
   `;
+
+  content.querySelectorAll("[data-manage-tab]").forEach(button => {
+    button.addEventListener("click", () => {
+      const tab = button.dataset.manageTab;
+      content.querySelectorAll("[data-manage-tab]").forEach(b => b.classList.toggle("is-active", b === button));
+      content.querySelectorAll("[data-manage-panel]").forEach(panel => { panel.hidden = panel.dataset.managePanel !== tab; });
+      if (tab === "draw" && window.BracketEngine) {
+        window.BracketEngine.init("bracketEngineRoot", tournament);
+      }
+    });
+  });
+
 
   content.querySelectorAll("[data-manage-tab]").forEach(button => {
     button.addEventListener("click", () => {
