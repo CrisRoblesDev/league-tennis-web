@@ -313,5 +313,16 @@
     "role": "user",
     "created": "2026-11-04T16:28:24.446Z",
     "membershipActive": false
+  },
+  {
+    "id": "user-f7d37d06-a9b5-4d05-8634-f7029bd6c7ac",
+    "name": "Hezy Saaty",
+    "email": "hezy.saaty@temp.aventuratennisleague.com",
+    "password": "pbkdf2$100000$A1mGdAmows3OyhEQPYGzZQ$c63DagnkxMickYb8e7WOXNcoM1_xB86esiuj8omyn8c",
+    "level": "",
+    "zone": "",
+    "role": "user",
+    "created": "2026-11-04T18:41:10.206Z",
+    "membershipActive": false
   }
 ]
