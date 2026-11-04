@@ -47,11 +47,23 @@
         "auto": true,
         "sets": null,
         "updated": "2026-11-04T03:02:25.682Z"
+      },
+      {
+        "id": "match-ed6b639b-a7fc-4ec2-855b-992f4a257f4f",
+        "stageId": "knockout",
+        "round": "Etapa 2",
+        "playerAId": "player-0ad5bb26-92b4-4da7-a28b-3cab8e767e06",
+        "playerBId": "player-e6f56afa-2d57-41e2-a158-6c5c8cf52664",
+        "date": "2026-11-05",
+        "court": "",
+        "status": "scheduled",
+        "score": "",
+        "winnerId": null
       }
     ],
     "createdBy": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
     "created": "2026-11-02T03:19:21.917Z",
-    "updated": "2026-11-04T03:29:01.932Z",
+    "updated": "2026-11-04T03:29:38.407Z",
     "formatType": "knockout",
     "groups": null,
     "groupCount": null
