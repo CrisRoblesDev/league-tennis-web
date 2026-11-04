@@ -130,75 +130,10 @@
     },
     "matches": [
       {
-        "id": "match-1e0e36c6-4f93-40f5-95fa-46f8aca60884",
+        "id": "match-0c80e702-f1fb-421d-b858-1d651e8578da",
         "stageId": "groups",
-        "round": "Liga general · Jornada 1",
-        "playerAId": "player-7d40a81c-a225-4a08-a80f-d126c7a86a19",
-        "playerBId": "player-2097de7a-ce8e-4ba3-8645-5f7e8f52cbc0",
-        "date": "",
-        "court": "",
-        "status": "scheduled",
-        "score": "",
-        "winnerId": null,
-        "auto": true
-      },
-      {
-        "id": "match-e436ff5a-9850-4fa0-8d24-4efd384591c7",
-        "stageId": "groups",
-        "round": "Liga general · Jornada 1",
-        "playerAId": "player-796d1776-6eb6-42ba-9a11-b1c110109485",
-        "playerBId": "player-76298acf-664b-4115-a7ab-b07211d56106",
-        "date": "",
-        "court": "",
-        "status": "scheduled",
-        "score": "",
-        "winnerId": null,
-        "auto": true
-      },
-      {
-        "id": "match-a6f74cff-9e0f-41c0-af1c-3d69b5d207bf",
-        "stageId": "groups",
-        "round": "Liga general · Jornada 1",
-        "playerAId": "player-05961c74-cca6-43e0-b484-5fcff32717b6",
-        "playerBId": "player-914de310-3c4d-4faa-bbaf-3c67940c14ee",
-        "date": "",
-        "court": "",
-        "status": "scheduled",
-        "score": "",
-        "winnerId": null,
-        "auto": true
-      },
-      {
-        "id": "match-e3e1d23f-5951-460f-87cb-9a1eca811c71",
-        "stageId": "groups",
-        "round": "Liga general · Jornada 2",
-        "playerAId": "player-7d40a81c-a225-4a08-a80f-d126c7a86a19",
-        "playerBId": "player-76298acf-664b-4115-a7ab-b07211d56106",
-        "date": "",
-        "court": "",
-        "status": "scheduled",
-        "score": "",
-        "winnerId": null,
-        "auto": true
-      },
-      {
-        "id": "match-74d27a31-e4b7-44f8-be73-70a7ac43e41a",
-        "stageId": "groups",
-        "round": "Liga general · Jornada 2",
+        "round": "Grupo A · Jornada 1",
         "playerAId": "player-2097de7a-ce8e-4ba3-8645-5f7e8f52cbc0",
-        "playerBId": "player-914de310-3c4d-4faa-bbaf-3c67940c14ee",
-        "date": "",
-        "court": "",
-        "status": "scheduled",
-        "score": "",
-        "winnerId": null,
-        "auto": true
-      },
-      {
-        "id": "match-3220a67f-8971-40e1-bd3b-9ebd8d1e4633",
-        "stageId": "groups",
-        "round": "Liga general · Jornada 2",
-        "playerAId": "player-796d1776-6eb6-42ba-9a11-b1c110109485",
         "playerBId": "player-05961c74-cca6-43e0-b484-5fcff32717b6",
         "date": "",
         "court": "",
@@ -208,22 +143,9 @@
         "auto": true
       },
       {
-        "id": "match-3c7df973-4b8d-4fbc-af4a-07ca06c7d95e",
+        "id": "match-ec59bc87-8627-4496-bc2d-77ed672aa49e",
         "stageId": "groups",
-        "round": "Liga general · Jornada 3",
-        "playerAId": "player-7d40a81c-a225-4a08-a80f-d126c7a86a19",
-        "playerBId": "player-914de310-3c4d-4faa-bbaf-3c67940c14ee",
-        "date": "",
-        "court": "",
-        "status": "scheduled",
-        "score": "",
-        "winnerId": null,
-        "auto": true
-      },
-      {
-        "id": "match-4a0c94b1-7571-41fe-81d6-bc569e276d24",
-        "stageId": "groups",
-        "round": "Liga general · Jornada 3",
+        "round": "Grupo A · Jornada 2",
         "playerAId": "player-76298acf-664b-4115-a7ab-b07211d56106",
         "playerBId": "player-05961c74-cca6-43e0-b484-5fcff32717b6",
         "date": "",
@@ -234,48 +156,9 @@
         "auto": true
       },
       {
-        "id": "match-0b863dfb-8077-4cbc-9aa0-020794fce6a8",
+        "id": "match-2f9041a5-a889-4c4c-b57e-51463dc85ccb",
         "stageId": "groups",
-        "round": "Liga general · Jornada 3",
-        "playerAId": "player-2097de7a-ce8e-4ba3-8645-5f7e8f52cbc0",
-        "playerBId": "player-796d1776-6eb6-42ba-9a11-b1c110109485",
-        "date": "",
-        "court": "",
-        "status": "scheduled",
-        "score": "",
-        "winnerId": null,
-        "auto": true
-      },
-      {
-        "id": "match-78e123d3-d192-4f2e-b551-f19f1c312c2b",
-        "stageId": "groups",
-        "round": "Liga general · Jornada 4",
-        "playerAId": "player-7d40a81c-a225-4a08-a80f-d126c7a86a19",
-        "playerBId": "player-05961c74-cca6-43e0-b484-5fcff32717b6",
-        "date": "",
-        "court": "",
-        "status": "scheduled",
-        "score": "",
-        "winnerId": null,
-        "auto": true
-      },
-      {
-        "id": "match-c0dc745d-7cd2-4f3f-945c-3041f4ce2f23",
-        "stageId": "groups",
-        "round": "Liga general · Jornada 4",
-        "playerAId": "player-914de310-3c4d-4faa-bbaf-3c67940c14ee",
-        "playerBId": "player-796d1776-6eb6-42ba-9a11-b1c110109485",
-        "date": "",
-        "court": "",
-        "status": "scheduled",
-        "score": "",
-        "winnerId": null,
-        "auto": true
-      },
-      {
-        "id": "match-37f112ad-7516-400c-a73f-ad5d436ff72d",
-        "stageId": "groups",
-        "round": "Liga general · Jornada 4",
+        "round": "Grupo A · Jornada 3",
         "playerAId": "player-76298acf-664b-4115-a7ab-b07211d56106",
         "playerBId": "player-2097de7a-ce8e-4ba3-8645-5f7e8f52cbc0",
         "date": "",
@@ -286,11 +169,11 @@
         "auto": true
       },
       {
-        "id": "match-fc3ab429-ef9d-46b7-be18-cd39e67e3f43",
+        "id": "match-d03283db-d7a1-47c8-9946-458c96f64042",
         "stageId": "groups",
-        "round": "Liga general · Jornada 5",
-        "playerAId": "player-7d40a81c-a225-4a08-a80f-d126c7a86a19",
-        "playerBId": "player-796d1776-6eb6-42ba-9a11-b1c110109485",
+        "round": "Grupo B · Jornada 1",
+        "playerAId": "player-796d1776-6eb6-42ba-9a11-b1c110109485",
+        "playerBId": "player-7d40a81c-a225-4a08-a80f-d126c7a86a19",
         "date": "",
         "court": "",
         "status": "scheduled",
@@ -299,24 +182,24 @@
         "auto": true
       },
       {
-        "id": "match-266f54b9-aba1-48c8-b4c8-56e10f5da0da",
+        "id": "match-2721648c-a342-4ce9-bb34-5b1a028355dc",
         "stageId": "groups",
-        "round": "Liga general · Jornada 5",
-        "playerAId": "player-05961c74-cca6-43e0-b484-5fcff32717b6",
-        "playerBId": "player-2097de7a-ce8e-4ba3-8645-5f7e8f52cbc0",
-        "date": "",
-        "court": "",
-        "status": "scheduled",
-        "score": "",
-        "winnerId": null,
-        "auto": true
-      },
-      {
-        "id": "match-c0f18593-b5f6-429a-97dd-2e7d394ca583",
-        "stageId": "groups",
-        "round": "Liga general · Jornada 5",
+        "round": "Grupo B · Jornada 2",
         "playerAId": "player-914de310-3c4d-4faa-bbaf-3c67940c14ee",
-        "playerBId": "player-76298acf-664b-4115-a7ab-b07211d56106",
+        "playerBId": "player-7d40a81c-a225-4a08-a80f-d126c7a86a19",
+        "date": "",
+        "court": "",
+        "status": "scheduled",
+        "score": "",
+        "winnerId": null,
+        "auto": true
+      },
+      {
+        "id": "match-b1ee1c46-eae9-486c-8012-27cbe4d65737",
+        "stageId": "groups",
+        "round": "Grupo B · Jornada 3",
+        "playerAId": "player-914de310-3c4d-4faa-bbaf-3c67940c14ee",
+        "playerBId": "player-796d1776-6eb6-42ba-9a11-b1c110109485",
         "date": "",
         "court": "",
         "status": "scheduled",
@@ -327,17 +210,22 @@
     ],
     "createdBy": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
     "created": "2026-11-04T04:33:43.202Z",
-    "groupCount": 1,
+    "groupCount": 2,
     "groups": [
       {
-        "name": "Liga general",
+        "name": "Grupo A",
         "entryPlayerIds": [
-          "player-7d40a81c-a225-4a08-a80f-d126c7a86a19",
-          "player-796d1776-6eb6-42ba-9a11-b1c110109485",
-          "player-05961c74-cca6-43e0-b484-5fcff32717b6",
-          "player-914de310-3c4d-4faa-bbaf-3c67940c14ee",
           "player-76298acf-664b-4115-a7ab-b07211d56106",
-          "player-2097de7a-ce8e-4ba3-8645-5f7e8f52cbc0"
+          "player-2097de7a-ce8e-4ba3-8645-5f7e8f52cbc0",
+          "player-05961c74-cca6-43e0-b484-5fcff32717b6"
+        ]
+      },
+      {
+        "name": "Grupo B",
+        "entryPlayerIds": [
+          "player-914de310-3c4d-4faa-bbaf-3c67940c14ee",
+          "player-796d1776-6eb6-42ba-9a11-b1c110109485",
+          "player-7d40a81c-a225-4a08-a80f-d126c7a86a19"
         ]
       }
     ],
@@ -348,6 +236,6 @@
         "type": "groups"
       }
     ],
-    "updated": "2026-11-04T04:33:45.157Z"
+    "updated": "2026-11-04T04:34:20.103Z"
   }
 ]
