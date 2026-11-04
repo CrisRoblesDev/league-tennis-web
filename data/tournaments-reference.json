@@ -15,11 +15,6 @@
         "id": "stage-qf",
         "name": "Grupos",
         "kind": "groups"
-      },
-      {
-        "id": "stage-final",
-        "name": "Final",
-        "kind": "bracket"
       }
     ],
     "groups": [
