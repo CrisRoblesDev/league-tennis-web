@@ -74,14 +74,33 @@
         "playerBId": "player-e6f56afa-2d57-41e2-a158-6c5c8cf52664",
         "date": "2026-11-05",
         "court": "",
-        "status": "scheduled",
-        "score": "",
-        "winnerId": null
+        "status": "completed",
+        "score": "6-4, 4-6, 7-6*",
+        "winnerId": "player-0ad5bb26-92b4-4da7-a28b-3cab8e767e06",
+        "sets": [
+          {
+            "home": 6,
+            "away": 4,
+            "tiebreak": false
+          },
+          {
+            "home": 4,
+            "away": 6,
+            "tiebreak": false
+          },
+          {
+            "home": 7,
+            "away": 6,
+            "tiebreak": true
+          }
+        ],
+        "superTiebreak": false,
+        "updated": "2026-11-04T03:44:45.059Z"
       }
     ],
     "createdBy": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
     "created": "2026-11-02T03:19:21.917Z",
-    "updated": "2026-11-04T03:44:07.660Z",
+    "updated": "2026-11-04T03:44:45.059Z",
     "formatType": "knockout",
     "groups": null,
     "groupCount": null
