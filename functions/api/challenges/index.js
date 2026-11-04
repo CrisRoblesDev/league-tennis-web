@@ -22,6 +22,11 @@ export async function onRequestPost(context) {
   const { request, env } = context;
   const userId = await requireAuth(request, env);
   if (!userId) return jsonResponse({ error: "Inicia sesión para publicar un desafío" }, 401);
+  const users = await gRead(env, "users");
+  const user = users.find(item => item.id === userId);
+  if (!user || !["member", "admin"].includes(user.role)) {
+    return jsonResponse({ error: "Solo los miembros pueden publicar desafíos" }, 403);
+  }
 
   let body;
   try {

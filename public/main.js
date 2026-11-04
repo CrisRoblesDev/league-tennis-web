@@ -73,7 +73,16 @@ function updateAuthUI() {
       ${currentUser.role === "admin" ? `<a class="btn btn-sm btn-admin" href="${isAdminPage ? "/" : "/admin.html"}">${isAdminPage ? "Página pública" : "Administración"}</a>` : ""}
       <button class="btn btn-sm btn-secondary" onclick="logout()">Salir</button>
     `;
+    const publishBtn = document.getElementById("publishChallengeBtn");
+    if (publishBtn) {
+      const canPublish = ["member", "admin"].includes(currentUser.role);
+      publishBtn.hidden = !canPublish;
+      publishBtn.disabled = !canPublish;
+    }
   } else {
+    const publishBtn = document.getElementById("publishChallengeBtn");
+    if (publishBtn) { publishBtn.hidden = true; publishBtn.disabled = true; }
+  }
     authBtns.innerHTML = `
       <button class="btn btn-sm" onclick="openModal('loginModal')">Iniciar sesión</button>
       <button class="btn btn-sm btn-primary" onclick="openModal('registerModal')">Registrarse</button>

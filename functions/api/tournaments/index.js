@@ -230,6 +230,11 @@ export async function onRequestPost({ request, env }) {
 
   const userId = await requireAuth(request, env).catch(() => null);
   if (!userId) return jsonResponse({ error: "Inicia sesión para continuar" }, 401);
+  const users = await gRead(env, "users");
+  const user = (Array.isArray(users) ? users : []).find(item => item.id === userId);
+  if (!user || !["member", "admin"].includes(user.role)) {
+    return jsonResponse({ error: "Solo los miembros pueden inscribirse en torneos" }, 403);
+  }
 
   const tournamentId = typeof body.tournamentId === "string" ? body.tournamentId : "";
   const tournaments = await gRead(env, "tournamentsReference");
