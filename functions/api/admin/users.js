@@ -80,7 +80,7 @@ export async function onRequestPost(context) {
     const name = typeof b.name === "string" ? b.name.trim() : "";
     const email = typeof b.email === "string" ? b.email.trim().toLowerCase() : "";
     const password = typeof b.password === "string" ? b.password : "";
-    const role = b.role === "admin" ? "admin" : "user";
+    const role = b.role === "admin" ? "admin" : b.role === "member" ? "member" : "user";
     if (!name || name.length > 100 || !EMAIL_PATTERN.test(email) ||
         password.length < 8 || password.length > 128) {
       return jsonResponse({ error: "Nombre, email válido y contraseña de 8 a 128 caracteres son requeridos." }, 400);
@@ -123,7 +123,7 @@ export async function onRequestPost(context) {
     target.password = await hashPw(updates.password);
   }
   if (updates.role !== undefined) {
-    if (!["admin", "user"].includes(updates.role)) return jsonResponse({ error: "Rol inválido" }, 400);
+    if (!["admin", "member", "user"].includes(updates.role)) return jsonResponse({ error: "Rol inválido" }, 400);
     if (target.id === userId && updates.role !== "admin") {
       return jsonResponse({ error: "No puedes quitarte tu propio acceso de administrador." }, 409);
     }
