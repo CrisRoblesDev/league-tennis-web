@@ -1457,3 +1457,108 @@ html[dir="rtl"] .admin-record-head { direction: rtl; }
 .ranking-manual-control { min-width:170px; white-space:nowrap; }
 .ranking-manual-control input { width:88px; min-width:72px; padding:6px 8px; border:1px solid #d0d5dd; border-radius:8px; }
 .ranking-manual-control button { margin-left:5px; }
+
+/* Rules & FAQ modern layout */
+.rules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 18px 0 28px;
+}
+.rule-card {
+  padding: 18px;
+  position: relative;
+}
+.rule-card .rule-icon {
+  font-size: 24px;
+  display: block;
+  margin-bottom: 8px;
+}
+.rule-card h4 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+.rule-card ul {
+  margin: 6px 0 0 18px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.rule-card p {
+  font-size: 14px;
+  margin: 6px 0;
+}
+.level-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.level-chips span {
+  background: var(--green);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+}
+.faq-title {
+  margin: 28px 0 12px;
+  font-size: 22px;
+}
+.faq-list {
+  display: grid;
+  gap: 10px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.faq-item {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  padding: 0;
+  overflow: hidden;
+}
+.faq-item summary {
+  cursor: pointer;
+  padding: 14px 18px;
+  font-weight: 700;
+  font-size: 15px;
+  list-style: none;
+  position: relative;
+  padding-right: 40px;
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after {
+  content: "+";
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: var(--green);
+  transition: transform .2s;
+}
+.faq-item[open] summary::after {
+  content: "−";
+}
+.faq-item p {
+  margin: 0;
+  padding: 0 18px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.rules-footer {
+  text-align: center;
+  margin-top: 32px;
+  padding: 20px;
+}
+.rules-footer .rules-brand {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0 0 4px;
+}
+@media (max-width: 640px) {
+  .rules-grid { grid-template-columns: 1fr; }
+  .rule-card { padding: 14px; }
+}
