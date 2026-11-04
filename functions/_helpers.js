@@ -15,6 +15,7 @@ const FILES = {
   challenges: "results.json",
   leagueChallenges: "challenges.json",
   tournaments: "tournaments.json",
+  tournamentsReference: "tournaments-reference.json",
   settings: "settings.json",
   ranking2026: "ranking2026.json"
 };
@@ -32,6 +33,7 @@ const DEFAULTS = {
   challenges: [],
   leagueChallenges: [],
   tournaments: [],
+  tournamentsReference: [],
   settings: { whatsappUrl: "" },
   ranking2026: []
 };
