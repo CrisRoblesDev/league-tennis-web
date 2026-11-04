@@ -80,13 +80,12 @@ function updateAuthUI() {
       publishBtn.disabled = !canPublish;
     }
   } else {
-    const publishBtn = document.getElementById("publishChallengeBtn");
-    if (publishBtn) { publishBtn.hidden = true; publishBtn.disabled = true; }
-  }
     authBtns.innerHTML = `
       <button class="btn btn-sm" onclick="openModal('loginModal')">Iniciar sesión</button>
       <button class="btn btn-sm btn-primary" onclick="openModal('registerModal')">Registrarse</button>
     `;
+    const publishBtn = document.getElementById("publishChallengeBtn");
+    if (publishBtn) { publishBtn.hidden = true; publishBtn.disabled = true; }
   }
 }
 
