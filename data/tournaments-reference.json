@@ -19,10 +19,6 @@
     ],
     "groups": [
       {
-        "id": "grp-b",
-        "name": "Grupo B"
-      },
-      {
         "id": "grp-c",
         "name": "Grupo C"
       },
