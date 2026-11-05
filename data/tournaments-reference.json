@@ -30,11 +30,6 @@
         "id": "xmw41420m3",
         "name": "WEEK 2",
         "kind": "bracket"
-      },
-      {
-        "id": "xmw45fhaa2",
-        "name": "WEEK 3",
-        "kind": "bracket"
       }
     ],
     "groups": [
@@ -81,17 +76,6 @@
         "groupId": null,
         "a": "user-a0105a54-6253-46b6-a266-43b17d35dde5",
         "b": "user-c214871c-3e87-483c-864c-d7042443fbbc",
-        "date": "",
-        "sa": null,
-        "sb": null,
-        "slot": 0
-      },
-      {
-        "id": "xmw45g07g3",
-        "stageId": "xmw45fhaa2",
-        "groupId": null,
-        "a": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
-        "b": "user-f7d37d06-a9b5-4d05-8634-f7029bd6c7ac",
         "date": "",
         "sa": null,
         "sb": null,
