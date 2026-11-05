@@ -726,11 +726,10 @@
           notify("Debe quedar al menos una etapa.");
           return;
         }
-        confirmAction("Eliminar etapa", `Se eliminará «${stage.name}» y sus partidos asociados.`, () => {
-          tournament.stages = tournament.stages.filter(entry => entry.id !== id);
-          tournament.matches = tournament.matches.filter(match => match.stageId !== id);
-          refresh("Etapa eliminada.");
-        });
+        if (!window.confirm(`¿Eliminar la etapa «${stage.name}» y sus partidos asociados?`)) return;
+        tournament.stages = tournament.stages.filter(entry => entry.id !== id);
+        tournament.matches = tournament.matches.filter(match => match.stageId !== id);
+        refresh("Etapa eliminada.");
         return;
       }
       if (action === "delete-structure") {
@@ -775,11 +774,10 @@
       if (action === "delete-group") {
         const group = tournament.groups.find(entry => entry.id === id);
         if (!group) return;
-        confirmAction("Eliminar grupo", `Se eliminará «${group.name}» y sus partidos asociados.`, () => {
-          tournament.groups = tournament.groups.filter(entry => entry.id !== id);
-          tournament.matches = tournament.matches.filter(match => match.groupId !== id);
-          refresh("Grupo eliminado.");
-        });
+        if (!window.confirm(`¿Eliminar el grupo «${group.name}» y sus partidos asociados?`)) return;
+        tournament.groups = tournament.groups.filter(entry => entry.id !== id);
+        tournament.matches = tournament.matches.filter(match => match.groupId !== id);
+        refresh("Grupo eliminado.");
         return;
       }
       if (action === "delete-match") {
