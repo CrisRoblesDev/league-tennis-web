@@ -720,7 +720,7 @@ function editAdminPlayer(playerId) {
   form.elements.namedItem("category").value = player.category || "singles";
   form.elements.namedItem("gender").value = player.gender || "hombres";
   form.elements.namedItem("zone").value = player.zone;
-  form.scrollIntoView({ behavior: "smooth", block: "center" });
+  openAdminDynamicEditModal("adminPlayerForm", "Editar jugador");
 }
 
 function resetAdminPlayerForm() {
@@ -729,6 +729,7 @@ function resetAdminPlayerForm() {
   form.reset();
   form.elements.namedItem("playerId").value = "";
   form.elements.namedItem("accountId").disabled = false;
+  closeAdminDynamicEditModal();
 }
 
 async function saveAdminPlayer(event) {
@@ -1389,7 +1390,7 @@ function editProduct(productId) {
     preview.style.display = imageInput.value ? "block" : "none";
     if (imageInput.value) preview.src = imageInput.value;
   }
-  form.scrollIntoView({ behavior: "smooth", block: "start" });
+  openAdminDynamicEditModal("adminProductForm", "Editar producto");
 }
 
 function previewProductImageFile(input) {
@@ -1449,6 +1450,7 @@ function resetProductForm() {
   if (preview) preview.style.display = "none";
   form.elements.namedItem("category").value = "";
   form.elements.namedItem("active").checked = true;
+  closeAdminDynamicEditModal();
 }async function saveProduct(event) {
   event.preventDefault();
   const form = event.target;
@@ -1536,7 +1538,7 @@ function editAdminResult(resultId) {
   const result = matchResults.find(item => item.id === resultId);
   const form = document.getElementById("adminResultForm");
   if (!result || !form) return;
-  form.hidden = false;
+  openAdminDynamicEditModal("adminResultForm", "Editar resultado");
   form.elements.namedItem("resultId").value = result.id;
   form.elements.namedItem("winnerId").value = result.winnerId;
   form.elements.namedItem("loserId").value = result.loserId;
@@ -1549,6 +1551,7 @@ function cancelAdminResultEdit() {
   const form = document.getElementById("adminResultForm");
   form.reset();
   form.hidden = true;
+  closeAdminDynamicEditModal();
 }
 
 async function saveAdminResult(event) {
@@ -1627,6 +1630,36 @@ function openModal(id) {
 function closeModal(id) {
   document.getElementById(id).classList.remove("open");
   document.body.style.overflow = "";
+}
+
+const _adminFormHomes = new Map();
+function openAdminDynamicEditModal(formId, title) {
+  const form = document.getElementById(formId);
+  const box = document.getElementById("adminDynamicEditBox");
+  const titleEl = document.getElementById("adminDynamicEditTitle");
+  if (!form || !box) return;
+  if (!_adminFormHomes.has(form)) {
+    _adminFormHomes.set(form, { parent: form.parentNode, next: form.nextSibling });
+  }
+  if (titleEl) titleEl.textContent = title;
+  if (!box.contains(form)) box.appendChild(form);
+  openModal("adminDynamicEditModal");
+}
+function closeAdminDynamicEditModal() {
+  const box = document.getElementById("adminDynamicEditBox");
+  if (box) {
+    Array.from(box.querySelectorAll("form")).forEach(form => {
+      const home = _adminFormHomes.get(form);
+      if (home && home.parent) {
+        if (home.next && home.next.parentNode === home.parent) {
+          home.parent.insertBefore(form, home.next);
+        } else {
+          home.parent.appendChild(form);
+        }
+      }
+    });
+  }
+  closeModal("adminDynamicEditModal");
 }
 
 document.querySelectorAll(".modal").forEach(m => {
