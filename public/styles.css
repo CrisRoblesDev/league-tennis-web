@@ -1712,3 +1712,7 @@ html, body { overflow-x: hidden; }
   .admin-quick-actions button { min-width: 0; }
   .admin-record, .card, .stat-card { max-width: 100%; }
 }
+
+.admin-nav, .admin-layout, .admin-module, .admin-section {
+  min-width: 0;
+}
