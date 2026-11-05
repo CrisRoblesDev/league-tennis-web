@@ -19,12 +19,12 @@
     ],
     "groups": [
       {
-        "id": "xmw2hpic92",
-        "name": "Grupo A"
-      },
-      {
         "id": "xmw2hpnxa3",
         "name": "Grupo B"
+      },
+      {
+        "id": "xmw2hpic92",
+        "name": "Grupo A"
       },
       {
         "id": "xmw2hs5k04",
