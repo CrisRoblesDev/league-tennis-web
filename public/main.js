@@ -277,13 +277,24 @@ function renderProducts() {
   }
 }
 
+function isStoreMember() {
+  return !!currentUser && (currentUser.role === "member" || currentUser.role === "admin" || currentUser.membershipActive === true);
+}
 function renderProductCard(p) {
+  const isBook = p.category === "libros" || (!p.category && p.type === "digital");
+  const member = isStoreMember();
+  const priceHtml = member && isBook
+    ? `<div class="price">Gratis para miembros</div><p class="muted small">Precio de referencia: $${(p.price / 100).toFixed(2)}</p>`
+    : `<div class="price">$${(p.price / 100).toFixed(2)}</div>`;
+  const buttonHtml = member && isBook
+    ? `<button class="btn btn-secondary" disabled>Incluido en tu membresia</button>`
+    : `<button class="btn btn-dark" onclick="checkout('${p.id}')">Comprar</button>`;
   return `<article class="card book-card">
     ${p.image ? `<div class="book-cover"><img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy"></div>` : `<div class="book-cover">${escapeHtml(p.name).replace(" ", "<br>")}</div>`}
     <h3>${escapeHtml(p.name)}</h3>
     <p class="muted">${escapeHtml(p.description || "")}</p>
-    <div class="price">$${(p.price / 100).toFixed(2)}</div>
-    <button class="btn btn-dark" onclick="checkout('${p.id}')">Comprar</button>
+    ${priceHtml}
+    ${buttonHtml}
   </article>`;
 }
 
@@ -531,7 +542,9 @@ async function fillAdminSettingsForm() {
   if (!form) return;
   try {
     const data = await api("/api/admin/settings");
-    form.elements.namedItem("whatsappUrl").value = data.whatsappUrl || "";
+    if (form.elements.namedItem("whatsappPhone")) form.elements.namedItem("whatsappPhone").value = data.whatsappPhone || "";
+  if (form.elements.namedItem("whatsappMessage")) form.elements.namedItem("whatsappMessage").value = data.whatsappMessage || "";
+  if (form.elements.namedItem("whatsappUrl")) form.elements.namedItem("whatsappUrl").value = data.whatsappUrl || "";
   } catch (error) {
     showToast(`No se pudo cargar la configuración: ${error.message}`);
   }
@@ -543,9 +556,12 @@ async function saveAdminSettings(event) {
   try {
     const data = await api("/api/admin/settings", {
       method: "POST",
-      body: JSON.stringify({ whatsappUrl: form.elements.namedItem("whatsappUrl").value.trim() })
+      body: JSON.stringify({ whatsappPhone: form.elements.namedItem("whatsappPhone") ? form.elements.namedItem("whatsappPhone").value.trim() : "", whatsappMessage: form.elements.namedItem("whatsappMessage") ? form.elements.namedItem("whatsappMessage").value.trim() : "", whatsappUrl: form.elements.namedItem("whatsappUrl") ? form.elements.namedItem("whatsappUrl").value.trim() : "" })
     });
     whatsappGroupUrl = data.whatsappUrl || "";
+    if (form.elements.namedItem("whatsappPhone")) form.elements.namedItem("whatsappPhone").value = data.whatsappPhone || "";
+    if (form.elements.namedItem("whatsappMessage")) form.elements.namedItem("whatsappMessage").value = data.whatsappMessage || "";
+    if (form.elements.namedItem("whatsappUrl")) form.elements.namedItem("whatsappUrl").value = data.whatsappUrl || "";
     applyWhatsAppLinks();
     showToast("Ajustes guardados.");
   } catch (error) {
@@ -1319,7 +1335,7 @@ async function showAdminPanel() {
 
   html += '<section class="admin-section admin-module" data-module="ranking" hidden><h3>Ranking</h3><p class="admin-section-help">Ajusta la base manual de puntos por jugador. El total suma esa base y los puntos automáticos de victorias confirmadas. Filtra por torneo o general.</p><div class="admin-form" style="margin-bottom:10px"><label>Vista del ranking<select id="adminRankingScope" onchange="renderAdminRanking(this.value)"></select></label></div><div class="table-wrap"><table><thead><tr><th>Pos.</th><th>Jugador</th><th>Nivel</th><th>Partidos</th><th>Puntos manuales</th><th>Total</th></tr></thead><tbody id="adminRankingBody"></tbody></table></div></section>';
 
-  html += '<section class="admin-section admin-module" data-module="settings" hidden><h3>Ajustes del sitio</h3><p class="admin-section-help">Configura el enlace del grupo de WhatsApp que aparece en la página pública.</p><form id="adminSettingsForm" class="admin-form"><label class="full">Enlace del grupo de WhatsApp<input name="whatsappUrl" type="url" placeholder="https://chat.whatsapp.com/... o https://wa.me/..."></label><p class="full muted">Acepta enlaces de invitación (chat.whatsapp.com/...) o enlaces por número (wa.me/...). Déjalo vacío para ocultar el botón flotante.</p><div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar ajustes</button></div></form></section>';
+  html += '<section class="admin-section admin-module" data-module="settings" hidden><h3>Ajustes del sitio</h3><p class="admin-section-help">Configura el botón de WhatsApp de la página pública. Ingresa solo el número y el mensaje; el enlace se crea automáticamente.</p><form id="adminSettingsForm" class="admin-form"><label>Número de WhatsApp<input name="whatsappPhone" type="tel" placeholder="Ej. +1 305 555 0123"></label><label class="full">Mensaje predeterminado<textarea name="whatsappMessage" rows="2" maxlength="500" placeholder="Hola, quiero información sobre la liga"></textarea></label><label class="full">Enlace generado (opcional, solo lectura)<input name="whatsappUrl" type="url" readonly placeholder="Se genera automáticamente"></label><p class="full muted">Déjalo vacío para ocultar el botón flotante. También puedes pegar un enlace completo de WhatsApp si lo prefieres.</p><div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar ajustes</button></div></form></section>';
   html += '</div>';
   html += '</div>';
 
