@@ -251,7 +251,7 @@
         const availableMembers = users.filter(u => member(u.id) && !tournament.participants.includes(u.id));
         el.innerHTML = `<div class="card p-5 md:p-6"><div class="flex flex-wrap justify-between gap-3 items-start"><div><p class="eyebrow text-[#668957] mb-2">CUADRO PRINCIPAL</p><h3 class="display text-2xl font-bold">${esc((FORMATS[tournament.mode] || FORMATS.knockout).label)}</h3><p class="muted text-sm mt-1">${admin ? "Gestión por arrastre: arrastra jugadores entre grupos, partidos entre etapas/grupos y reordena con el ratón. Haz clic en un partido para editarlo o en “+” para crear uno nuevo." : "Los ganadores avanzan conforme se registran los resultados."}</p></div>${
           admin
-            ? `<div class="flex flex-wrap gap-2">${btn("+ Participante", "add-participant-draw", "", "")}${btn("+ Grupo", "add-group")}${btn("+ Etapa", "add-stage", "", "")}${btn("Editar torneo", "edit-tournament")}</div>`
+            ? `<div class="flex flex-wrap gap-2">${btn("+ Participante", "add-participant-draw", "", "")}${btn("+ Partido", "add-match-top", "", "")}${btn("+ Grupo", "add-group")}${btn("+ Etapa", "add-stage", "", "")}${btn("Editar torneo", "edit-tournament")}</div>`
             : `<span class="pill">${tournament.participants.length} jugadores</span>`
         }</div>${admin && availableMembers.length ? `<div class="mb-4 p-3 rounded-xl bg-[#f0f9dd] border border-[#c9dd9d]"><strong class="text-sm">Miembros sin inscribir:</strong> ${availableMembers.map(u => `<button type="button" class="button light small mx-1 my-1" data-action="add-participant-draw" data-id="${esc(u.id)}">${esc(u.name)}</button>`).join("")}</div>` : ""}${admin ? `<div class="mb-3 p-2 rounded-lg bg-[#f7fbf2] border border-[#dce5d8] text-xs text-[#4b6b3a]">Arrastra jugadores y partidos. Suelta sobre un grupo/etapa para moverlos. Las líneas se actualizan automáticamente.</div>` : ""}${drawMarkup(tournament, admin)}</div>`;
       }
@@ -438,23 +438,7 @@
     }
 
     function reconcile(tournament) {
-      const allRounds = rounds(tournament);
-      for (let roundIndex = 0; roundIndex < allRounds.length; roundIndex += 1) {
-        for (let slot = 0; slot < allRounds[roundIndex].count; slot += 1) {
-          const match = bracketMatch(tournament, allRounds[roundIndex].stage.id, slot);
-          if (!match) continue;
-          const [a, b] = entrants(tournament, roundIndex, slot);
-          const hasResult = match.sa !== null && match.sb !== null;
-          // Re-seed unplayed matches so reordering participants/stages is reflected,
-          // but never overwrite a match that already has a result.
-          if (!hasResult && (match.a !== a || match.b !== b)) {
-            match.a = a;
-            match.b = b;
-            match.sa = null;
-            match.sb = null;
-          }
-        }
-      }
+      // Manual management: only clean up matches whose stage/group no longer exists.
       tournament.matches = tournament.matches.filter(match =>
         tournament.stages.some(stage => stage.id === match.stageId) &&
         (!match.groupId || tournament.groups.some(group => group.id === match.groupId))
@@ -574,9 +558,9 @@
       const stage = tournament.stages.find(item => item.id === (match?.stageId || stageId));
       const isBracket = stage?.kind === "bracket";
       const roundIndex = rounds(tournament).findIndex(item => item.stage.id === stage?.id);
-      const pair = isBracket && slot !== null ? entrants(tournament, roundIndex, slot) : null;
-      const a = pair ? pair[0] : match?.a || "";
-      const b = pair ? pair[1] : match?.b || "";
+      // Manual assignment: never pre-fill players automatically.
+      const a = match?.a || "";
+      const b = match?.b || "";
       const existingGroupId = match?.groupId || preGroupId;
 
       // Stage selector for moving matches between stages
@@ -597,7 +581,7 @@
       const showGroupSelector = stage && stage.kind === "groups" && tournament.groups.length;
       const groupContainerHtml = showGroupSelector ? `<div><label class="label" for="modal-group">Grupo <span class="text-red-500">*</span></label><select id="modal-group" name="group" class="field" required><option value="">Seleccionar grupo</option>${tournament.groups.map(group => `<option value="${esc(group.id)}" ${existingGroupId === group.id ? "selected" : ""}>${esc(group.name)}</option>`).join("")}</select></div>` : "";
 
-      modal(match ? "Editar partido" : "Asignar partido", `<p class="muted text-sm mb-4">${esc(stage?.name || "Etapa")} ${slot !== null ? `· partido ${slot + 1}` : ""}</p><div class="grid grid-cols-2 gap-3">${stageSelect}${select("a", a, "Jugador A")}${select("b", b, "Jugador B")}${field("Fecha y hora", "date", match?.date || "", "datetime-local")}<div id="modal-group-container">${groupContainerHtml}</div>${field("Sets jugador A", "sa", match?.sa ?? "", "number", 'min="0" max="5"')}${field("Sets jugador B", "sb", match?.sb ?? "", "number", 'min="0" max="5"')}</div><p class="muted text-xs mt-3" id="match-modal-hint">${showGroupSelector && !existingGroupId ? "Selecciona un grupo para ver sus jugadores" : ""}</p>`, form => {
+      modal(match ? "Editar partido" : "Asignar partido", `<p class="muted text-sm mb-4">${esc(stage?.name || "Etapa")} ${slot !== null ? `· partido ${slot + 1}` : ""}</p><div class="space-y-3"><div class="grid grid-cols-2 gap-3">${stageSelect}<div id="modal-group-container">${groupContainerHtml}</div></div><div class="grid grid-cols-2 gap-3">${select("a", a, "Jugador A")}${select("b", b, "Jugador B")}</div><div class="grid grid-cols-2 gap-3">${field("Fecha y hora", "date", match?.date || "", "datetime-local")}<div></div></div><div class="grid grid-cols-2 gap-3">${field("Sets jugador A", "sa", match?.sa ?? "", "number", 'min="0" max="5"')}${field("Sets jugador B", "sb", match?.sb ?? "", "number", 'min="0" max="5"')}</div></div><p class="muted text-xs mt-3" id="match-modal-hint">${showGroupSelector && !existingGroupId ? "Selecciona un grupo para ver sus jugadores" : ""}</p>`, form => {
         const newStageId = form.get("stage");
         const newStage = tournament.stages.find(s => s.id === newStageId);
         const newIsBracket = newStage?.kind === "bracket";
@@ -1040,6 +1024,10 @@
         const groupId = target.dataset.groupId;
         const stageId = target.dataset.stageId;
         editMatch(null, stageId, null, groupId); // pass preGroupId for filtering
+        return;
+      }
+      if (action === "add-match-top") {
+        editMatch(null); // fully manual: admin chooses stage, group and players
         return;
       }
       if (action === "assign-to-group") {
