@@ -1716,3 +1716,45 @@ html, body { overflow-x: hidden; }
 .admin-nav, .admin-layout, .admin-module, .admin-section {
   min-width: 0;
 }
+
+/* Aggressive mobile overflow prevention */
+* { box-sizing: border-box; }
+.admin-page * { max-width: 100%; }
+.admin-shell, .admin-content, .admin-layout, .admin-section, .admin-module,
+.admin-module > *, .admin-section > *, .admin-form, .card, .admin-record,
+.stat-card, .table-wrap, table, thead, tbody, tr, th, td {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.admin-form label { min-width: 0; }
+@media (max-width: 900px) {
+  .admin-page main { padding: 0 8px; }
+  .admin-welcome { padding: 12px 0; }
+  .admin-quick-actions { gap: 8px; }
+  .admin-quick-actions button { padding: 12px; font-size: 13px; }
+  .admin-stats { gap: 8px; }
+  .stat-card { padding: 12px; min-width: 0; }
+  .admin-nav { padding: 8px 4px 12px; }
+  .admin-nav button { min-width: 110px; padding: 10px 12px; font-size: 12px; }
+  .admin-section { margin: 12px 0 20px; }
+  .admin-section > h3 { font-size: 18px; }
+  .admin-form { gap: 10px; }
+  .admin-form input, .admin-form select, .admin-form textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 12px 14px;
+    font-size: 16px; /* prevents zoom on iOS */
+  }
+  .admin-form-actions { flex-direction: column; gap: 8px; }
+  .admin-form-actions button { width: 100%; }
+  .grid, .grid-2, .grid-3, .grid-4 { display: grid; grid-template-columns: 1fr !important; gap: 12px !important; }
+  .card, .admin-record { min-width: 0; }
+  .admin-order-tools { flex-direction: column; gap: 8px; align-items: stretch; }
+  .admin-section-head { flex-direction: column; align-items: stretch; gap: 8px; }
+}
+@media (max-width: 520px) {
+  .admin-stats { grid-template-columns: repeat(2, 1fr); }
+  .stat-number { font-size: 20px; }
+  .admin-quick-actions { grid-template-columns: 1fr; }
+}
