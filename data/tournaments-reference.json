@@ -25,6 +25,11 @@
         "id": "xmw3w56oo1",
         "name": "Grupos",
         "kind": "groups"
+      },
+      {
+        "id": "xmw3xi1hl2",
+        "name": "WEEK 2",
+        "kind": "bracket"
       }
     ],
     "groups": [
