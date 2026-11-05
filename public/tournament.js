@@ -249,11 +249,11 @@
 
       if (tab === "draw") {
         const availableMembers = users.filter(u => member(u.id) && !tournament.participants.includes(u.id));
-        el.innerHTML = `<div class="card p-5 md:p-6"><div class="flex flex-wrap justify-between gap-3 items-start"><div><p class="eyebrow text-[#668957] mb-2">CUADRO PRINCIPAL</p><h3 class="display text-2xl font-bold">${esc((FORMATS[tournament.mode] || FORMATS.knockout).label)}</h3><p class="muted text-sm mt-1">${admin ? "Control total: arrastra, haz clic, añade. Todo se gestiona aquí." : "Los ganadores avanzan conforme se registran los resultados."}</p></div>${
+        el.innerHTML = `<div class="card p-5 md:p-6"><div class="flex flex-wrap justify-between gap-3 items-start"><div><p class="eyebrow text-[#668957] mb-2">CUADRO PRINCIPAL</p><h3 class="display text-2xl font-bold">${esc((FORMATS[tournament.mode] || FORMATS.knockout).label)}</h3><p class="muted text-sm mt-1">${admin ? "Gestión por arrastre: arrastra jugadores entre grupos, partidos entre etapas/grupos y reordena con el ratón. Haz clic en un partido para editarlo o en “+” para crear uno nuevo." : "Los ganadores avanzan conforme se registran los resultados."}</p></div>${
           admin
             ? `<div class="flex flex-wrap gap-2">${btn("+ Participante", "add-participant-draw", "", "")}${btn("+ Grupo", "add-group")}${btn("+ Etapa", "add-stage", "", "")}${btn("Editar torneo", "edit-tournament")}</div>`
             : `<span class="pill">${tournament.participants.length} jugadores</span>`
-        }</div>${admin && availableMembers.length ? `<div class="mb-4 p-3 rounded-xl bg-[#f0f9dd] border border-[#c9dd9d]"><strong class="text-sm">Miembros sin inscribir:</strong> ${availableMembers.map(u => `<button type="button" class="button light small mx-1 my-1" data-action="add-participant-draw" data-id="${esc(u.id)}">${esc(u.name)}</button>`).join("")}</div>` : ""}${drawMarkup(tournament, admin)}</div>`;
+        }</div>${admin && availableMembers.length ? `<div class="mb-4 p-3 rounded-xl bg-[#f0f9dd] border border-[#c9dd9d]"><strong class="text-sm">Miembros sin inscribir:</strong> ${availableMembers.map(u => `<button type="button" class="button light small mx-1 my-1" data-action="add-participant-draw" data-id="${esc(u.id)}">${esc(u.name)}</button>`).join("")}</div>` : ""}${admin ? `<div class="mb-3 p-2 rounded-lg bg-[#f7fbf2] border border-[#dce5d8] text-xs text-[#4b6b3a]">Arrastra jugadores y partidos. Suelta sobre un grupo/etapa para moverlos. Las líneas se actualizan automáticamente.</div>` : ""}${drawMarkup(tournament, admin)}</div>`;
       }
       if (tab === "draw") setTimeout(() => drawConnections(), 50);
     }

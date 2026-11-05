@@ -307,8 +307,22 @@
   font-weight: 800;
 }
 
-.tournament-app .slot[draggable="true"] {
+.tournament-app .slot[draggable="true"],
+.tournament-app [data-drag] {
   cursor: grab;
+}
+
+.tournament-app [data-drag]:active {
+  cursor: grabbing;
+}
+
+.tournament-app .match-node,
+.tournament-app .group-card {
+  transition: box-shadow 0.15s ease, transform 0.12s ease;
+}
+
+.tournament-app .match-node:hover {
+  box-shadow: 0 6px 18px #17352d14;
 }
 
 .tournament-app .group-card {
