@@ -37,12 +37,12 @@
         "name": "Grupo C"
       },
       {
-        "id": "xmw2hpnxa3",
-        "name": "Grupo B"
-      },
-      {
         "id": "xmw3xhb1k1",
         "name": "Grupo A"
+      },
+      {
+        "id": "xmw2hpnxa3",
+        "name": "Grupo B"
       }
     ],
     "participants": [
