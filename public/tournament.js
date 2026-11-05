@@ -255,6 +255,7 @@
             : `<span class="pill">${tournament.participants.length} jugadores</span>`
         }</div>${admin && availableMembers.length ? `<div class="mb-4 p-3 rounded-xl bg-[#f0f9dd] border border-[#c9dd9d]"><strong class="text-sm">Miembros sin inscribir:</strong> ${availableMembers.map(u => `<button type="button" class="button light small mx-1 my-1" data-action="add-participant-draw" data-id="${esc(u.id)}">${esc(u.name)}</button>`).join("")}</div>` : ""}${drawMarkup(tournament, admin)}</div>`;
       }
+      if (tab === "draw") setTimeout(() => drawConnections(), 50);
     }
 
     function bracketStages(tournament) {
@@ -343,7 +344,7 @@
                 admin
                   ? `<button data-action="edit-group" data-id="${esc(group.id)}" class="hover:underline" type="button">${esc(group.name)} ✎</button>`
                   : esc(group.name)
-              }</strong>${admin ? `<span>${btn("↑", "move-group-up", group.id)}${btn("↓", "move-group-down", group.id)}${btn("✕", "delete-group", group.id, "danger").replace("<button", "<button draggable=\"false\"")}</span>` : ""}</div><div class="group-players">${players.map(id => `<div class="slot border-t border-[#dce5d8] ${admin ? "draggable" : ""}" ${admin ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${admin ? `<button type="button" data-action="edit-player" data-id="${esc(id)}" class="text-left hover:underline">${esc(name(id))}</button>` : esc(name(id))}</div>`).join("") || '<p class="muted text-xs">Sin jugadores</p>'}</div>${admin ? `<div class="group-drop-zone" data-drop="group" data-id="${esc(group.id)}" style="margin-top:8px;padding:8px;border:2px dashed #c9dd9d;border-radius:6px;text-align:center;color:#598044;font-size:11px;">Soltar jugador aquí para mover a ${esc(group.name)}</div>` : ""}<div class="group-matches mt-2">${matches.length > 0 ? matches.map(match => {
+              }</strong>${admin ? `<span>${btn("↑", "move-group-up", group.id)}${btn("↓", "move-group-down", group.id)}${btn("✕", "delete-group", group.id, "danger").replace("<button", "<button draggable=\"false\"")}</span>` : ""}</div><div class="group-players">${players.map(id => `<div class="slot border-t border-[#dce5d8] ${admin ? "draggable" : ""}" ${admin ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${admin ? `<button type="button" data-action="edit-player" data-id="${esc(id)}" class="text-left hover:underline">${esc(name(id))}</button>` : esc(name(id))}</div>`).join("") || '<p class="muted text-xs">Sin jugadores</p>'}</div>${admin ? `<div class="group-drop-zone" data-drop="group" data-id="${esc(group.id)}" style="margin-top:8px;padding:8px;border:2px dashed #c9dd9d;border-radius:6px;text-align:center;color:#598044;font-size:11px;">Soltar jugador aquí para mover a ${esc(group.name)}</div>` : ""}${admin ? `<div class="group-assign mt-2 flex gap-1 items-center"><select class="field small" data-group-assign="${esc(group.id)}" style="flex:1;"><option value="">Asignar jugador a ${esc(group.name)}</option>${tournament.participants.map(pid => `<option value="${esc(pid)}">${esc(name(pid))}</option>`).join("")}</select><button type="button" class="button light small" data-action="assign-to-group" data-group-id="${esc(group.id)}">Asignar</button></div>` : ""}<div class="group-matches mt-2">${matches.length > 0 ? matches.map(match => {
                 const mWin = winner(match);
                 return `<div class="match-node group-match ${mWin ? "win" : ""}" ${admin ? `data-action="draw-match" data-match-id="${esc(match.id)}" draggable="true" data-drag="match" data-drop="match" data-id="${esc(match.id)}" role="button" tabindex="0" aria-label="Editar partido de ${esc(group.name)}"` : ""}>
                   <div class="flex justify-between gap-2 text-[10px] muted mb-1">
@@ -376,17 +377,64 @@
             const last = roundIndex === allRounds.length - 1;
             if (match) {
               const [a, b] = [match.a, match.b];
-              return `<div class="match-node ${last ? "last" : ""} ${win ? "win" : ""}" ${admin ? `data-action="draw-match" data-match-id="${esc(match.id)}" draggable="true" data-drag="match" data-drop="match" data-id="${esc(match.id)}" role="button" tabindex="0" aria-label="Editar partido ${slot + 1} de ${esc(round.stage.name)}"` : ""}><div class="flex justify-between gap-2 text-[10px] muted mb-1"><span>PARTIDO ${slot + 1}</span><span>${match.date ? new Date(match.date).toLocaleDateString("es-CL") : "Por programar"}</span></div>${
+              return `<div class="match-node ${last ? "last" : ""} ${win ? "win" : ""}" data-slot="${slot}" ${admin ? `data-action="draw-match" data-match-id="${esc(match.id)}" draggable="true" data-drag="match" data-drop="match" data-id="${esc(match.id)}" role="button" tabindex="0" aria-label="Editar partido ${slot + 1} de ${esc(round.stage.name)}"` : ""}><div class="flex justify-between gap-2 text-[10px] muted mb-1"><span>PARTIDO ${slot + 1}</span><span>${match.date ? new Date(match.date).toLocaleDateString("es-CL") : "Por programar"}</span></div>${
                 [a, b].map(id => `<div class="slot ${win === id && id ? "winner" : ""}" ${admin && roundIndex === 0 && id ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${id ? esc(name(id)) : "— Por definir"}</div>`).join("")
               }${admin ? '<span class="muted text-[10px]">Clic para editar · arrastra para mover</span>' : ""}</div>`;
             }
             // Empty slot: show "+" button to create match (admin only)
-            return admin ? `<div class="match-node empty-slot ${last ? "last" : ""}" data-action="add-bracket-match" data-stage="${esc(stageId)}" data-slot="${slot}" style="border-style:dashed;border-color:#c9dd9d;background:#f8fdf3;min-height:86px;display:flex;align-items:center;justify-content:center;"><button type="button" class="button light small" style="width:100%;">+ Crear partido ${slot + 1}</button></div>` : `<div class="match-node empty-slot ${last ? "last" : ""}" style="border-style:dashed;border-color:#c9dd9d;background:#f8fdf3;min-height:86px;display:flex;align-items:center;justify-content:center;color:#a3c979;font-size:11px;">Partido ${slot + 1} (vacío)</div>`;
+            return admin ? `<div class="match-node empty-slot ${last ? "last" : ""}" data-action="add-bracket-match" data-stage="${esc(stageId)}" data-slot="${slot}" style="border-style:dashed;border-color:#c9dd9d;background:#f8fdf3;min-height:86px;display:flex;align-items:center;justify-content:center;"><button type="button" class="button light small" style="width:100%;">+ Crear partido ${slot + 1}</button></div>` : `<div class="match-node empty-slot ${last ? "last" : ""}" data-slot="${slot}" style="border-style:dashed;border-color:#c9dd9d;background:#f8fdf3;min-height:86px;display:flex;align-items:center;justify-content:center;color:#a3c979;font-size:11px;">Partido ${slot + 1} (vacío)</div>`;
           }).join("")
         }</div></div>`;
       }).join("");
 
-      return `<div class="bracket-scroll mt-6" aria-label="Main Draw desplazable"><div class="bracket">${groups}${columns || '<p class="muted">Añade una etapa de eliminación para mostrar el cuadro.</p>'}</div></div>${admin ? '<p class="muted text-xs mt-2">Las flechas permiten reordenar sin arrastrar. Para mover un jugador entre grupos, arrástralo sobre la zona "Soltar jugador aquí" del grupo de destino. Para mover un partido entre grupos, arrástralo sobre la zona "Soltar partido aquí" del grupo de destino. Haz clic en "+ Crear partido" para añadir partidos al cuadro.</p>' : ""}`;
+      return `<div class="bracket-scroll mt-6" aria-label="Main Draw desplazable"><div class="bracket" style="position:relative;"><svg class="draw-connectors" aria-hidden="true" style="position:absolute;top:0;left:0;pointer-events:none;z-index:0;"></svg><div style="position:relative;z-index:1;">${groups}${columns || '<p class="muted">Añade una etapa de eliminación para mostrar el cuadro.</p>'}</div></div></div>${admin ? '<p class="muted text-xs mt-2">Las flechas permiten reordenar sin arrastrar. Para mover un jugador entre grupos, arrástralo sobre la zona "Soltar jugador aquí" del grupo de destino. Para mover un partido entre grupos, arrástralo sobre la zona "Soltar partido aquí" del grupo de destino. Haz clic en "+ Crear partido" para añadir partidos al cuadro. Las líneas conectan cada partido con el de la siguiente etapa.</p>' : ""}`;
+    }
+
+    function drawConnections() {
+      const bracket = root.querySelector(".bracket");
+      const svg = root.querySelector(".draw-connectors");
+      if (!bracket || !svg) return;
+      const stageRect = bracket.getBoundingClientRect();
+      const scrollW = Math.max(bracket.scrollWidth, stageRect.width);
+      const scrollH = Math.max(bracket.scrollHeight, stageRect.height);
+      svg.setAttribute("width", scrollW);
+      svg.setAttribute("height", scrollH);
+      svg.setAttribute("viewBox", `0 0 ${scrollW} ${scrollH}`);
+      svg.innerHTML = "";
+      // Identify bracket stage columns (those without group cards).
+      const rounds = [...bracket.querySelectorAll(":scope > .bracket > div > .round, :scope > div > .round")];
+      // Fallback: query all .round inside bracket
+      const allRounds = [...bracket.querySelectorAll(".round")].filter(round => !round.querySelector(".group-card") && round.querySelector(".match-node"));
+      // Only adjacent columns
+      for (let i = 0; i < allRounds.length - 1; i++) {
+        const left = allRounds[i];
+        const right = allRounds[i + 1];
+        const leftNodes = [...left.querySelectorAll(".round-body > .match-node:not(.empty-slot)")];
+        const rightNodes = [...right.querySelectorAll(".round-body > .match-node:not(.empty-slot)")];
+        if (!leftNodes.length || !rightNodes.length) continue;
+        leftNodes.forEach((node) => {
+          const slot = node.dataset.slot !== undefined ? +node.dataset.slot : null;
+          const targetSlot = slot !== null && !Number.isNaN(slot) ? Math.floor(slot / 2) : null;
+          const target = targetSlot !== null
+            ? rightNodes.find(n => +n.dataset.slot === targetSlot)
+            : rightNodes[Math.floor(leftNodes.indexOf(node) / 2)];
+          if (!target) return;
+          const a = node.getBoundingClientRect();
+          const b = target.getBoundingClientRect();
+          const x1 = (a.right - stageRect.left) + bracket.scrollLeft;
+          const y1 = (a.top - stageRect.top + a.height / 2) + bracket.scrollTop;
+          const x2 = (b.left - stageRect.left) + bracket.scrollLeft;
+          const y2 = (b.top - stageRect.top + b.height / 2) + bracket.scrollTop;
+          const mid = x1 + Math.max(18, (x2 - x1) / 2);
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          path.setAttribute("d", `M ${x1} ${y1} H ${mid} V ${y2} H ${x2}`);
+          path.setAttribute("class", "draw-connector");
+          path.setAttribute("fill", "none");
+          path.setAttribute("stroke", "#a3c979");
+          path.setAttribute("stroke-width", "2");
+          svg.appendChild(path);
+        });
+      }
     }
 
     function reconcile(tournament) {
@@ -396,12 +444,9 @@
           const match = bracketMatch(tournament, allRounds[roundIndex].stage.id, slot);
           if (!match) continue;
           const [a, b] = entrants(tournament, roundIndex, slot);
-          if (match.a !== a || match.b !== b) {
-            match.a = a;
-            match.b = b;
-            match.sa = null;
-            match.sb = null;
-          }
+          // Only auto-fill empty slots; never clobber manually assigned participants.
+          if (match.a === null && a) match.a = a;
+          if (match.b === null && b) match.b = b;
         }
       }
       tournament.matches = tournament.matches.filter(match =>
@@ -983,6 +1028,15 @@
         editMatch(null, stageId, null, groupId); // pass preGroupId for filtering
         return;
       }
+      if (action === "assign-to-group") {
+        const groupId = target.dataset.groupId;
+        const select = root.querySelector(`[data-group-assign="${groupId}"]`);
+        const playerId = select?.value;
+        if (!playerId) { notify("Selecciona un jugador."); return; }
+        setGroupForPlayer(tournament, playerId, groupId);
+        refresh(`Jugador asignado a ${tournament.groups.find(g => g.id === groupId)?.name || "grupo"}.`);
+        return;
+      }
       if (action === "add-bracket-match") {
         const stageId = target.dataset.stage;
         const slot = +target.dataset.slot;
@@ -1174,6 +1228,7 @@
     }
 
     shell.dataset.mode = view;
+    window.addEventListener("resize", () => { if (tab === "draw") drawConnections(); });
     load();
     return { reload: load, root, shell };
   }
