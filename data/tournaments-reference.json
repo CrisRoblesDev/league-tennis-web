@@ -12,16 +12,22 @@
     "status": "abierto",
     "stages": [
       {
+        "id": "xmw3w5g4e2",
+        "name": "WEEK 1",
+        "kind": "bracket"
+      },
+      {
         "id": "xmw3udah13",
         "name": "WEEK 3",
         "kind": "bracket"
+      },
+      {
+        "id": "xmw3w56oo1",
+        "name": "Grupos",
+        "kind": "groups"
       }
     ],
     "groups": [
-      {
-        "id": "xmw2hpnxa3",
-        "name": "Grupo B"
-      },
       {
         "id": "xmw2hs5k04",
         "name": "Grupo C"
@@ -29,11 +35,42 @@
       {
         "id": "xmw2hsagk5",
         "name": "Grupo D"
+      },
+      {
+        "id": "xmw2hpnxa3",
+        "name": "Grupo B"
+      },
+      {
+        "id": "xmw3wwwuk1",
+        "name": "Grupo A"
       }
     ],
-    "participants": [],
+    "participants": [
+      "user-75152e59-4308-46f7-a73e-ae78a415bd67",
+      "user-a0105a54-6253-46b6-a266-43b17d35dde5",
+      "user-c214871c-3e87-483c-864c-d7042443fbbc",
+      "user-e9b6d508-100b-4a74-810a-ed08b966b83c"
+    ],
     "requests": [],
-    "matches": []
+    "matches": [
+      {
+        "id": "xmw3wy5g72",
+        "stageId": "xmw3udah13",
+        "groupId": "xmw3wwwuk1",
+        "a": "user-75152e59-4308-46f7-a73e-ae78a415bd67",
+        "b": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      }
+    ],
+    "groupAssignments": {
+      "user-75152e59-4308-46f7-a73e-ae78a415bd67": "xmw3wwwuk1",
+      "user-e9b6d508-100b-4a74-810a-ed08b966b83c": "xmw3wwwuk1",
+      "user-a0105a54-6253-46b6-a266-43b17d35dde5": "xmw3wwwuk1",
+      "user-c214871c-3e87-483c-864c-d7042443fbbc": "xmw3wwwuk1"
+    }
   },
   {
     "id": "tournament-womens-35-2026",
