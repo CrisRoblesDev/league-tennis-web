@@ -384,7 +384,7 @@
             // Empty slot: show "+" button to create match (admin only)
             return admin ? `<div class="match-node empty-slot ${last ? "last" : ""}" data-action="add-bracket-match" data-stage="${esc(stageId)}" data-slot="${slot}" style="border-style:dashed;border-color:#c9dd9d;background:#f8fdf3;min-height:86px;display:flex;align-items:center;justify-content:center;"><button type="button" class="button light small" style="width:100%;">+ Crear partido ${slot + 1}</button></div>` : `<div class="match-node empty-slot ${last ? "last" : ""}" data-slot="${slot}" style="border-style:dashed;border-color:#c9dd9d;background:#f8fdf3;min-height:86px;display:flex;align-items:center;justify-content:center;color:#a3c979;font-size:11px;">Partido ${slot + 1} (vacío)</div>`;
           }).join("")
-        }</div></div>`;
+        }${admin ? `<div style="margin-top:8px;text-align:center;"><button type="button" class="button light small" data-action="add-bracket-match" data-stage="${esc(stageId)}" data-slot="${slotsToShow}">+ Añadir partido</button></div>` : ""}</div></div>`;
       }).join("");
 
       return `<div class="bracket-scroll mt-6" aria-label="Main Draw desplazable"><div class="bracket" style="position:relative;"><svg class="draw-connectors" aria-hidden="true" style="position:absolute;top:0;left:0;pointer-events:none;z-index:0;"></svg><div style="position:relative;z-index:1;">${groups}${columns || '<p class="muted">Añade una etapa de eliminación para mostrar el cuadro.</p>'}</div></div></div>${admin ? '<p class="muted text-xs mt-2">Las flechas permiten reordenar sin arrastrar. Para mover un jugador entre grupos, arrástralo sobre la zona "Soltar jugador aquí" del grupo de destino. Para mover un partido entre grupos, arrástralo sobre la zona "Soltar partido aquí" del grupo de destino. Haz clic en "+ Crear partido" para añadir partidos al cuadro. Las líneas conectan cada partido con el de la siguiente etapa.</p>' : ""}`;
@@ -626,7 +626,13 @@
           date: form.get("date"),
           sa: sa === "" ? null : +sa,
           sb: sb === "" ? null : +sb,
-          slot: newIsBracket ? slot : null
+          slot: newIsBracket
+            ? (slot !== null && slot !== undefined
+                ? slot
+                : (tournament.matches || [])
+                    .filter(m => m.stageId === (newStageId || stage?.id))
+                    .reduce((mx, m) => Math.max(mx, Number.isInteger(m.slot) ? m.slot : -1), -1) + 1)
+            : null
         };
         if (match) Object.assign(match, data);
         else tournament.matches.push({ id: uid(), ...data });
@@ -1100,8 +1106,17 @@
       const node = event.target.closest("[data-drag]");
       if (!node || event.target.matches("input")) return;
       drag = { kind: node.dataset.drag, id: node.dataset.id };
+      node.classList.add("is-dragging");
       event.dataTransfer.effectAllowed = "move";
       event.dataTransfer.setData("text/plain", drag.id);
+    });
+
+    app.addEventListener("dragend", event => {
+      drag = null;
+      root.querySelectorAll(".drop-over, .is-dragging").forEach(node => {
+        node.classList.remove("drop-over");
+        node.classList.remove("is-dragging");
+      });
     });
 
     app.addEventListener("dragover", event => {

@@ -267,12 +267,23 @@
 }
 
 .tournament-app .match-node:not(.last)::after {
-  content: "";
-  position: absolute;
-  left: 100%;
-  top: 50%;
-  width: 48px;
-  border-top: 2px solid #a3bd89;
+  content: none;
+}
+
+.tournament-app .draw-connectors path.draw-connector {
+  filter: drop-shadow(0 1px 1px #17352d22);
+}
+
+.tournament-app .drop-over {
+  outline: 2px dashed #598044;
+  background: #edf5e3 !important;
+  transform: scale(1.01);
+  transition: transform 0.12s ease;
+}
+
+.tournament-app .is-dragging {
+  opacity: 0.45;
+  transform: scale(0.98);
 }
 
 .tournament-app .match-node.win {
