@@ -1693,3 +1693,22 @@ html[dir="rtl"] .admin-record-head { direction: rtl; }
   .admin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-welcome .admin-quick-actions { grid-template-columns: 1fr; }
 }
+
+/* Prevent horizontal overflow on admin mobile */
+html, body { overflow-x: hidden; }
+.admin-shell, .admin-content, .admin-layout, .admin-section, .admin-module {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+.admin-page main, .admin-shell { padding-left: 12px; padding-right: 12px; }
+@media (max-width: 900px) {
+  .admin-page main, .admin-shell { padding-left: 8px; padding-right: 8px; }
+  .admin-section { padding-left: 0; padding-right: 0; }
+  .table-wrap table { width: 100%; }
+  .admin-form input, .admin-form select, .admin-form textarea {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .admin-quick-actions button { min-width: 0; }
+  .admin-record, .card, .stat-card { max-width: 100%; }
+}
