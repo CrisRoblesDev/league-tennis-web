@@ -344,7 +344,7 @@
                 admin
                   ? `<button data-action="edit-group" data-id="${esc(group.id)}" class="hover:underline" type="button">${esc(group.name)} ✎</button>`
                   : esc(group.name)
-              }</strong>${admin ? `<span>${btn("↑", "move-group-up", group.id)}${btn("↓", "move-group-down", group.id)}${btn("✕", "delete-group", group.id, "danger").replace("<button", "<button draggable=\"false\"")}</span>` : ""}</div><div class="group-players">${players.map(id => `<div class="slot border-t border-[#dce5d8] ${admin ? "draggable" : ""}" ${admin ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${admin ? `<button type="button" data-action="edit-player" data-id="${esc(id)}" class="text-left hover:underline">${esc(name(id))}</button>` : esc(name(id))}</div>`).join("") || '<p class="muted text-xs">Sin jugadores</p>'}</div>${admin ? `<div class="group-drop-zone" data-drop="group" data-id="${esc(group.id)}" style="margin-top:8px;padding:8px;border:2px dashed #c9dd9d;border-radius:6px;text-align:center;color:#598044;font-size:11px;">Soltar jugador aquí para mover a ${esc(group.name)}</div>` : ""}${admin ? `<div class="group-assign mt-2 flex gap-1 items-center"><select class="field small" data-group-assign="${esc(group.id)}" style="flex:1;"><option value="">Asignar jugador a ${esc(group.name)}</option>${tournament.participants.map(pid => `<option value="${esc(pid)}">${esc(name(pid))}</option>`).join("")}</select><button type="button" class="button light small" data-action="assign-to-group" data-group-id="${esc(group.id)}">Asignar</button></div>` : ""}<div class="group-matches mt-2">${matches.length > 0 ? matches.map(match => {
+              }</strong>${admin ? `<span>${btn("↑", "move-group-up", group.id)}${btn("↓", "move-group-down", group.id)}${btn("✕", "delete-group", group.id, "danger").replace("<button", "<button draggable=\"false\"")}</span>` : ""}</div><div class="group-players">${players.map(id => `<div class="slot border-t border-[#dce5d8] ${admin ? "draggable" : ""}" ${admin ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${admin ? `<button type="button" data-action="edit-player" data-id="${esc(id)}" class="text-left hover:underline">${esc(name(id))}</button>` : esc(name(id))}${admin ? ` <button type="button" class="button light small" style="margin-left:6px;" data-action="remove-from-group" data-player-id="${esc(id)}" data-group-id="${esc(group.id)}" draggable="false">Quitar del grupo</button>` : ""}</div>`).join("") || '<p class="muted text-xs">Sin jugadores</p>'}</div>${admin ? `<div class="group-drop-zone" data-drop="group" data-id="${esc(group.id)}" style="margin-top:8px;padding:8px;border:2px dashed #c9dd9d;border-radius:6px;text-align:center;color:#598044;font-size:11px;">Soltar jugador aquí para mover a ${esc(group.name)}</div>` : ""}${admin ? `<div class="group-assign mt-2 flex gap-1 items-center"><select class="field small" data-group-assign="${esc(group.id)}" style="flex:1;"><option value="">Asignar jugador a ${esc(group.name)}</option>${tournament.participants.map(pid => `<option value="${esc(pid)}">${esc(name(pid))}</option>`).join("")}</select><button type="button" class="button light small" data-action="assign-to-group" data-group-id="${esc(group.id)}">Asignar</button></div>` : ""}<div class="group-matches mt-2">${matches.length > 0 ? matches.map(match => {
                 const mWin = winner(match);
                 return `<div class="match-node group-match ${mWin ? "win" : ""}" ${admin ? `data-action="draw-match" data-match-id="${esc(match.id)}" draggable="true" data-drag="match" data-drop="match" data-id="${esc(match.id)}" role="button" tabindex="0" aria-label="Editar partido de ${esc(group.name)}"` : ""}>
                   <div class="flex justify-between gap-2 text-[10px] muted mb-1">
@@ -1039,6 +1039,14 @@
         refresh(`Jugador asignado a ${tournament.groups.find(g => g.id === groupId)?.name || "grupo"}.`);
         return;
       }
+      if (action === "remove-from-group") {
+        const playerId = target.dataset.playerId;
+        const groupId = target.dataset.groupId;
+        if (!playerId) return;
+        setGroupForPlayer(tournament, playerId, null);
+        refresh(`Jugador retirado de ${tournament.groups.find(g => g.id === groupId)?.name || "grupo"}.`);
+        return;
+      }
       if (action === "add-bracket-match") {
         const stageId = target.dataset.stage;
         const slot = +target.dataset.slot;
@@ -1100,7 +1108,7 @@
 
     app.addEventListener("dragstart", event => {
       const node = event.target.closest("[data-drag]");
-      if (!node || event.target.matches("input")) return;
+      if (!node || event.target.matches("input,button")) return;
       drag = { kind: node.dataset.drag, id: node.dataset.id };
       node.classList.add("is-dragging");
       event.dataTransfer.effectAllowed = "move";

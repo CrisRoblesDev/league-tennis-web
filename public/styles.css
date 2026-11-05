@@ -1671,7 +1671,10 @@ html[dir="rtl"] .admin-record-head { direction: rtl; }
     border: 0;
     border-bottom: 1px solid var(--line);
     border-radius: 0;
-    background: transparent;
+    background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
   .admin-layout .admin-nav button {
     flex: 0 0 auto;
@@ -1681,6 +1684,7 @@ html[dir="rtl"] .admin-record-head { direction: rtl; }
     border-radius: 14px;
     padding: 12px 14px;
     font-size: 13px;
+    white-space: nowrap;
     box-shadow: 0 4px 14px rgba(16,36,58,.06);
   }
   .admin-module-select { display: none !important; }
@@ -1735,8 +1739,8 @@ html, body { overflow-x: hidden; }
   .admin-quick-actions button { padding: 12px; font-size: 13px; }
   .admin-stats { gap: 8px; }
   .stat-card { padding: 12px; min-width: 0; }
-  .admin-nav { padding: 8px 4px 12px; }
-  .admin-nav button { min-width: 110px; padding: 10px 12px; font-size: 12px; }
+  .admin-nav { padding: 8px 4px 12px; background: #fff; }
+  .admin-nav button { min-width: 110px; padding: 10px 12px; font-size: 12px; white-space: nowrap; }
   .admin-section { margin: 12px 0 20px; }
   .admin-section > h3 { font-size: 18px; }
   .admin-form { gap: 10px; }
