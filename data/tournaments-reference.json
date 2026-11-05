@@ -59,17 +59,6 @@
     "requests": [],
     "matches": [
       {
-        "id": "xmw3uin584",
-        "stageId": "xmw3uclkn1",
-        "groupId": "xmw2hpic92",
-        "a": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
-        "b": "user-c214871c-3e87-483c-864c-d7042443fbbc",
-        "date": "",
-        "sa": null,
-        "sb": null,
-        "slot": null
-      },
-      {
         "id": "xmw3ukbu57",
         "stageId": "xmw3ucwiy2",
         "groupId": "xmw2hpic92",
