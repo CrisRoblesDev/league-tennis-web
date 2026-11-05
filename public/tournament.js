@@ -444,9 +444,15 @@
           const match = bracketMatch(tournament, allRounds[roundIndex].stage.id, slot);
           if (!match) continue;
           const [a, b] = entrants(tournament, roundIndex, slot);
-          // Only auto-fill empty slots; never clobber manually assigned participants.
-          if (match.a === null && a) match.a = a;
-          if (match.b === null && b) match.b = b;
+          const hasResult = match.sa !== null && match.sb !== null;
+          // Re-seed unplayed matches so reordering participants/stages is reflected,
+          // but never overwrite a match that already has a result.
+          if (!hasResult && (match.a !== a || match.b !== b)) {
+            match.a = a;
+            match.b = b;
+            match.sa = null;
+            match.sb = null;
+          }
         }
       }
       tournament.matches = tournament.matches.filter(match =>
@@ -476,8 +482,10 @@
       const payload = JSON.parse(JSON.stringify(tournament));
       saveChain = saveChain.then(async () => {
         const data = await request({ action: "save", tournament: payload });
-        if (!tournaments.some(item => item.id === payload.id) && data.tournament) {
-          tournaments.unshift(data.tournament);
+        if (data.tournament) {
+          const index = tournaments.findIndex(item => item.id === payload.id);
+          if (index >= 0) tournaments[index] = data.tournament;
+          else tournaments.unshift(data.tournament);
         }
       }).catch(error => {
         notify(`No se pudo guardar: ${error.message}`);
