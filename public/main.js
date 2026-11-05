@@ -1300,6 +1300,17 @@ async function showAdminPanel() {
   html += '<div class="stat-card"><div class="stat-number">' + pendingResults.length + '</div><div class="stat-label">Resultados por revisar</div></div>';
   html += '</div>';
 
+  html += '<select class="admin-module-select" onchange="setAdminModule(this.value)" aria-label="Módulo de administración">';
+  html += '<option value="tournaments">Torneos</option>';
+  html += '<option value="players">Jugadores</option>';
+  html += '<option value="results">Resultados</option>';
+  html += '<option value="challenges">Desafíos</option>';
+  html += '<option value="products">Tienda</option>';
+  html += '<option value="orders">Compras</option>';
+  html += '<option value="users">Cuentas</option>';
+  html += '<option value="ranking">Ranking</option>';
+  html += '<option value="settings">Ajustes</option>';
+  html += '</select>';
   html += '<div class="admin-layout">';
   html += '<nav class="admin-nav" aria-label="Módulos de administración">';
   html += '<button type="button" data-module-btn="tournaments" onclick="setAdminModule(\'tournaments\')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/></svg>Torneos</button>';
