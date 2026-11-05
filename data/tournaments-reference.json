@@ -63,7 +63,19 @@
       "user-f7d37d06-a9b5-4d05-8634-f7029bd6c7ac"
     ],
     "requests": [],
-    "matches": [],
+    "matches": [
+      {
+        "id": "xmw40xxag1",
+        "stageId": "xmw3ycl9m2",
+        "groupId": null,
+        "a": "user-75152e59-4308-46f7-a73e-ae78a415bd67",
+        "b": "user-a0105a54-6253-46b6-a266-43b17d35dde5",
+        "date": "2026-11-05T17:54",
+        "sa": null,
+        "sb": null,
+        "slot": 0
+      }
+    ],
     "groupAssignments": {
       "user-e9b6d508-100b-4a74-810a-ed08b966b83c": "xmw3xhb1k1",
       "user-75152e59-4308-46f7-a73e-ae78a415bd67": "xmw3xhb1k1",
