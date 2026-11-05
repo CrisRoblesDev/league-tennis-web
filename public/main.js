@@ -508,7 +508,7 @@ function editAdminUser(userId) {
   form.elements.namedItem("level").value = user.level || "";
   form.elements.namedItem("zone").value = user.zone || "";
   form.elements.namedItem("phone").value = user.phone || "";
-  form.elements.namedItem("nationality").value = user.nationality || "";
+  if (form.elements.namedItem("nationality")) form.elements.namedItem("nationality").value = user.nationality || "";
   form.elements.namedItem("membershipActive").checked = user.membershipActive === true;
   openAdminDynamicEditModal("adminUserForm", "Editar usuario");
 }
@@ -653,7 +653,6 @@ async function saveAdminUser(event) {
     showToast("Nombre y email son requeridos.");
     return;
   }
-
   try {
     if (userId) {
       // Edit existing user
