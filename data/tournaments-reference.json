@@ -51,13 +51,25 @@
       }
     ],
     "participants": [
-      "user-75152e59-4308-46f7-a73e-ae78a415bd67",
       "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
+      "user-75152e59-4308-46f7-a73e-ae78a415bd67",
       "user-a0105a54-6253-46b6-a266-43b17d35dde5",
       "user-c214871c-3e87-483c-864c-d7042443fbbc"
     ],
     "requests": [],
-    "matches": []
+    "matches": [
+      {
+        "id": "xmw3uin584",
+        "stageId": "xmw3uclkn1",
+        "groupId": "xmw2hpic92",
+        "a": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
+        "b": "user-c214871c-3e87-483c-864c-d7042443fbbc",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      }
+    ]
   },
   {
     "id": "tournament-womens-35-2026",
