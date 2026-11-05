@@ -12,6 +12,11 @@
     "status": "abierto",
     "stages": [
       {
+        "id": "xmw3w5g4e2",
+        "name": "WEEK 1",
+        "kind": "bracket"
+      },
+      {
         "id": "xmw3udah13",
         "name": "WEEK 3",
         "kind": "bracket"
@@ -20,11 +25,6 @@
         "id": "xmw3w56oo1",
         "name": "Grupos",
         "kind": "groups"
-      },
-      {
-        "id": "xmw3w5g4e2",
-        "name": "WEEK 1",
-        "kind": "bracket"
       }
     ],
     "groups": [
