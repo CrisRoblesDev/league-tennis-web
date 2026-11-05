@@ -15,6 +15,11 @@
         "id": "xmw3udah13",
         "name": "WEEK 3",
         "kind": "bracket"
+      },
+      {
+        "id": "xmw3w56oo1",
+        "name": "Grupos",
+        "kind": "groups"
       }
     ],
     "groups": [
@@ -33,7 +38,8 @@
     ],
     "participants": [],
     "requests": [],
-    "matches": []
+    "matches": [],
+    "groupAssignments": {}
   },
   {
     "id": "tournament-womens-35-2026",
