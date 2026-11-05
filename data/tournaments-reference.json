@@ -50,7 +50,9 @@
         "name": "Grupo D"
       }
     ],
-    "participants": [],
+    "participants": [
+      "user-e9b6d508-100b-4a74-810a-ed08b966b83c"
+    ],
     "requests": [],
     "matches": []
   },
