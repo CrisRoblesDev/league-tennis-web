@@ -94,6 +94,7 @@ export async function onRequestPost(context) {
       email,
       password: await hashPw(password),
       role,
+      nationality: typeof b.nationality === "string" ? (b.nationality.trim() || null) : (typeof b.nacionalidad === "string" ? (b.nacionalidad.trim() || null) : (typeof b.country === "string" ? (b.country.trim() || null) : null)),
       created: new Date().toISOString()
     };
     users.push(created);
@@ -148,6 +149,12 @@ export async function onRequestPost(context) {
       return jsonResponse({ error: "Zona inválida" }, 400);
     }
     target.zone = updates.zone || null;
+  }
+  if (updates.nationality !== undefined || updates.nacionalidad !== undefined || updates.country !== undefined) {
+    const rawNationality = updates.nationality !== undefined ? updates.nationality : (updates.nacionalidad !== undefined ? updates.nacionalidad : updates.country);
+    if (rawNationality === null) { target.nationality = null; }
+    else if (typeof rawNationality === "string") { target.nationality = rawNationality.trim() || null; }
+    else { return jsonResponse({ error: "Nacionalidad inválida" }, 400); }
   }
   if (updates.phone !== undefined) {
     const phoneValue = typeof updates.phone === "string" ? updates.phone.trim() : "";

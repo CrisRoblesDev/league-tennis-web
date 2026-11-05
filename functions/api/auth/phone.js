@@ -29,6 +29,7 @@ async function handle(request, env) {
         role: user.role,
         level: user.level,
         zone: user.zone,
+        nationality: user.nationality || "",
         phone: user.phone || "",
         membershipActive: user.membershipActive,
         needsPhone,
@@ -55,6 +56,12 @@ async function handle(request, env) {
   const target = users.find(item => item.id === userId);
   if (!target) return jsonResponse({ error: "Usuario no encontrado" }, 404);
   target.phone = phone;
+  if (body && (body.nationality !== undefined || body.nacionalidad !== undefined || body.country !== undefined)) {
+    const rawPhoneNat = body.nationality !== undefined ? body.nationality : (body.nacionalidad !== undefined ? body.nacionalidad : body.country);
+    if (rawPhoneNat === null) target.nationality = null;
+    else if (typeof rawPhoneNat === "string") target.nationality = rawPhoneNat.trim() || null;
+    else target.nationality = target.nationality;
+  }
   await gWrite(env, "users", users);
 
   const needsPhone = false;
@@ -72,6 +79,7 @@ async function handle(request, env) {
       role: target.role,
       level: target.level,
       zone: target.zone,
+      nationality: target.nationality || "",
       phone: target.phone || "",
       membershipActive: target.membershipActive,
       needsPhone,

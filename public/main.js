@@ -133,7 +133,8 @@ async function register(e) {
         password: form.password.value,
         phone: form.elements.namedItem("phone").value.trim(),
         level: form.level.value,
-        zone: form.zone.value
+        zone: form.zone.value,
+        nationality: form.elements.namedItem("nationality") ? form.elements.namedItem("nationality").value.trim() : ""
       })
     });
     currentUser = data.user;
@@ -492,6 +493,7 @@ function editAdminUser(userId) {
   form.elements.namedItem("level").value = user.level || "";
   form.elements.namedItem("zone").value = user.zone || "";
   form.elements.namedItem("phone").value = user.phone || "";
+  if (form.elements.namedItem("nationality")) form.elements.namedItem("nationality").value = user.nationality || "";
   form.elements.namedItem("membershipActive").checked = user.membershipActive === true;
   document.getElementById("adminUserSelection").textContent = `Editando: ${user.name}`;
   openModal("adminUserEditModal");
@@ -633,7 +635,8 @@ async function createAdminUser(event) {
         name: form.elements.namedItem("name").value,
         email: form.elements.namedItem("email").value,
         password: form.elements.namedItem("password").value,
-        role: form.elements.namedItem("role").value
+        role: form.elements.namedItem("role").value,
+        nationality: form.elements.namedItem("nationality") ? form.elements.namedItem("nationality").value.trim() : ""
       })
     });
     form.reset();
@@ -663,6 +666,7 @@ async function saveAdminUser(event) {
     level: form.elements.namedItem("level").value,
     zone: form.elements.namedItem("zone").value,
     phone: form.elements.namedItem("phone").value.trim() || null,
+    nationality: form.elements.namedItem("nationality") ? (form.elements.namedItem("nationality").value.trim() || null) : undefined,
     membershipActive: form.elements.namedItem("membershipActive").checked
   };
   const email = form.elements.namedItem("email").value.trim();

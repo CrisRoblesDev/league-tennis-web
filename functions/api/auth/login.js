@@ -37,6 +37,6 @@ export async function onRequestPost(context) {
   const needsPhone = !user.phone;
   return setSessionResp({
     userId: user.id,
-    user: { id: user.id, name: user.name, email: user.email, role: user.role, level: user.level, zone: user.zone, phone: user.phone || "", membershipActive: user.membershipActive, needsPhone, requiresPhone: needsPhone, phoneRequired: needsPhone, mustRegisterPhone: needsPhone }
+    user: { id: user.id, name: user.name, email: user.email, role: user.role, level: user.level, zone: user.zone, nationality: user.nationality || "", phone: user.phone || "", membershipActive: user.membershipActive, needsPhone, requiresPhone: needsPhone, phoneRequired: needsPhone, mustRegisterPhone: needsPhone }
   }, env, request);
 }
