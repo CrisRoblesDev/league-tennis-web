@@ -301,7 +301,7 @@
                 admin
                   ? `<button data-action="edit-group" data-id="${esc(group.id)}" class="hover:underline" type="button">${esc(group.name)} ✎</button>`
                   : esc(group.name)
-              }</strong>${admin ? `<span>${btn("↑", "move-group-up", group.id)}${btn("↓", "move-group-down", group.id)}${btn("✕", "delete-group", group.id, "danger").replace("<button", "<button draggable=\"false\"")}</span>` : ""}</div><div class="group-players">${players.map(id => `<div class="slot border-t border-[#dce5d8] ${admin ? "draggable" : ""}" ${admin ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${admin ? `<button type="button" data-action="edit-player" data-id="${esc(id)}" class="text-left hover:underline">${esc(name(id))}</button>` : esc(name(id))}</div>`).join("") || '<p class="muted text-xs">Sin jugadores</p>'}</div>${admin ? `<div class="group-drop-zone" data-drag="player" data-drop="group" data-id="${esc(group.id)}" style="margin-top:8px;padding:8px;border:2px dashed #c9dd9d;border-radius:6px;text-align:center;color:#598044;font-size:11px;">Soltar jugador aquí para mover a ${esc(group.name)}</div>` : ""}<div class="group-matches mt-2">${matches.length > 0 ? matches.map(match => {
+              }</strong>${admin ? `<span>${btn("↑", "move-group-up", group.id)}${btn("↓", "move-group-down", group.id)}${btn("✕", "delete-group", group.id, "danger").replace("<button", "<button draggable=\"false\"")}</span>` : ""}</div><div class="group-players">${players.map(id => `<div class="slot border-t border-[#dce5d8] ${admin ? "draggable" : ""}" ${admin ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${admin ? `<button type="button" data-action="edit-player" data-id="${esc(id)}" class="text-left hover:underline">${esc(name(id))}</button>` : esc(name(id))}</div>`).join("") || '<p class="muted text-xs">Sin jugadores</p>'}</div>${admin ? `<div class="group-drop-zone" data-drop="group" data-id="${esc(group.id)}" style="margin-top:8px;padding:8px;border:2px dashed #c9dd9d;border-radius:6px;text-align:center;color:#598044;font-size:11px;">Soltar jugador aquí para mover a ${esc(group.name)}</div>` : ""}<div class="group-matches mt-2">${matches.length > 0 ? matches.map(match => {
                 const mWin = winner(match);
                 return `<div class="match-node group-match ${mWin ? "win" : ""}" ${admin ? `data-action="draw-match" data-match-id="${esc(match.id)}" draggable="true" data-drag="match" data-drop="match" data-id="${esc(match.id)}" role="button" tabindex="0" aria-label="Editar partido de ${esc(group.name)}"` : ""}>
                   <div class="flex justify-between gap-2 text-[10px] muted mb-1">
@@ -311,7 +311,7 @@
                   ${[match.a, match.b].map((id, i) => `<div class="slot ${mWin === id && id ? "winner" : ""}" ${admin ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${id ? esc(name(id)) : "— Por definir"}</div>`).join("")}
                   ${admin ? '<span class="muted text-[10px]">Clic para editar · arrastra para mover</span>' : ""}
                 </div>`;
-              }).join("") : '<p class="muted text-xs text-center py-2">Sin partidos</p>'}</div>${admin && matches.length > 0 ? `<div class="match-drop-zone" data-drag="match" data-drop="group" data-id="${esc(group.id)}" style="margin-top:8px;padding:8px;border:2px dashed #c9dd9d;border-radius:6px;text-align:center;color:#598044;font-size:11px;">Soltar partido aquí para mover a ${esc(group.name)}</div>` : ""}</div>`;
+              }).join("") : '<p class="muted text-xs text-center py-2">Sin partidos</p>'}</div>${admin && matches.length > 0 ? `<div class="match-drop-zone" data-drop="group" data-id="${esc(group.id)}" style="margin-top:8px;padding:8px;border:2px dashed #c9dd9d;border-radius:6px;text-align:center;color:#598044;font-size:11px;">Soltar partido aquí para mover a ${esc(group.name)}</div>` : ""}</div>`;
             }).join("") || '<p class="muted text-sm">Añade un grupo.</p>'
           }</div></div>`
         : "";
@@ -848,10 +848,12 @@
       }
       if (action === "draw-match") {
         const matchId = target.dataset.matchId;
+        const stageId = target.dataset.stage;
+        const slot = target.dataset.slot !== undefined ? +target.dataset.slot : null;
         if (matchId) {
-          editMatch(matchId);
+          editMatch(matchId, stageId, slot); // Pass stage/slot even for existing matches (needed for bracket position)
         } else {
-          editMatch(null, target.dataset.stage, +target.dataset.slot);
+          editMatch(null, stageId, slot);
         }
         return;
       }
