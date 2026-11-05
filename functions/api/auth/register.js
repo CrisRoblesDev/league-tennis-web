@@ -16,6 +16,7 @@ export async function onRequestPost(context) {
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const password = typeof body.password === "string" ? body.password : "";
   const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+  const nationality = typeof body.nationality === "string" ? body.nationality.trim() : (typeof body.nacionalidad === "string" ? body.nacionalidad.trim() : (typeof body.country === "string" ? body.country.trim() : ""));
   if (!name || name.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 8 || password.length > 128) {
     return jsonResponse({ error: "Ingresa un nombre, email válido y contraseña de 8 a 128 caracteres" }, 400);
   }
@@ -34,6 +35,7 @@ export async function onRequestPost(context) {
     phone,
     level: typeof body.level === "string" ? body.level : null,
     zone: typeof body.zone === "string" ? body.zone : null,
+    nationality: nationality || null,
     role: env.ADMIN_EMAIL && email === env.ADMIN_EMAIL.trim().toLowerCase() ? "admin" : "user",
     created: new Date().toISOString(), membershipActive: false
   };
@@ -50,6 +52,7 @@ export async function onRequestPost(context) {
       role: user.role,
       level: user.level,
       zone: user.zone,
+      nationality: user.nationality || "",
       phone: user.phone || "",
       membershipActive: user.membershipActive,
       needsPhone,

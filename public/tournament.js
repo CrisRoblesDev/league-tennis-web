@@ -69,6 +69,8 @@
     let drag = null;
     let modalReturn = null;
     let saveChain = Promise.resolve();
+    // New: track which participant belongs to which group (participantId -> groupId)
+    let groupAssignments = new Map();
 
     const tNow = () => tournaments.find(tournament => tournament.id === activeId);
     const name = id => users.find(user => user.id === id)?.name || "Por asignar";
@@ -243,8 +245,43 @@
     }
 
     function groupPlayers(tournament, index) {
-      const count = tournament.groups.length;
-      return tournament.participants.filter((_, playerIndex) => playerIndex % count === index);
+      const group = tournament.groups[index];
+      if (!group) return [];
+      // Use explicit group assignments if available, fall back to modulo for backwards compatibility
+      const assigned = tournament.participants.filter(pId => {
+        const assignedGroupId = tournament.groupAssignments?.[pId];
+        return assignedGroupId === group.id;
+      });
+      // If no explicit assignments exist, fall back to modulo distribution
+      if (assigned.length === 0 && tournament.groupAssignments && Object.keys(tournament.groupAssignments).length === 0) {
+        return tournament.participants.filter((_, playerIndex) => playerIndex % tournament.groups.length === index);
+      }
+      return assigned;
+    }
+
+    function groupMatches(tournament, groupId) {
+      return tournament.matches.filter(match => match.groupId === groupId);
+    }
+
+    function getGroupForPlayer(tournament, playerId) {
+      if (tournament.groupAssignments && tournament.groupAssignments[playerId]) {
+        return tournament.groupAssignments[playerId];
+      }
+      // Fallback: calculate from modulo
+      const index = tournament.participants.indexOf(playerId);
+      if (index >= 0 && tournament.groups.length > 0) {
+        return tournament.groups[index % tournament.groups.length]?.id;
+      }
+      return null;
+    }
+
+    function setGroupForPlayer(tournament, playerId, groupId) {
+      if (!tournament.groupAssignments) tournament.groupAssignments = {};
+      if (groupId) {
+        tournament.groupAssignments[playerId] = groupId;
+      } else {
+        delete tournament.groupAssignments[playerId];
+      }
     }
 
     function drawMarkup(tournament, admin) {
@@ -256,13 +293,26 @@
               ? `<button type="button" data-action="edit-stage" data-id="${esc(groupStage.id)}" class="text-left hover:underline">${esc(groupStage.name)} ✎</button> ${btn("↑", "move-stage-up", groupStage.id)} ${btn("↓", "move-stage-down", groupStage.id)} ${btn("✕", "delete-stage", groupStage.id, "danger").replace("<button", "<button draggable=\"false\"")}`
               : esc(groupStage.name)
           }</div><div class="round-body">${
-            tournament.groups.map((group, index) => `<div class="group-card ${admin ? "draggable" : ""}" ${admin ? `draggable="true" data-drag="group" data-drop="group" data-id="${esc(group.id)}"` : ""}><div class="flex justify-between gap-1 items-center mb-2"><strong class="text-sm">${
-              admin
-                ? `<button data-action="edit-group" data-id="${esc(group.id)}" class="hover:underline" type="button">${esc(group.name)} ✎</button>`
-                : esc(group.name)
-            }</strong>${admin ? `<span>${btn("↑", "move-group-up", group.id)}${btn("↓", "move-group-down", group.id)}${btn("✕", "delete-group", group.id, "danger").replace("<button", "<button draggable=\"false\"")}</span>` : ""}</div>${
-              groupPlayers(tournament, index).map(id => `<div class="slot border-t border-[#dce5d8] ${admin ? "draggable" : ""}" ${admin ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${admin ? `<button type="button" data-action="edit-player" data-id="${esc(id)}" class="text-left hover:underline">${esc(name(id))}</button>` : esc(name(id))}</div>`).join("") || '<p class="muted text-xs">Sin jugadores</p>'
-            }</div>`).join("") || '<p class="muted text-sm">Añade un grupo.</p>'
+            tournament.groups.map((group, index) => {
+              const players = groupPlayers(tournament, index);
+              const matches = groupMatches(tournament, group.id);
+              const win = winner; // reference for use in map
+              return `<div class="group-card ${admin ? "draggable" : ""}" ${admin ? `draggable="true" data-drag="group" data-drop="group" data-id="${esc(group.id)}"` : ""}><div class="flex justify-between gap-1 items-center mb-2"><strong class="text-sm">${
+                admin
+                  ? `<button data-action="edit-group" data-id="${esc(group.id)}" class="hover:underline" type="button">${esc(group.name)} ✎</button>`
+                  : esc(group.name)
+              }</strong>${admin ? `<span>${btn("↑", "move-group-up", group.id)}${btn("↓", "move-group-down", group.id)}${btn("✕", "delete-group", group.id, "danger").replace("<button", "<button draggable=\"false\"")}</span>` : ""}</div><div class="group-players">${players.map(id => `<div class="slot border-t border-[#dce5d8] ${admin ? "draggable" : ""}" ${admin ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${admin ? `<button type="button" data-action="edit-player" data-id="${esc(id)}" class="text-left hover:underline">${esc(name(id))}</button>` : esc(name(id))}</div>`).join("") || '<p class="muted text-xs">Sin jugadores</p>'}</div>${admin ? `<div class="group-drop-zone" data-drag="player" data-drop="group" data-id="${esc(group.id)}" style="margin-top:8px;padding:8px;border:2px dashed #c9dd9d;border-radius:6px;text-align:center;color:#598044;font-size:11px;">Soltar jugador aquí para mover a ${esc(group.name)}</div>` : ""}<div class="group-matches mt-2">${matches.length > 0 ? matches.map(match => {
+                const mWin = winner(match);
+                return `<div class="match-node group-match ${mWin ? "win" : ""}" ${admin ? `data-action="draw-match" data-match-id="${esc(match.id)}" draggable="true" data-drag="match" data-drop="match" data-id="${esc(match.id)}" role="button" tabindex="0" aria-label="Editar partido de ${esc(group.name)}"` : ""}>
+                  <div class="flex justify-between gap-2 text-[10px] muted mb-1">
+                    <span>${esc(group.name)}</span>
+                    <span>${match.date ? new Date(match.date).toLocaleDateString("es-CL") : "Por programar"}</span>
+                  </div>
+                  ${[match.a, match.b].map((id, i) => `<div class="slot ${mWin === id && id ? "winner" : ""}" ${admin ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${id ? esc(name(id)) : "— Por definir"}</div>`).join("")}
+                  ${admin ? '<span class="muted text-[10px]">Clic para editar · arrastra para mover</span>' : ""}
+                </div>`;
+              }).join("") : '<p class="muted text-xs text-center py-2">Sin partidos</p>'}</div>${admin && matches.length > 0 ? `<div class="match-drop-zone" data-drag="match" data-drop="group" data-id="${esc(group.id)}" style="margin-top:8px;padding:8px;border:2px dashed #c9dd9d;border-radius:6px;text-align:center;color:#598044;font-size:11px;">Soltar partido aquí para mover a ${esc(group.name)}</div>` : ""}</div>`;
+            }).join("") || '<p class="muted text-sm">Añade un grupo.</p>'
           }</div></div>`
         : "";
 
@@ -276,13 +326,14 @@
           const match = bracketMatch(tournament, round.stage.id, slot);
           const win = winner(match);
           const last = roundIndex === allRounds.length - 1;
-          return `<div class="match-node ${last ? "last" : ""} ${win ? "win" : ""}" ${admin ? `data-action="draw-match" data-stage="${esc(round.stage.id)}" data-slot="${slot}" role="button" tabindex="0" aria-label="Editar partido ${slot + 1} de ${esc(round.stage.name)}"` : ""}><div class="flex justify-between gap-2 text-[10px] muted mb-1"><span>PARTIDO ${slot + 1}</span><span>${match?.date ? new Date(match.date).toLocaleDateString("es-CL") : "Por programar"}</span></div>${
+          const matchId = match?.id;
+          return `<div class="match-node ${last ? "last" : ""} ${win ? "win" : ""}" ${admin ? `data-action="draw-match" data-stage="${esc(round.stage.id)}" data-slot="${slot}" ${matchId ? `data-match-id="${esc(matchId)}" draggable="true" data-drag="match" data-drop="match" data-id="${esc(matchId)}"` : ""} role="button" tabindex="0" aria-label="Editar partido ${slot + 1} de ${esc(round.stage.name)}"` : ""}><div class="flex justify-between gap-2 text-[10px] muted mb-1"><span>PARTIDO ${slot + 1}</span><span>${match?.date ? new Date(match.date).toLocaleDateString("es-CL") : "Por programar"}</span></div>${
             [a, b].map(id => `<div class="slot ${win === id && id ? "winner" : ""}" ${admin && roundIndex === 0 && id ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${id ? esc(name(id)) : "— Por definir"}</div>`).join("")
           }${admin ? '<span class="muted text-[10px]">Clic para editar · arrastra para mover</span>' : ""}</div>`;
         }).join("")
       }</div></div>`).join("");
 
-      return `<div class="bracket-scroll mt-6" aria-label="Main Draw desplazable"><div class="bracket">${groups}${columns || '<p class="muted">Añade una etapa de eliminación para mostrar el cuadro.</p>'}</div></div>${admin ? '<p class="muted text-xs mt-2">Las flechas permiten reordenar sin arrastrar. Para mover un jugador entre grupos, arrástralo sobre otro jugador del grupo de destino.</p>' : ""}`;
+      return `<div class="bracket-scroll mt-6" aria-label="Main Draw desplazable"><div class="bracket">${groups}${columns || '<p class="muted">Añade una etapa de eliminación para mostrar el cuadro.</p>'}</div></div>${admin ? '<p class="muted text-xs mt-2">Las flechas permiten reordenar sin arrastrar. Para mover un jugador entre grupos, arrástralo sobre la zona "Soltar jugador aquí" del grupo de destino. Para mover un partido entre grupos, arrástralo sobre la zona "Soltar partido aquí" del grupo de destino.</p>' : ""}`;
     }
 
     function reconcile(tournament) {
@@ -420,10 +471,22 @@
       const pair = isBracket && slot !== null ? entrants(tournament, roundIndex, slot) : null;
       const a = pair ? pair[0] : match?.a || "";
       const b = pair ? pair[1] : match?.b || "";
-      const select = (key, value, label) => `<div><label class="label" for="modal-${key}">${label}</label><select class="field" id="modal-${key}" name="${key}" ${isBracket ? "disabled" : ""}><option value="">Por asignar</option>${tournament.participants.map(playerId => `<option value="${esc(playerId)}" ${playerId === value ? "selected" : ""}>${esc(name(playerId))}</option>`).join("")}</select></div>`;
-      modal(match ? "Editar partido" : "Asignar partido", `<p class="muted text-sm mb-4">${esc(stage?.name || "Etapa")} ${slot !== null ? `· partido ${slot + 1}` : ""}</p><div class="grid grid-cols-2 gap-3">${select("a", a, "Jugador A")}${select("b", b, "Jugador B")}${field("Fecha y hora", "date", match?.date || "", "datetime-local")}${tournament.groups.length && !isBracket ? `<div><label class="label" for="modal-group">Grupo</label><select id="modal-group" name="group" class="field"><option value="">Sin grupo</option>${tournament.groups.map(group => `<option value="${esc(group.id)}" ${match?.groupId === group.id ? "selected" : ""}>${esc(group.name)}</option>`).join("")}</select></div>` : "<div></div>"}${field("Sets jugador A", "sa", match?.sa ?? "", "number", 'min="0" max="5"')}${field("Sets jugador B", "sb", match?.sb ?? "", "number", 'min="0" max="5"')}</div><p class="muted text-xs mt-3">Deja ambos resultados vacíos si el partido está pendiente. No se permiten empates.</p>`, form => {
-        const x = isBracket ? a : form.get("a");
-        const y = isBracket ? b : form.get("b");
+
+      // Stage selector for moving matches between stages
+      const stageSelect = `<div><label class="label" for="modal-stage">Etapa</label><select class="field" id="modal-stage" name="stage"><option value="">Seleccionar etapa</option>${tournament.stages.map(s => `<option value="${esc(s.id)}" ${(match?.stageId || stage?.id) === s.id ? "selected" : ""}>${esc(s.name)} (${s.kind})</option>`).join("")}</select></div>`;
+
+      const select = (key, value, label) => `<div><label class="label" for="modal-${key}">${label}</label><select class="field" id="modal-${key}" name="${key}" ${isBracket && !match ? "disabled" : ""}><option value="">Por asignar</option>${tournament.participants.map(playerId => `<option value="${esc(playerId)}" ${playerId === value ? "selected" : ""}>${esc(name(playerId))}</option>`).join("")}</select></div>`;
+      modal(match ? "Editar partido" : "Asignar partido", `<p class="muted text-sm mb-4">${esc(stage?.name || "Etapa")} ${slot !== null ? `· partido ${slot + 1}` : ""}</p><div class="grid grid-cols-2 gap-3">${stageSelect}${select("a", a, "Jugador A")}${select("b", b, "Jugador B")}${field("Fecha y hora", "date", match?.date || "", "datetime-local")}<div id="modal-group-container">${match?.groupId || tournament.groups.length ? `<div><label class="label" for="modal-group">Grupo</label><select id="modal-group" name="group" class="field"><option value="">Sin grupo</option>${tournament.groups.map(group => `<option value="${esc(group.id)}" ${match?.groupId === group.id ? "selected" : ""}>${esc(group.name)}</option>`).join("")}</select></div>` : ""}</div>${field("Sets jugador A", "sa", match?.sa ?? "", "number", 'min="0" max="5"')}${field("Sets jugador B", "sb", match?.sb ?? "", "number", 'min="0" max="5"')}</div><p class="muted text-xs mt-3">Deja ambos resultados vacíos si el partido está pendiente. No se permiten empates.</p>`, form => {
+        const newStageId = form.get("stage");
+        const newStage = tournament.stages.find(s => s.id === newStageId);
+        const newIsBracket = newStage?.kind === "bracket";
+
+        // When stage changes, update groupId accordingly
+        let groupId = form.get("group") || null;
+        if (newIsBracket) groupId = null; // Bracket matches don't have groups
+
+        const x = (newIsBracket && !match && slot !== null) ? a : form.get("a");
+        const y = (newIsBracket && !match && slot !== null) ? b : form.get("b");
         const sa = form.get("sa");
         const sb = form.get("sb");
         if ((x && y && x === y) || (sa === "") !== (sb === "") || (sa !== "" && (+sa === +sb || !x || !y))) {
@@ -431,19 +494,35 @@
           return false;
         }
         const data = {
-          stageId: stage?.id || match?.stageId,
-          groupId: isBracket ? null : (form.get("group") || null),
+          stageId: newStageId || stage?.id || match?.stageId,
+          groupId,
           a: x || null,
           b: y || null,
           date: form.get("date"),
           sa: sa === "" ? null : +sa,
           sb: sb === "" ? null : +sb,
-          slot: isBracket ? slot : null
+          slot: newIsBracket ? slot : null
         };
         if (match) Object.assign(match, data);
         else tournament.matches.push({ id: uid(), ...data });
         refresh("Partido y cuadro actualizados.");
       });
+
+      // Update group container visibility when stage changes
+      setTimeout(() => {
+        const stageSel = document.getElementById("modal-stage");
+        const groupContainer = document.getElementById("modal-group-container");
+        if (stageSel && groupContainer) {
+          stageSel.addEventListener("change", () => {
+            const selectedStage = tournament.stages.find(s => s.id === stageSel.value);
+            if (selectedStage && selectedStage.kind === "bracket") {
+              groupContainer.innerHTML = "";
+            } else if (tournament.groups.length) {
+              groupContainer.innerHTML = `<div><label class="label" for="modal-group">Grupo</label><select id="modal-group" name="group" class="field"><option value="">Sin grupo</option>${tournament.groups.map(group => `<option value="${esc(group.id)}" ${match?.groupId === group.id ? "selected" : ""}>${esc(group.name)}</option>`).join("")}</select></div>`;
+            }
+          });
+        }
+      }, 0);
     }
 
     function wizardSave() {
@@ -768,7 +847,12 @@
         return;
       }
       if (action === "draw-match") {
-        editMatch(null, target.dataset.stage, +target.dataset.slot);
+        const matchId = target.dataset.matchId;
+        if (matchId) {
+          editMatch(matchId);
+        } else {
+          editMatch(null, target.dataset.stage, +target.dataset.slot);
+        }
         return;
       }
       if (action === "delete-group") {
@@ -834,7 +918,13 @@
 
     app.addEventListener("dragover", event => {
       const target = event.target.closest("[data-drop]");
-      if (target && drag?.kind === target.dataset.drop && drag.id !== target.dataset.id) {
+      if (!target || !drag) return;
+      // Allow cross-kind drops: player->group, match->stage, match->group
+      const allowDrop =
+        (drag.kind === "player" && target.dataset.drop === "group") ||
+        (drag.kind === "match" && (target.dataset.drop === "stage" || target.dataset.drop === "group")) ||
+        (drag.kind === target.dataset.drop && drag.id !== target.dataset.id);
+      if (allowDrop) {
         event.preventDefault();
         target.classList.add("drop-over");
       }
@@ -847,10 +937,54 @@
 
     app.addEventListener("drop", event => {
       const target = event.target.closest("[data-drop]");
-      if (!target || !drag || target.dataset.drop !== drag.kind) return;
+      if (!target || !drag) return;
       event.preventDefault();
       root.querySelectorAll(".drop-over").forEach(node => node.classList.remove("drop-over"));
       const tournament = tNow();
+
+      // Handle cross-group player moves (drag player, drop on group drop zone)
+      if (drag.kind === "player" && target.dataset.drop === "group") {
+        const playerId = drag.id;
+        const groupId = target.dataset.id;
+        setGroupForPlayer(tournament, playerId, groupId);
+        refresh(`Jugador movido a ${tournament.groups.find(g => g.id === groupId)?.name || "grupo"}.`);
+        drag = null;
+        return;
+      }
+
+      // Handle match-to-stage moves (drag match, drop on stage)
+      if (drag.kind === "match" && target.dataset.drop === "stage") {
+        const matchId = drag.id;
+        const stageId = target.dataset.id;
+        const match = tournament.matches.find(m => m.id === matchId);
+        if (match) {
+          match.stageId = stageId;
+          match.groupId = null; // Remove group assignment when moving to bracket stage
+          match.slot = null; // Reset slot
+          refresh("Partido movido a otra etapa.");
+        }
+        drag = null;
+        return;
+      }
+
+      // Handle match-to-group moves (drag match, drop on group)
+      if (drag.kind === "match" && target.dataset.drop === "group") {
+        const matchId = drag.id;
+        const groupId = target.dataset.id;
+        const match = tournament.matches.find(m => m.id === matchId);
+        const groupStage = tournament.stages.find(s => s.kind === "groups");
+        if (match && groupStage) {
+          match.groupId = groupId;
+          match.stageId = groupStage.id;
+          match.slot = null;
+          refresh("Partido movido a fase de grupos.");
+        }
+        drag = null;
+        return;
+      }
+
+      // Standard reordering within same list
+      if (target.dataset.drop !== drag.kind) return;
       const list = page === "wizard"
         ? (drag.kind === "stage" ? wizard.stages : wizard.groups)
         : drag.kind === "stage" ? tournament.stages : drag.kind === "group" ? tournament.groups : tournament.participants;

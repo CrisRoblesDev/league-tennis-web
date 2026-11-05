@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="tournament.css?v=1">
 <script src="i18n.js?v=13" defer></script>
 <script src="tournament.js?v=1" defer></script>
-<script src="main.js?v=16" defer></script>
+<script src="main.js?v=17" defer></script>
 <script src="bracket-engine.js?v=3" defer></script>
 </head>
 <body>
@@ -444,6 +444,7 @@
       <label class="full">Teléfono<input name="phone" type="tel" autocomplete="tel" required placeholder="Ej. +1 305 555 0123"></label>
       <label>Nivel de tenis<select name="level"><option value="">Opcional</option><option>2.5</option><option>3.0</option><option>3.5</option><option>4.0</option><option>4.5</option><option>5.0</option></select></label>
       <label>Zona de Miami<select name="zone"><option value="">Opcional</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
+      <label>Nacionalidad<input name="nationality" maxlength="60" placeholder="Ej. Argentina"></label>
       <label class="full"><span><input type="checkbox" required> Acepto las reglas de la liga.</span></label>
       <button class="btn btn-primary full" type="submit">Crear cuenta</button>
     </form>
@@ -515,5 +516,19 @@
   </div>
 </div>
 
+<!-- PROFILE EDIT MODAL -->
+<div class="modal" id="profileEditModal">
+  <div class="modal-box">
+    <div class="modal-head"><h2>Editar perfil</h2><button class="close" onclick="closeModal('profileEditModal')">×</button></div>
+    <form id="profileEditForm" class="admin-form">
+      <label>Nombre<input name="name" maxlength="100" required></label>
+      <label>Email<input name="email" type="email" required></label>
+      <label>Teléfono<input name="phone" type="tel" placeholder="Ej. +1 305 555 0123"></label>
+      <label>Nacionalidad<input name="nationality" maxlength="60" placeholder="Ej. Argentina"></label>
+      <label class="full"><span><input name="password" type="password" minlength="8" maxlength="128" placeholder="Dejar vacío para no cambiar la contraseña"></span></label>
+      <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar cambios</button><button class="btn btn-secondary" type="button" onclick="closeModal('profileEditModal')">Cancelar</button></div>
+    </form>
+  </div>
+</div>
 </body>
 </html>

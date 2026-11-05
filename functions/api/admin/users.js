@@ -94,6 +94,7 @@ export async function onRequestPost(context) {
       email,
       password: await hashPw(password),
       role,
+      nationality: typeof b.nationality === "string" ? (b.nationality.trim() || null) : (typeof b.nacionalidad === "string" ? (b.nacionalidad.trim() || null) : (typeof b.country === "string" ? (b.country.trim() || null) : null)),
       created: new Date().toISOString()
     };
     users.push(created);
@@ -149,12 +150,25 @@ export async function onRequestPost(context) {
     }
     target.zone = updates.zone || null;
   }
+  if (updates.nationality !== undefined || updates.nacionalidad !== undefined || updates.country !== undefined) {
+    const rawNationality = updates.nationality !== undefined ? updates.nationality : (updates.nacionalidad !== undefined ? updates.nacionalidad : updates.country);
+    if (rawNationality === null) { target.nationality = null; }
+    else if (typeof rawNationality === "string") { target.nationality = rawNationality.trim() || null; }
+    else { return jsonResponse({ error: "Nacionalidad inválida" }, 400); }
+  }
   if (updates.phone !== undefined) {
     const phoneValue = typeof updates.phone === "string" ? updates.phone.trim() : "";
     if (phoneValue && (phoneValue.length < 7 || phoneValue.replace(/\D/g, "").length < 7)) {
       return jsonResponse({ error: "Teléfono inválido" }, 400);
     }
     target.phone = phoneValue || null;
+  }
+  if (updates.name !== undefined) {
+    const nameValue = typeof updates.name === "string" ? updates.name.trim() : "";
+    if (!nameValue || nameValue.length > 100) {
+      return jsonResponse({ error: "Nombre inválido (1-100 caracteres)" }, 400);
+    }
+    target.name = nameValue;
   }
   await gWrite(env, "users", users);
   return jsonResponse({ ok: true });

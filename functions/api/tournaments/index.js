@@ -137,6 +137,17 @@ function normalizeTournament(raw, userById) {
   let end = cleanDate(raw.end);
   if (date && end && end < date) end = date;
 
+  // Parse groupAssignments: { [playerId]: groupId }
+  const groupAssignments = {};
+  if (raw.groupAssignments && typeof raw.groupAssignments === "object") {
+    for (const [playerId, groupId] of Object.entries(raw.groupAssignments)) {
+      if (typeof playerId === "string" && typeof groupId === "string" &&
+          participantSet.has(playerId) && groupIds.has(groupId)) {
+        groupAssignments[playerId] = groupId;
+      }
+    }
+  }
+
   return {
     id: cleanId(raw.id, "tournament"),
     name,
@@ -152,7 +163,8 @@ function normalizeTournament(raw, userById) {
     groups,
     participants,
     requests,
-    matches
+    matches,
+    groupAssignments
   };
 }
 
