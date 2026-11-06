@@ -86,7 +86,6 @@
     "requests": [],
     "matches": [],
     "groupAssignments": {
-      "user-a0105a54-6253-46b6-a266-43b17d35dde5": "grp-a",
       "user-a98b85b1-552e-45d2-9353-07a3d648109a": "grp-a",
       "user-7929e9a9-e4df-4ed9-8a47-189bcb2d3daf": "grp-c",
       "user-0243ad0c-dc30-48de-8c76-366be2d7192a": "grp-c",
