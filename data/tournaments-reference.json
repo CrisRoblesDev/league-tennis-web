@@ -34,10 +34,6 @@
     ],
     "groups": [
       {
-        "id": "xmw3xhb1k1",
-        "name": "Grupo A"
-      },
-      {
         "id": "xmw2hsagk5",
         "name": "Grupo D"
       }
@@ -141,10 +137,6 @@
       }
     ],
     "groupAssignments": {
-      "user-e9b6d508-100b-4a74-810a-ed08b966b83c": "xmw3xhb1k1",
-      "user-75152e59-4308-46f7-a73e-ae78a415bd67": "xmw3xhb1k1",
-      "user-a0105a54-6253-46b6-a266-43b17d35dde5": "xmw3xhb1k1",
-      "user-c214871c-3e87-483c-864c-d7042443fbbc": "xmw3xhb1k1",
       "user-9b9b2373-bf4b-47fc-9857-8afd9f3efef8": "xmw2hsagk5",
       "user-c8b785f6-e933-4736-b352-e3c5132afe61": "xmw2hsagk5",
       "user-7929e9a9-e4df-4ed9-8a47-189bcb2d3daf": "xmw2hsagk5",
