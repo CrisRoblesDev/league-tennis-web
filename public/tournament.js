@@ -255,7 +255,20 @@
             : `<span class="pill">${tournament.participants.length} jugadores</span>`
         }</div><div class="flex flex-wrap items-center gap-2 mb-3 mt-2"><span class="muted text-xs font-bold">Zoom</span>${btn("−", "zoom-out", "", "secondary")}${btn("+", "zoom-in", "", "secondary")}${btn("Ajustar", "zoom-reset", "", "secondary")}<span class="muted text-xs" id="zoom-label">${Math.round(drawZoom * 100)}%</span></div>${admin ? `<div class="mb-3 p-2 rounded-lg bg-[#f7fbf2] border border-[#dce5d8] text-xs text-[#4b6b3a]">Arrastra jugadores y partidos. Suelta sobre un grupo/etapa para moverlos.</div>` : ""}${drawMarkup(tournament, admin)}</div>`;
       }
-      if (tab === "draw") setTimeout(() => { drawConnections(); applyDrawZoom(); }, 50);
+      if (tab === "draw") setTimeout(() => {
+        drawConnections(); applyDrawZoom();
+        const scroll = root.querySelector(".bracket-scroll");
+        if (scroll && !scroll.dataset.zoomBound) {
+          scroll.dataset.zoomBound = "1";
+          scroll.addEventListener("wheel", (e) => {
+            e.preventDefault();
+            const delta = e.deltaY < 0 ? 0.1 : -0.1;
+            drawZoom = Math.min(2, Math.max(0.4, Math.round((drawZoom + delta) * 100) / 100));
+            applyDrawZoom();
+            drawConnections();
+          }, { passive: false });
+        }
+      }, 50);
     }
 
     function bracketStages(tournament) {
@@ -941,6 +954,21 @@
         createFromWizard();
         return;
       }
+      if (action === "zoom-in") {
+        drawZoom = Math.min(2, Math.round((drawZoom + 0.1) * 100) / 100);
+        applyDrawZoom();
+        return;
+      }
+      if (action === "zoom-out") {
+        drawZoom = Math.max(0.4, Math.round((drawZoom - 0.1) * 100) / 100);
+        applyDrawZoom();
+        return;
+      }
+      if (action === "zoom-reset") {
+        drawZoom = 0.75;
+        applyDrawZoom();
+        return;
+      }
       if (!admin) {
         if (!["enroll", "withdraw", "cancel-request"].includes(action)) return;
         if (!currentUserId) {
@@ -1094,21 +1122,6 @@
         if (!playerId) return;
         setGroupForPlayer(tournament, playerId, null);
         refresh(`Jugador retirado de ${tournament.groups.find(g => g.id === groupId)?.name || "grupo"}.`);
-        return;
-      }
-      if (action === "zoom-in") {
-        drawZoom = Math.min(2, Math.round((drawZoom + 0.1) * 100) / 100);
-        applyDrawZoom();
-        return;
-      }
-      if (action === "zoom-out") {
-        drawZoom = Math.max(0.4, Math.round((drawZoom - 0.1) * 100) / 100);
-        applyDrawZoom();
-        return;
-      }
-      if (action === "zoom-reset") {
-        drawZoom = 0.75;
-        applyDrawZoom();
         return;
       }
       if (action === "add-bracket-match") {
