@@ -516,14 +516,6 @@
     },
     "connections": [
       {
-        "from": "xmw5c5x6tf",
-        "to": "xmw5c6y38h"
-      },
-      {
-        "from": "xmw5c5x6tf",
-        "to": "xmw5c7vvqi"
-      },
-      {
         "from": "xmw5c6g1ng",
         "to": "xmw5c6y38h"
       }
