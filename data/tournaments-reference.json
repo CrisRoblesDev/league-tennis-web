@@ -695,7 +695,20 @@
       "user-f3607eec-25f4-4775-a46e-bcdc45be58f0"
     ],
     "requests": [],
-    "matches": [],
+    "matches": [
+      {
+        "id": "xmw5igs4w3",
+        "stageId": "xmw5ifyqt2",
+        "groupId": null,
+        "a": "user-94c3d05c-a460-4993-b0f7-1c92f3ac470e",
+        "b": "user-56b60b3d-8236-46d5-aaa2-542d5ca0586b",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 0,
+        "cardNo": 1
+      }
+    ],
     "groupAssignments": {
       "user-94c3d05c-a460-4993-b0f7-1c92f3ac470e": "xmw5ibchb1",
       "user-a8a4122b-dc85-46aa-bfe8-831c61b62b4d": "xmw5ibchb1",
