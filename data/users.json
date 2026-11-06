@@ -348,5 +348,14 @@
     "created": "2026-11-06T21:57:20.322Z",
     "level": "4.0",
     "zone": "Aventura / Sunny Isles"
+  },
+  {
+    "id": "user-964a7577-84e7-4b43-b7a4-0dc326610874",
+    "name": "Alan Gary",
+    "email": "alan.gary@temp.aventuratennisleague.com",
+    "password": "pbkdf2$100000$Ad7e54M1KsB5TW5CvtFneQ$PgXugbeaYPLQB6TDuEudvwsJz5UwB-lxpFnaD8q8waU",
+    "role": "user",
+    "nationality": null,
+    "created": "2026-11-06T22:00:29.147Z"
   }
 ]
