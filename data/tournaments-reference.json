@@ -17,11 +17,6 @@
         "kind": "groups"
       },
       {
-        "id": "stage-cuartos-de-final",
-        "name": "Cuartos de final",
-        "kind": "bracket"
-      },
-      {
         "id": "stage-semifinal",
         "name": "Semifinal",
         "kind": "bracket"
@@ -53,50 +48,6 @@
     ],
     "requests": [],
     "matches": [
-      {
-        "id": "qf-1",
-        "stageId": "stage-cuartos-de-final",
-        "groupId": null,
-        "a": null,
-        "b": null,
-        "date": "",
-        "sa": null,
-        "sb": null,
-        "slot": 0
-      },
-      {
-        "id": "qf-2",
-        "stageId": "stage-cuartos-de-final",
-        "groupId": null,
-        "a": null,
-        "b": null,
-        "date": "",
-        "sa": null,
-        "sb": null,
-        "slot": 1
-      },
-      {
-        "id": "qf-3",
-        "stageId": "stage-cuartos-de-final",
-        "groupId": null,
-        "a": null,
-        "b": null,
-        "date": "",
-        "sa": null,
-        "sb": null,
-        "slot": 2
-      },
-      {
-        "id": "qf-4",
-        "stageId": "stage-cuartos-de-final",
-        "groupId": null,
-        "a": null,
-        "b": null,
-        "date": "",
-        "sa": null,
-        "sb": null,
-        "slot": 3
-      },
       {
         "id": "sf-1",
         "stageId": "stage-semifinal",
