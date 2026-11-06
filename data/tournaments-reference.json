@@ -17,8 +17,8 @@
         "kind": "groups"
       },
       {
-        "id": "stage-final",
-        "name": "Final",
+        "id": "stage-sf",
+        "name": "Semifinal",
         "kind": "bracket"
       },
       {
@@ -378,16 +378,16 @@
         "cardNo": 29
       },
       {
-        "id": "final-1",
-        "stageId": "stage-final",
+        "id": "sf-2",
+        "stageId": "stage-sf",
         "groupId": null,
         "a": null,
         "b": null,
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": 0,
-        "cardNo": 31
+        "slot": 1,
+        "cardNo": 30
       }
     ],
     "groupAssignments": {
