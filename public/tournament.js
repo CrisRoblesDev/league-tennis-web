@@ -400,7 +400,7 @@
               }${admin ? '<span class="muted text-[10px]">Clic para editar · arrastra para mover</span>' : ""}${admin ? `<button type="button" class="button light small" style="margin-top:6px;" data-action="unir-linea" data-match-id="${esc(match.id)}" draggable="false" title="unir linea">Unir linea</button>` : ""}${admin ? `<button type="button" class="button light small" style="margin-top:6px;margin-left:4px;" data-action="desunir-linea" data-match-id="${esc(match.id)}" draggable="false" title="desunir linea">Desunir linea</button>` : ""}</div>`;
             }
             // Empty slot (sin botón de creación; el admin usa el botón superior "+ Partido")
-            return admin ? `<div class="match-node empty-slot ${last ? "last" : ""}" data-slot="${slot}" style="border-style:dashed;border-color:#c9dd9d;background:#f8fdf3;min-height:86px;display:flex;align-items:center;justify-content:center;color:#a3c979;font-size:11px;">Partido ${slot + 1} (vacío)</div>` : `<div class="match-node empty-slot ${last ? "last" : ""}" data-slot="${slot}" style="border-style:dashed;border-color:#c9dd9d;background:#f8fdf3;min-height:86px;display:flex;align-items:center;justify-content:center;color:#a3c979;font-size:11px;">Partido ${slot + 1} (vacío)</div>`;
+            return `<div class="match-node empty-slot ${last ? "last" : ""}" data-slot="${slot}" style="border-style:dashed;border-color:#c9dd9d;background:#f8fdf3;min-height:86px;"></div>`;
           }).join("")
         }</div></div>`;
       }).join("");
