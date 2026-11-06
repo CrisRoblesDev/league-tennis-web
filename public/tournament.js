@@ -274,6 +274,10 @@
     function bracketMatch(tournament, stageId, slot) {
       return tournament.matches.find(match => match.stageId === stageId && match.slot === slot);
     }
+    function nextCardNo(tournament) {
+      const nums = (tournament.matches || []).map(m => Number(m.cardNo)).filter(n => Number.isInteger(n) && n > 0);
+      return nums.length ? Math.max(...nums) + 1 : 1;
+    }
 
     function entrants(tournament, roundIndex, slot) {
       const allRounds = rounds(tournament);
@@ -345,9 +349,9 @@
                   : esc(group.name)
               }</strong>${admin ? `<span>${btn("↑", "move-group-up", group.id)}${btn("↓", "move-group-down", group.id)}${btn("✕", "delete-group", group.id, "danger").replace("<button", "<button draggable=\"false\"")}</span>` : ""}</div><div class="group-players">${players.map(id => `<div class="slot border-t border-[#dce5d8] ${admin ? "draggable" : ""}" ${admin ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${admin ? `<button type="button" data-action="edit-player" data-id="${esc(id)}" class="text-left hover:underline">${esc(name(id))}</button>` : esc(name(id))}${admin ? ` <button type="button" class="button light small" style="margin-left:6px;" data-action="remove-from-group" data-player-id="${esc(id)}" data-group-id="${esc(group.id)}" draggable="false">Quitar del grupo</button>` : ""}</div>`).join("") || '<p class="muted text-xs">Sin jugadores</p>'}</div>${admin ? `<div class="group-drop-zone" data-drop="group" data-id="${esc(group.id)}" style="margin-top:8px;padding:8px;border:2px dashed #c9dd9d;border-radius:6px;text-align:center;color:#598044;font-size:11px;">Soltar jugador aquí para mover a ${esc(group.name)}</div>` : ""}${admin ? `<div class="group-assign mt-2 flex gap-1 items-center"><select class="field small" data-group-assign="${esc(group.id)}" style="flex:1;"><option value="">Asignar jugador a ${esc(group.name)}</option>${tournament.participants.map(pid => `<option value="${esc(pid)}">${esc(name(pid))}</option>`).join("")}</select><button type="button" class="button light small" data-action="assign-to-group" data-group-id="${esc(group.id)}">Asignar</button></div>` : ""}<div class="group-matches mt-2">${matches.length > 0 ? matches.map(match => {
                 const mWin = winner(match);
-                return `<div class="match-node group-match ${mWin ? "win" : ""}" ${admin ? `data-action="draw-match" data-match-id="${esc(match.id)}" draggable="true" data-drag="match" data-drop="match" data-id="${esc(match.id)}" role="button" tabindex="0" aria-label="Editar partido de ${esc(group.name)}"` : ""}>
+                return `<div class="match-node group-match ${mWin ? "win" : ""}" data-card-no="${esc(match.cardNo || "")}" data-match-id="${esc(match.id)}" ${admin ? `data-action="draw-match" draggable="true" data-drag="match" data-drop="match" data-id="${esc(match.id)}" role="button" tabindex="0" aria-label="Editar partido de ${esc(group.name)}"` : ""}>
                   <div class="flex justify-between gap-2 text-[10px] muted mb-1">
-                    <span>${esc(group.name)}</span>
+                    <span>${esc(group.name)}${admin ? ` · #${esc(match.cardNo || match.id)}` : ""}</span>
                     <span>${match.date ? new Date(match.date).toLocaleDateString("es-CL") : "Por programar"}</span>
                   </div>
                   ${[match.a, match.b].map((id, i) => `<div class="slot ${mWin === id && id ? "winner" : ""}" ${admin ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${id ? esc(name(id)) : "— Por definir"}</div>`).join("")}
@@ -376,7 +380,7 @@
             const last = roundIndex === allRounds.length - 1;
             if (match) {
               const [a, b] = [match.a, match.b];
-              return `<div class="match-node ${last ? "last" : ""} ${win ? "win" : ""}" data-slot="${slot}" ${admin ? `data-action="draw-match" data-match-id="${esc(match.id)}" draggable="true" data-drag="match" data-drop="match" data-id="${esc(match.id)}" role="button" tabindex="0" aria-label="Editar partido ${slot + 1} de ${esc(round.stage.name)}"` : ""}><div class="flex justify-between gap-2 text-[10px] muted mb-1"><span>PARTIDO ${slot + 1}</span><span>${match.date ? new Date(match.date).toLocaleDateString("es-CL") : "Por programar"}</span></div>${
+              return `<div class="match-node ${last ? "last" : ""} ${win ? "win" : ""}" data-slot="${slot}" data-card-no="${esc(match.cardNo || "")}" data-match-id="${esc(match.id)}" ${admin ? `data-action="draw-match" draggable="true" data-drag="match" data-drop="match" data-id="${esc(match.id)}" role="button" tabindex="0" aria-label="Editar partido ${slot + 1} de ${esc(round.stage.name)}"` : ""}><div class="flex justify-between gap-2 text-[10px] muted mb-1"><span>PARTIDO ${slot + 1}${admin ? ` · #${esc(match.cardNo || match.id)}` : ""}</span><span>${match.date ? new Date(match.date).toLocaleDateString("es-CL") : "Por programar"}</span></div>${
                 [a, b].map(id => `<div class="slot ${win === id && id ? "winner" : ""}" ${admin && roundIndex === 0 && id ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${id ? esc(name(id)) : "— Por definir"}</div>`).join("")
               }${admin ? '<span class="muted text-[10px]">Clic para editar · arrastra para mover</span>' : ""}</div>`;
             }
@@ -390,6 +394,8 @@
     }
 
     function drawConnections() {
+      const tournament = tNow();
+      if (!tournament) return;
       const bracket = root.querySelector(".bracket");
       const svg = root.querySelector(".draw-connectors");
       if (!bracket || !svg) return;
@@ -434,6 +440,29 @@
           svg.appendChild(path);
         });
       }
+
+      // Manual connections between cards
+      const manualConnections = Array.isArray(tournament.connections) ? tournament.connections : [];
+      manualConnections.forEach(conn => {
+        const fromNode = bracket.querySelector('[data-match-id="' + conn.from + '"]');
+        const toNode = bracket.querySelector('[data-match-id="' + conn.to + '"]');
+        if (!fromNode || !toNode) return;
+        const a = fromNode.getBoundingClientRect();
+        const b = toNode.getBoundingClientRect();
+        const x1 = (a.right - stageRect.left) + bracket.scrollLeft;
+        const y1 = (a.top - stageRect.top + a.height / 2) + bracket.scrollTop;
+        const x2 = (b.left - stageRect.left) + bracket.scrollLeft;
+        const y2 = (b.top - stageRect.top + b.height / 2) + bracket.scrollTop;
+        const mid = (x1 + x2) / 2;
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", `M ${x1} ${y1} H ${mid} V ${y2} H ${x2}`);
+        path.setAttribute("class", "draw-connector");
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", "#e07b39");
+        path.setAttribute("stroke-width", "2");
+        path.setAttribute("stroke-dasharray", "6 4");
+        svg.appendChild(path);
+      });
     }
 
     function reconcile(tournament) {
@@ -442,6 +471,12 @@
         tournament.stages.some(stage => stage.id === match.stageId) &&
         (!match.groupId || tournament.groups.some(group => group.id === match.groupId))
       );
+      if (Array.isArray(tournament.connections)) {
+        const ids = new Set(tournament.matches.map(match => match.id));
+        tournament.connections = tournament.connections.filter(connection =>
+          ids.has(connection.from) && ids.has(connection.to) && connection.from !== connection.to
+        );
+      }
     }
 
     function reorder(list, from, to) {
@@ -626,7 +661,7 @@
             : null
         };
         if (match) Object.assign(match, data);
-        else tournament.matches.push({ id: uid(), ...data });
+        else tournament.matches.push({ id: uid(), cardNo: nextCardNo(tournament), ...data });
         refresh("Partido y cuadro actualizados.");
       });
 
@@ -777,7 +812,8 @@
         groups: w.groups.map(group => ({ ...group })),
         participants: [...w.participants],
         requests: [],
-        matches: []
+        matches: [],
+        connections: []
       };
       tournaments.unshift(created);
       page = "home";
@@ -819,6 +855,34 @@
       }
     });
 
+    app.addEventListener("dblclick", event => {
+      const target = event.target.closest("[data-match-id]");
+      if (!target || !adminView()) return;
+      const tournament = tNow();
+      if (!tournament) return;
+      const matchId = target.dataset.matchId;
+      const match = (tournament.matches || []).find(m => m.id === matchId);
+      if (!match) return;
+      const otherMatches = (tournament.matches || []).filter(m => m.id !== matchId);
+      if (!otherMatches.length) {
+        notify("No hay otras tarjetas para conectar.");
+        return;
+      }
+      const cardLabel = match.cardNo || match.id;
+      const options = otherMatches.map(m => `<option value="${esc(m.id)}">#${esc(m.cardNo || m.id)} · ${esc(name(m.a))} vs ${esc(name(m.b))}</option>`).join("");
+      modal(`Asignar línea a tarjeta número ${cardLabel}`, `<div><label class="label" for="modal-link-target">Tarjeta destino</label><select id="modal-link-target" name="targetId" class="field">${options}</select></div><p class="muted text-xs mt-2">Se dibujará una línea entre las tarjetas seleccionadas.</p>`, form => {
+        const targetId = form.get("targetId");
+        if (!targetId || !otherMatches.some(m => m.id === targetId)) {
+          notify("Selecciona una tarjeta válida.");
+          return;
+        }
+        if (!Array.isArray(tournament.connections)) tournament.connections = [];
+        const exists = tournament.connections.some(c => (c.from === matchId && c.to === targetId) || (c.from === targetId && c.to === matchId));
+        if (!exists) tournament.connections.push({ from: matchId, to: targetId });
+        refresh("Línea asignada.");
+      }, "Asignar línea");
+    });
+
     app.addEventListener("submit", event => {
       if (event.target.id !== "match-form") return;
       event.preventDefault();
@@ -831,6 +895,7 @@
       }
       tournament.matches.push({
         id: uid(),
+        cardNo: nextCardNo(tournament),
         stageId: $id("match-stage").value,
         groupId: $id("match-group").value || null,
         a,

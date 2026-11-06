@@ -119,6 +119,8 @@ function normalizeTournament(raw, userById) {
       const id = cleanId(match.id, "match");
       if (seen.has(id)) continue;
       seen.add(id);
+      const rawCardNo = Number(match.cardNo);
+      const cardNo = Number.isInteger(rawCardNo) && rawCardNo > 0 ? rawCardNo : null;
       matches.push({
         id,
         stageId,
@@ -128,7 +130,8 @@ function normalizeTournament(raw, userById) {
         date: cleanDateTime(match.date),
         sa: hasResult && sa !== sb ? sa : null,
         sb: hasResult && sa !== sb ? sb : null,
-        slot
+        slot,
+        cardNo
       });
     }
   }
@@ -148,6 +151,34 @@ function normalizeTournament(raw, userById) {
     }
   }
 
+  // Ensure every match has a unique card number.
+  const usedCardNos = new Set(matches.map(match => match.cardNo).filter(Number.isInteger));
+  let nextCardNo = 1;
+  for (const match of matches) {
+    if (Number.isInteger(match.cardNo)) continue;
+    while (usedCardNos.has(nextCardNo)) nextCardNo += 1;
+    match.cardNo = nextCardNo;
+    usedCardNos.add(nextCardNo);
+    nextCardNo += 1;
+  }
+
+  // Parse connections between cards.
+  const matchIds = new Set(matches.map(match => match.id));
+  const connections = [];
+  const seenConnections = new Set();
+  if (Array.isArray(raw.connections)) {
+    for (const connection of raw.connections.slice(0, MAX_MATCHES * 2)) {
+      if (!connection || typeof connection !== "object") continue;
+      const from = typeof connection.from === "string" ? connection.from : "";
+      const to = typeof connection.to === "string" ? connection.to : "";
+      if (!matchIds.has(from) || !matchIds.has(to) || from === to) continue;
+      const key = from < to ? `${from}|${to}` : `${to}|${from}`;
+      if (seenConnections.has(key)) continue;
+      seenConnections.add(key);
+      connections.push({ from, to });
+    }
+  }
+
   return {
     id: cleanId(raw.id, "tournament"),
     name,
@@ -164,7 +195,8 @@ function normalizeTournament(raw, userById) {
     participants,
     requests,
     matches,
-    groupAssignments
+    groupAssignments,
+    connections
   };
 }
 

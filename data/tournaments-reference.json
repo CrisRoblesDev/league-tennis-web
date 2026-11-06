@@ -15,13 +15,453 @@
         "id": "xmw58tqat1",
         "name": "GROUPS",
         "kind": "groups"
+      },
+      {
+        "id": "stage-qf",
+        "name": "Cuartos de final",
+        "kind": "bracket"
+      },
+      {
+        "id": "stage-sf",
+        "name": "Semifinal",
+        "kind": "bracket"
+      },
+      {
+        "id": "stage-final",
+        "name": "Final",
+        "kind": "bracket"
       }
     ],
-    "groups": [],
-    "participants": [],
+    "groups": [
+      {
+        "id": "grp-a",
+        "name": "Grupo A"
+      },
+      {
+        "id": "grp-b",
+        "name": "Grupo B"
+      },
+      {
+        "id": "grp-c",
+        "name": "Grupo C"
+      },
+      {
+        "id": "grp-d",
+        "name": "Grupo D"
+      }
+    ],
+    "participants": [
+      "user-75152e59-4308-46f7-a73e-ae78a415bd67",
+      "user-a0105a54-6253-46b6-a266-43b17d35dde5",
+      "user-9b9b2373-bf4b-47fc-9857-8afd9f3efef8",
+      "user-a98b85b1-552e-45d2-9353-07a3d648109a",
+      "user-28f7f695-a6d0-47fd-8a16-9d4fcd8b6d1e",
+      "user-c8b785f6-e933-4736-b352-e3c5132afe61",
+      "user-d1f35a4a-b9c6-4b1c-a9d9-3de3b06fe82d",
+      "user-b6fa3c18-dff4-458b-947d-a86cc9dba534",
+      "user-7929e9a9-e4df-4ed9-8a47-189bcb2d3daf",
+      "user-0243ad0c-dc30-48de-8c76-366be2d7192a",
+      "user-2f60c373-73b3-43d9-a3ff-fa923487c313",
+      "user-be1b251f-f2bc-4fc3-9b08-dcb16eb5788a",
+      "user-18574db8-0b20-451f-9693-ed7eb24e8a97",
+      "user-292dc535-3d97-4ca0-ad8a-356cc668c40b",
+      "user-11549a34-ef61-47de-ba87-bb63924deeb1",
+      "user-29bb2990-ee1e-46a0-a498-f4ae67549d3d"
+    ],
     "requests": [],
-    "matches": [],
-    "groupAssignments": {}
+    "matches": [
+      {
+        "id": "mmatch-1",
+        "cardNo": 1,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-a",
+        "a": "user-75152e59-4308-46f7-a73e-ae78a415bd67",
+        "b": "user-a0105a54-6253-46b6-a266-43b17d35dde5",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-2",
+        "cardNo": 2,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-a",
+        "a": "user-75152e59-4308-46f7-a73e-ae78a415bd67",
+        "b": "user-9b9b2373-bf4b-47fc-9857-8afd9f3efef8",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-3",
+        "cardNo": 3,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-a",
+        "a": "user-75152e59-4308-46f7-a73e-ae78a415bd67",
+        "b": "user-a98b85b1-552e-45d2-9353-07a3d648109a",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-4",
+        "cardNo": 4,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-a",
+        "a": "user-a0105a54-6253-46b6-a266-43b17d35dde5",
+        "b": "user-9b9b2373-bf4b-47fc-9857-8afd9f3efef8",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-5",
+        "cardNo": 5,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-a",
+        "a": "user-a0105a54-6253-46b6-a266-43b17d35dde5",
+        "b": "user-a98b85b1-552e-45d2-9353-07a3d648109a",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-6",
+        "cardNo": 6,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-a",
+        "a": "user-9b9b2373-bf4b-47fc-9857-8afd9f3efef8",
+        "b": "user-a98b85b1-552e-45d2-9353-07a3d648109a",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-7",
+        "cardNo": 7,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-b",
+        "a": "user-28f7f695-a6d0-47fd-8a16-9d4fcd8b6d1e",
+        "b": "user-c8b785f6-e933-4736-b352-e3c5132afe61",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-8",
+        "cardNo": 8,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-b",
+        "a": "user-28f7f695-a6d0-47fd-8a16-9d4fcd8b6d1e",
+        "b": "user-d1f35a4a-b9c6-4b1c-a9d9-3de3b06fe82d",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-9",
+        "cardNo": 9,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-b",
+        "a": "user-28f7f695-a6d0-47fd-8a16-9d4fcd8b6d1e",
+        "b": "user-b6fa3c18-dff4-458b-947d-a86cc9dba534",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-10",
+        "cardNo": 10,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-b",
+        "a": "user-c8b785f6-e933-4736-b352-e3c5132afe61",
+        "b": "user-d1f35a4a-b9c6-4b1c-a9d9-3de3b06fe82d",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-11",
+        "cardNo": 11,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-b",
+        "a": "user-c8b785f6-e933-4736-b352-e3c5132afe61",
+        "b": "user-b6fa3c18-dff4-458b-947d-a86cc9dba534",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-12",
+        "cardNo": 12,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-b",
+        "a": "user-d1f35a4a-b9c6-4b1c-a9d9-3de3b06fe82d",
+        "b": "user-b6fa3c18-dff4-458b-947d-a86cc9dba534",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-13",
+        "cardNo": 13,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-c",
+        "a": "user-7929e9a9-e4df-4ed9-8a47-189bcb2d3daf",
+        "b": "user-0243ad0c-dc30-48de-8c76-366be2d7192a",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-14",
+        "cardNo": 14,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-c",
+        "a": "user-7929e9a9-e4df-4ed9-8a47-189bcb2d3daf",
+        "b": "user-2f60c373-73b3-43d9-a3ff-fa923487c313",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-15",
+        "cardNo": 15,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-c",
+        "a": "user-7929e9a9-e4df-4ed9-8a47-189bcb2d3daf",
+        "b": "user-be1b251f-f2bc-4fc3-9b08-dcb16eb5788a",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-16",
+        "cardNo": 16,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-c",
+        "a": "user-0243ad0c-dc30-48de-8c76-366be2d7192a",
+        "b": "user-2f60c373-73b3-43d9-a3ff-fa923487c313",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-17",
+        "cardNo": 17,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-c",
+        "a": "user-0243ad0c-dc30-48de-8c76-366be2d7192a",
+        "b": "user-be1b251f-f2bc-4fc3-9b08-dcb16eb5788a",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-18",
+        "cardNo": 18,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-c",
+        "a": "user-2f60c373-73b3-43d9-a3ff-fa923487c313",
+        "b": "user-be1b251f-f2bc-4fc3-9b08-dcb16eb5788a",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-19",
+        "cardNo": 19,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-d",
+        "a": "user-18574db8-0b20-451f-9693-ed7eb24e8a97",
+        "b": "user-292dc535-3d97-4ca0-ad8a-356cc668c40b",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-20",
+        "cardNo": 20,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-d",
+        "a": "user-18574db8-0b20-451f-9693-ed7eb24e8a97",
+        "b": "user-11549a34-ef61-47de-ba87-bb63924deeb1",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-21",
+        "cardNo": 21,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-d",
+        "a": "user-18574db8-0b20-451f-9693-ed7eb24e8a97",
+        "b": "user-29bb2990-ee1e-46a0-a498-f4ae67549d3d",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-22",
+        "cardNo": 22,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-d",
+        "a": "user-292dc535-3d97-4ca0-ad8a-356cc668c40b",
+        "b": "user-11549a34-ef61-47de-ba87-bb63924deeb1",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-23",
+        "cardNo": 23,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-d",
+        "a": "user-292dc535-3d97-4ca0-ad8a-356cc668c40b",
+        "b": "user-29bb2990-ee1e-46a0-a498-f4ae67549d3d",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "mmatch-24",
+        "cardNo": 24,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-d",
+        "a": "user-11549a34-ef61-47de-ba87-bb63924deeb1",
+        "b": "user-29bb2990-ee1e-46a0-a498-f4ae67549d3d",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "qf-1",
+        "cardNo": 25,
+        "stageId": "stage-qf",
+        "groupId": null,
+        "a": null,
+        "b": null,
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 0
+      },
+      {
+        "id": "qf-2",
+        "cardNo": 26,
+        "stageId": "stage-qf",
+        "groupId": null,
+        "a": null,
+        "b": null,
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 1
+      },
+      {
+        "id": "qf-3",
+        "cardNo": 27,
+        "stageId": "stage-qf",
+        "groupId": null,
+        "a": null,
+        "b": null,
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 2
+      },
+      {
+        "id": "qf-4",
+        "cardNo": 28,
+        "stageId": "stage-qf",
+        "groupId": null,
+        "a": null,
+        "b": null,
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 3
+      },
+      {
+        "id": "sf-1",
+        "cardNo": 29,
+        "stageId": "stage-sf",
+        "groupId": null,
+        "a": null,
+        "b": null,
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 0
+      },
+      {
+        "id": "sf-2",
+        "cardNo": 30,
+        "stageId": "stage-sf",
+        "groupId": null,
+        "a": null,
+        "b": null,
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 1
+      },
+      {
+        "id": "final-1",
+        "cardNo": 31,
+        "stageId": "stage-final",
+        "groupId": null,
+        "a": null,
+        "b": null,
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 0
+      }
+    ],
+    "groupAssignments": {
+      "user-75152e59-4308-46f7-a73e-ae78a415bd67": "grp-a",
+      "user-a0105a54-6253-46b6-a266-43b17d35dde5": "grp-a",
+      "user-9b9b2373-bf4b-47fc-9857-8afd9f3efef8": "grp-a",
+      "user-a98b85b1-552e-45d2-9353-07a3d648109a": "grp-a",
+      "user-28f7f695-a6d0-47fd-8a16-9d4fcd8b6d1e": "grp-b",
+      "user-c8b785f6-e933-4736-b352-e3c5132afe61": "grp-b",
+      "user-d1f35a4a-b9c6-4b1c-a9d9-3de3b06fe82d": "grp-b",
+      "user-b6fa3c18-dff4-458b-947d-a86cc9dba534": "grp-b",
+      "user-7929e9a9-e4df-4ed9-8a47-189bcb2d3daf": "grp-c",
+      "user-0243ad0c-dc30-48de-8c76-366be2d7192a": "grp-c",
+      "user-2f60c373-73b3-43d9-a3ff-fa923487c313": "grp-c",
+      "user-be1b251f-f2bc-4fc3-9b08-dcb16eb5788a": "grp-c",
+      "user-18574db8-0b20-451f-9693-ed7eb24e8a97": "grp-d",
+      "user-292dc535-3d97-4ca0-ad8a-356cc668c40b": "grp-d",
+      "user-11549a34-ef61-47de-ba87-bb63924deeb1": "grp-d",
+      "user-29bb2990-ee1e-46a0-a498-f4ae67549d3d": "grp-d"
+    },
+    "connections": []
   },
   {
     "id": "tournament-womens-35-2026",
@@ -66,7 +506,8 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null
+        "slot": null,
+        "cardNo": 1
       },
       {
         "id": "wmatch-2",
@@ -77,7 +518,8 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null
+        "slot": null,
+        "cardNo": 2
       },
       {
         "id": "wmatch-3",
@@ -88,7 +530,8 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null
+        "slot": null,
+        "cardNo": 3
       },
       {
         "id": "wmatch-4",
@@ -99,7 +542,8 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null
+        "slot": null,
+        "cardNo": 4
       },
       {
         "id": "wmatch-5",
@@ -110,7 +554,8 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null
+        "slot": null,
+        "cardNo": 5
       },
       {
         "id": "wmatch-6",
@@ -121,7 +566,8 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null
+        "slot": null,
+        "cardNo": 6
       },
       {
         "id": "wmatch-7",
@@ -132,7 +578,8 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null
+        "slot": null,
+        "cardNo": 7
       },
       {
         "id": "wmatch-8",
@@ -143,7 +590,8 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null
+        "slot": null,
+        "cardNo": 8
       },
       {
         "id": "wmatch-9",
@@ -154,7 +602,8 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null
+        "slot": null,
+        "cardNo": 9
       },
       {
         "id": "wmatch-10",
@@ -165,7 +614,8 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null
+        "slot": null,
+        "cardNo": 10
       },
       {
         "id": "wmatch-11",
@@ -176,7 +626,8 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null
+        "slot": null,
+        "cardNo": 11
       },
       {
         "id": "wmatch-12",
@@ -187,7 +638,8 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null
+        "slot": null,
+        "cardNo": 12
       },
       {
         "id": "wmatch-13",
@@ -198,7 +650,8 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null
+        "slot": null,
+        "cardNo": 13
       },
       {
         "id": "wmatch-14",
@@ -209,7 +662,8 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null
+        "slot": null,
+        "cardNo": 14
       },
       {
         "id": "wmatch-15",
@@ -220,8 +674,18 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null
+        "slot": null,
+        "cardNo": 15
       }
-    ]
+    ],
+    "groupAssignments": {
+      "user-94c3d05c-a460-4993-b0f7-1c92f3ac470e": "grp-w",
+      "user-aa23fcfa-6c58-4588-bb92-9b6fb6f0407c": "grp-w",
+      "user-f6f97712-6bcc-460a-82e8-0dda349b43c6": "grp-w",
+      "user-20e75353-a755-4bc3-9c0d-74a75346b832": "grp-w",
+      "user-ce4c01a9-fa20-4033-9c47-884d3a754602": "grp-w",
+      "user-56b60b3d-8236-46d5-aaa2-542d5ca0586b": "grp-w"
+    },
+    "connections": []
   }
 ]
