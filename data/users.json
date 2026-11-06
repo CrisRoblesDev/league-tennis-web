@@ -324,5 +324,18 @@
     "role": "user",
     "created": "2026-11-04T18:41:10.206Z",
     "membershipActive": false
+  },
+  {
+    "id": "user-f2c616c5-cb34-417a-9696-e131af91c372",
+    "name": "Luis Ureta",
+    "email": "luis.ureta@temp.aventuratennisleague.com",
+    "password": "pbkdf2$100000$-cqgr8fo2Hn9uqUASiF6rg$C-U8MpZmTH5Zv5MSctdCam8BKa2pP7CejKwSlwZt0QY",
+    "role": "user",
+    "nationality": null,
+    "created": "2026-11-06T19:37:11.124Z",
+    "membershipActive": false,
+    "level": null,
+    "zone": null,
+    "phone": null
   }
 ]
