@@ -303,7 +303,9 @@
         "cardNo": 18
       }
     ],
-    "groupAssignments": {},
+    "groupAssignments": {
+      "user-2f60c373-73b3-43d9-a3ff-fa923487c313": "xmw5bz8g9c"
+    },
     "connections": []
   },
   {
