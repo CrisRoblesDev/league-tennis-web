@@ -12,11 +12,6 @@
     "status": "abierto",
     "stages": [
       {
-        "id": "stage-sf",
-        "name": "Semifinal",
-        "kind": "bracket"
-      },
-      {
         "id": "xmw5b9zzd1",
         "name": "Administración",
         "kind": "bracket"
@@ -59,20 +54,7 @@
       "user-29bb2990-ee1e-46a0-a498-f4ae67549d3d"
     ],
     "requests": [],
-    "matches": [
-      {
-        "id": "sf-2",
-        "stageId": "stage-sf",
-        "groupId": null,
-        "a": null,
-        "b": null,
-        "date": "",
-        "sa": null,
-        "sb": null,
-        "slot": 1,
-        "cardNo": 30
-      }
-    ],
+    "matches": [],
     "groupAssignments": {
       "user-75152e59-4308-46f7-a73e-ae78a415bd67": "grp-a",
       "user-a0105a54-6253-46b6-a266-43b17d35dde5": "grp-a",
