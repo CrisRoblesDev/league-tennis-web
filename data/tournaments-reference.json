@@ -516,10 +516,6 @@
     },
     "connections": [
       {
-        "from": "xmw5d2s9k9",
-        "to": "xmw5d4hpib"
-      },
-      {
         "from": "xmw5ee63a1",
         "to": "xmw5egaq44"
       },
@@ -550,10 +546,6 @@
       {
         "from": "xmw5cu8kk3",
         "to": "xmw5cvi5u6"
-      },
-      {
-        "from": "xmw5cuoc24",
-        "to": "xmw5cv5s25"
       }
     ]
   },
