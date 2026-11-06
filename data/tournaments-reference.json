@@ -66,7 +66,6 @@
       }
     ],
     "participants": [
-      "user-75152e59-4308-46f7-a73e-ae78a415bd67",
       "user-a0105a54-6253-46b6-a266-43b17d35dde5",
       "user-9b9b2373-bf4b-47fc-9857-8afd9f3efef8",
       "user-a98b85b1-552e-45d2-9353-07a3d648109a",
@@ -85,8 +84,7 @@
     "requests": [],
     "matches": [],
     "groupAssignments": {
-      "user-a0105a54-6253-46b6-a266-43b17d35dde5": "xmw5byxvkb",
-      "user-75152e59-4308-46f7-a73e-ae78a415bd67": "xmw5byxvkb"
+      "user-a0105a54-6253-46b6-a266-43b17d35dde5": "xmw5byxvkb"
     },
     "connections": []
   },
