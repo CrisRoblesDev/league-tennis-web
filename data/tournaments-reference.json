@@ -17,11 +17,6 @@
         "kind": "groups"
       },
       {
-        "id": "stage-qf",
-        "name": "Cuartos de final",
-        "kind": "bracket"
-      },
-      {
         "id": "stage-sf",
         "name": "Semifinal",
         "kind": "bracket"
@@ -364,30 +359,6 @@
         "cardNo": 24
       },
       {
-        "id": "qf-1",
-        "stageId": "stage-qf",
-        "groupId": null,
-        "a": null,
-        "b": null,
-        "date": "",
-        "sa": null,
-        "sb": null,
-        "slot": 0,
-        "cardNo": 25
-      },
-      {
-        "id": "qf-2",
-        "stageId": "stage-qf",
-        "groupId": null,
-        "a": null,
-        "b": null,
-        "date": "",
-        "sa": null,
-        "sb": null,
-        "slot": 1,
-        "cardNo": 26
-      },
-      {
         "id": "qf-3",
         "stageId": "xmw58tqat1",
         "groupId": "grp-a",
@@ -398,18 +369,6 @@
         "sb": null,
         "slot": null,
         "cardNo": 27
-      },
-      {
-        "id": "qf-4",
-        "stageId": "stage-qf",
-        "groupId": null,
-        "a": null,
-        "b": null,
-        "date": "",
-        "sa": null,
-        "sb": null,
-        "slot": 3,
-        "cardNo": 28
       },
       {
         "id": "sf-1",
