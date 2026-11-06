@@ -17,11 +17,6 @@
         "kind": "groups"
       },
       {
-        "id": "stage-sf",
-        "name": "Semifinal",
-        "kind": "bracket"
-      },
-      {
         "id": "stage-final",
         "name": "Final",
         "kind": "bracket"
@@ -381,18 +376,6 @@
         "sb": null,
         "slot": null,
         "cardNo": 29
-      },
-      {
-        "id": "sf-2",
-        "stageId": "stage-sf",
-        "groupId": null,
-        "a": null,
-        "b": null,
-        "date": "",
-        "sa": null,
-        "sb": null,
-        "slot": 1,
-        "cardNo": 30
       },
       {
         "id": "final-1",
