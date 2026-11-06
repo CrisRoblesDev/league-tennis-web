@@ -673,6 +673,11 @@
         "id": "stage-rr",
         "name": "Todos contra todos",
         "kind": "groups"
+      },
+      {
+        "id": "xmw5ifyqt2",
+        "name": "WEEK 1",
+        "kind": "bracket"
       }
     ],
     "groups": [
