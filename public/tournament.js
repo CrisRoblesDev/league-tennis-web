@@ -347,7 +347,7 @@
                 admin
                   ? `<button data-action="edit-group" data-id="${esc(group.id)}" class="hover:underline" type="button">${esc(group.name)} ✎</button>`
                   : esc(group.name)
-              }</strong>${admin ? `<span>${btn("↑", "move-group-up", group.id)}${btn("↓", "move-group-down", group.id)}${btn("✕", "delete-group", group.id, "danger").replace("<button", "<button draggable=\"false\"")}</span>` : ""}</div><div class="group-players">${players.map(id => `<div class="slot border-t border-[#dce5d8] ${admin ? "draggable" : ""}" ${admin ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${admin ? `<button type="button" data-action="edit-player" data-id="${esc(id)}" class="text-left hover:underline">${esc(name(id))}</button>` : esc(name(id))}${admin ? ` <button type="button" class="button light small" style="margin-left:6px;" data-action="remove-from-group" data-player-id="${esc(id)}" data-group-id="${esc(group.id)}" draggable="false">Quitar del grupo</button>` : ""}</div>`).join("") || '<p class="muted text-xs">Sin jugadores</p>'}</div>${admin ? `<div class="group-drop-zone" data-drop="group" data-id="${esc(group.id)}" style="margin-top:8px;padding:8px;border:2px dashed #c9dd9d;border-radius:6px;text-align:center;color:#598044;font-size:11px;">Soltar jugador aquí para mover a ${esc(group.name)}</div>` : ""}${admin ? `<div class="group-assign mt-2 flex gap-1 items-center"><select class="field small" data-group-assign="${esc(group.id)}" style="flex:1;"><option value="">Asignar jugador a ${esc(group.name)}</option>${tournament.participants.map(pid => `<option value="${esc(pid)}">${esc(name(pid))}</option>`).join("")}</select><button type="button" class="button light small" data-action="assign-to-group" data-group-id="${esc(group.id)}">Asignar</button></div>` : ""}<div class="group-matches mt-2">${matches.length > 0 ? matches.map(match => {
+              }</strong>${admin ? `<span>${btn("↑", "move-group-up", group.id)}${btn("↓", "move-group-down", group.id)}${btn("✕", "delete-group", group.id, "danger").replace("<button", "<button draggable=\"false\"")}</span>` : ""}</div><div class="group-players">${players.map(id => `<div class="slot border-t border-[#dce5d8] ${admin ? "draggable" : ""}" ${admin ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${admin ? `<button type="button" data-action="edit-player" data-id="${esc(id)}" class="text-left hover:underline">${esc(name(id))}</button>` : esc(name(id))}${admin ? ` <button type="button" class="button light small" style="margin-left:6px;" data-action="remove-from-group" data-player-id="${esc(id)}" data-group-id="${esc(group.id)}" draggable="false">Quitar del grupo</button>` : ""}</div>`).join("") || '<p class="muted text-xs">Sin jugadores</p>'}</div>${admin ? `<div class="group-drop-zone" data-drop="group" data-id="${esc(group.id)}" style="margin-top:8px;padding:8px;border:2px dashed #c9dd9d;border-radius:6px;text-align:center;color:#598044;font-size:11px;">Soltar jugador aquí para mover a ${esc(group.name)}</div>` : ""}<div class="group-matches mt-2">${matches.length > 0 ? matches.map(match => {
                 const mWin = winner(match);
                 return `<div class="match-node group-match ${mWin ? "win" : ""}" data-card-no="${esc(match.cardNo || "")}" data-match-id="${esc(match.id)}" ${admin ? `data-action="draw-match" draggable="true" data-drag="match" data-drop="match" data-id="${esc(match.id)}" role="button" tabindex="0" aria-label="Editar partido de ${esc(group.name)}"` : ""}>
                   <div class="flex justify-between gap-2 text-[10px] muted mb-1">
@@ -356,8 +356,9 @@
                   </div>
                   ${[match.a, match.b].map((id, i) => `<div class="slot ${mWin === id && id ? "winner" : ""}" ${admin ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${id ? esc(name(id)) : "— Por definir"}</div>`).join("")}
                   ${admin ? '<span class="muted text-[10px]">Clic para editar · arrastra para mover</span>' : ""}
+                  ${admin ? `<button type="button" class="button light small" style="margin-top:6px;" data-action="unir-linea" data-match-id="${esc(match.id)}" draggable="false" title="unir linea">Unir línea</button>` : ""}
                 </div>`;
-              }).join("") : '<p class="muted text-xs text-center py-2">Sin partidos</p>'}</div>${admin && matches.length > 0 ? `<div class="match-drop-zone" data-drop="group" data-id="${esc(group.id)}" style="margin-top:8px;padding:8px;border:2px dashed #c9dd9d;border-radius:6px;text-align:center;color:#598044;font-size:11px;">Soltar partido aquí para mover a ${esc(group.name)}</div>` : ""}${admin ? `<div class="add-match-btn mt-2" data-action="add-group-match" data-group-id="${esc(group.id)}" data-stage-id="${esc(groupStage.id)}" style="text-align:center;"><button type="button" class="button light small">+ Añadir partido a ${esc(group.name)}</button></div>` : ""}</div>`;
+              }).join("") : '<p class="muted text-xs text-center py-2">Sin partidos</p>'}</div>${admin && matches.length > 0 ? `<div class="match-drop-zone" data-drop="group" data-id="${esc(group.id)}" style="margin-top:8px;padding:8px;border:2px dashed #c9dd9d;border-radius:6px;text-align:center;color:#598044;font-size:11px;">Soltar partido aquí para mover a ${esc(group.name)}</div>` : ""}</div>`;
             }).join("") || '<p class="muted text-sm">Añade un grupo.</p>'
           }</div></div>`
         : "";
@@ -382,7 +383,7 @@
               const [a, b] = [match.a, match.b];
               return `<div class="match-node ${last ? "last" : ""} ${win ? "win" : ""}" data-slot="${slot}" data-card-no="${esc(match.cardNo || "")}" data-match-id="${esc(match.id)}" ${admin ? `data-action="draw-match" draggable="true" data-drag="match" data-drop="match" data-id="${esc(match.id)}" role="button" tabindex="0" aria-label="Editar partido ${slot + 1} de ${esc(round.stage.name)}"` : ""}><div class="flex justify-between gap-2 text-[10px] muted mb-1"><span>PARTIDO ${slot + 1}${admin ? ` · #${esc(match.cardNo || match.id)}` : ""}</span><span>${match.date ? new Date(match.date).toLocaleDateString("es-CL") : "Por programar"}</span></div>${
                 [a, b].map(id => `<div class="slot ${win === id && id ? "winner" : ""}" ${admin && roundIndex === 0 && id ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${id ? esc(name(id)) : "— Por definir"}</div>`).join("")
-              }${admin ? '<span class="muted text-[10px]">Clic para editar · arrastra para mover</span>' : ""}</div>`;
+              }${admin ? '<span class="muted text-[10px]">Clic para editar · arrastra para mover</span>' : ""}${admin ? `<button type="button" class="button light small" style="margin-top:6px;" data-action="unir-linea" data-match-id="${esc(match.id)}" draggable="false" title="unir linea">Unir línea</button>` : ""}</div>`;
             }
             // Empty slot: show "+" button to create match (admin only)
             return admin ? `<div class="match-node empty-slot ${last ? "last" : ""}" data-action="add-bracket-match" data-stage="${esc(stageId)}" data-slot="${slot}" style="border-style:dashed;border-color:#c9dd9d;background:#f8fdf3;min-height:86px;display:flex;align-items:center;justify-content:center;"><button type="button" class="button light small" style="width:100%;">+ Crear partido ${slot + 1}</button></div>` : `<div class="match-node empty-slot ${last ? "last" : ""}" data-slot="${slot}" style="border-style:dashed;border-color:#c9dd9d;background:#f8fdf3;min-height:86px;display:flex;align-items:center;justify-content:center;color:#a3c979;font-size:11px;">Partido ${slot + 1} (vacío)</div>`;
@@ -769,7 +770,7 @@
 
       if (w.step === 1) {
         el.innerHTML = `<h3 class="display text-2xl font-bold mb-2">Etapas y grupos</h3><p class="muted text-sm mb-5">Arrastra para reordenar o usa las flechas.</p><div class="grid md:grid-cols-2 gap-6">${
-          [["stage", "Etapas", w.stages], ["group", "Grupos", w.groups]].map(([kind, title, items]) => `<div><h4 class="font-bold mb-3">${title}</h4><div class="space-y-2">${
+          [["stage", "Etapas", w.stages], ["group", "Grupos", w.groups]].map(([kind, title, items]) => `<div><h4 class="font-bold mb-3">${title}</h4><div class="space-y-2" style="max-height:260px;overflow-y:auto;padding-right:4px;">${
             items.map((item, index) => `<div class="flex flex-wrap gap-1 p-2 rounded-xl border border-[#dce5d8] bg-white draggable" draggable="true" data-drag="${kind}" data-drop="${kind}" data-id="${esc(item.id)}"><label class="sr-only" for="edit-${esc(item.id)}">Nombre ${title.toLowerCase()} ${index + 1}</label><input id="edit-${esc(item.id)}" data-structure-input="${kind}" data-id="${esc(item.id)}" class="field !w-[130px] flex-1" value="${esc(item.name)}">${btn("↑", "wizard-move-up", `${kind}:${item.id}`)}${btn("↓", "wizard-move-down", `${kind}:${item.id}`)}${btn("×", "wizard-remove", `${kind}:${item.id}`, "danger")}</div>`).join("")
           }</div><div class="mt-3">${btn(`+ Añadir ${kind === "stage" ? "etapa" : "grupo"}`, "wizard-add", kind, "")}</div></div>`).join("")
         }</div><div class="mt-7 border-t border-[#dce5d8] pt-5"><h4 class="font-bold mb-2">Participantes iniciales <span class="muted font-normal">(opcional)</span></h4><div class="grid sm:grid-cols-2 md:grid-cols-3 gap-2">${
@@ -1128,6 +1129,25 @@
         const stageId = target.dataset.stage;
         const slot = +target.dataset.slot;
         editMatch(null, stageId, slot);
+        return;
+      }
+      if (action === "unir-linea" || action === "join-line" || action === "unir linea") {
+        const matchId = target.dataset.matchId || target.dataset.id;
+        const match = (tournament.matches || []).find(m => m.id === matchId);
+        if (!match) return;
+        const cardLabel = match.cardNo || match.id;
+        modal(`Unir linea a tarjeta número ${cardLabel}`, `<div><label class="label" for="modal-link-target-no">Número de tarjeta destino</label><input class="field" id="modal-link-target-no" name="targetNo" type="number" min="1" required></div><p class="muted text-xs mt-2">Se dibujará una línea entre las tarjetas seleccionadas.</p>`, form => {
+          const targetNo = Number(form.get("targetNo"));
+          const targetMatch = (tournament.matches || []).find(m => Number(m.cardNo) === targetNo);
+          if (!targetMatch || targetMatch.id === match.id) {
+            notify("Selecciona una tarjeta válida.");
+            return;
+          }
+          if (!Array.isArray(tournament.connections)) tournament.connections = [];
+          const exists = tournament.connections.some(c => (c.from === match.id && c.to === targetMatch.id) || (c.from === targetMatch.id && c.to === match.id));
+          if (!exists) tournament.connections.push({ from: match.id, to: targetMatch.id });
+          refresh("Línea asignada.");
+        }, "Unir linea");
         return;
       }
       if (action === "delete-group") {
