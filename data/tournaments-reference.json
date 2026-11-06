@@ -30,6 +30,11 @@
         "id": "xmw5bu0b75",
         "name": "Nueva etapaA",
         "kind": "bracket"
+      },
+      {
+        "id": "xmw5bu5kz7",
+        "name": "ZZ",
+        "kind": "bracket"
       }
     ],
     "groups": [
