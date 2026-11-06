@@ -12,11 +12,6 @@
     "status": "abierto",
     "stages": [
       {
-        "id": "xmw4118yv3",
-        "name": "WEEK 1",
-        "kind": "groups"
-      },
-      {
         "id": "xmw58tqat1",
         "name": "GROUPS",
         "kind": "groups"
