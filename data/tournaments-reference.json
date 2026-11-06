@@ -40,6 +40,11 @@
         "id": "xmw5bubzw9",
         "name": "SEMIFINAL",
         "kind": "bracket"
+      },
+      {
+        "id": "xmw5bx0p5a",
+        "name": "FINAL",
+        "kind": "bracket"
       }
     ],
     "groups": [
