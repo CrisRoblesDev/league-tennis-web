@@ -32,12 +32,7 @@
         "kind": "bracket"
       }
     ],
-    "groups": [
-      {
-        "id": "xmw2hsagk5",
-        "name": "Grupo D"
-      }
-    ],
+    "groups": [],
     "participants": [
       "user-75152e59-4308-46f7-a73e-ae78a415bd67",
       "user-a0105a54-6253-46b6-a266-43b17d35dde5",
@@ -136,12 +131,7 @@
         "slot": 0
       }
     ],
-    "groupAssignments": {
-      "user-9b9b2373-bf4b-47fc-9857-8afd9f3efef8": "xmw2hsagk5",
-      "user-c8b785f6-e933-4736-b352-e3c5132afe61": "xmw2hsagk5",
-      "user-7929e9a9-e4df-4ed9-8a47-189bcb2d3daf": "xmw2hsagk5",
-      "user-be1b251f-f2bc-4fc3-9b08-dcb16eb5788a": "xmw2hsagk5"
-    }
+    "groupAssignments": {}
   },
   {
     "id": "tournament-womens-35-2026",
