@@ -17,11 +17,6 @@
         "kind": "groups"
       },
       {
-        "id": "stage-semifinal",
-        "name": "Semifinal",
-        "kind": "bracket"
-      },
-      {
         "id": "stage-final",
         "name": "Final",
         "kind": "bracket"
@@ -48,28 +43,6 @@
     ],
     "requests": [],
     "matches": [
-      {
-        "id": "sf-1",
-        "stageId": "stage-semifinal",
-        "groupId": null,
-        "a": null,
-        "b": null,
-        "date": "",
-        "sa": null,
-        "sb": null,
-        "slot": 0
-      },
-      {
-        "id": "sf-2",
-        "stageId": "stage-semifinal",
-        "groupId": null,
-        "a": null,
-        "b": null,
-        "date": "",
-        "sa": null,
-        "sb": null,
-        "slot": 1
-      },
       {
         "id": "final-1",
         "stageId": "stage-final",
