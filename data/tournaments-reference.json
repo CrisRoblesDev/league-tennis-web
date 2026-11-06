@@ -47,12 +47,7 @@
         "kind": "bracket"
       }
     ],
-    "groups": [
-      {
-        "id": "grp-c",
-        "name": "Grupo C"
-      }
-    ],
+    "groups": [],
     "participants": [
       "user-75152e59-4308-46f7-a73e-ae78a415bd67",
       "user-a0105a54-6253-46b6-a266-43b17d35dde5",
@@ -73,12 +68,7 @@
     ],
     "requests": [],
     "matches": [],
-    "groupAssignments": {
-      "user-7929e9a9-e4df-4ed9-8a47-189bcb2d3daf": "grp-c",
-      "user-0243ad0c-dc30-48de-8c76-366be2d7192a": "grp-c",
-      "user-2f60c373-73b3-43d9-a3ff-fa923487c313": "grp-c",
-      "user-be1b251f-f2bc-4fc3-9b08-dcb16eb5788a": "grp-c"
-    },
+    "groupAssignments": {},
     "connections": []
   },
   {
