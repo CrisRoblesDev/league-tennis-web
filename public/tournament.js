@@ -423,7 +423,8 @@
     function applyDrawZoom() {
       const bracket = root.querySelector(".bracket");
       if (!bracket) return;
-      bracket.style.zoom = String(drawZoom);
+      bracket.style.transform = `scale(${drawZoom})`;
+      bracket.style.transformOrigin = "0 0";
       const label = root.querySelector("#zoom-label");
       if (label) label.textContent = `${Math.round(drawZoom * 100)}%`;
     }
@@ -435,8 +436,8 @@
       if (!bracket || !svg) return;
       const z = drawZoom || 1;
       const stageRect = bracket.getBoundingClientRect();
-      const scrollW = Math.max(bracket.scrollWidth, stageRect.width) / z;
-      const scrollH = Math.max(bracket.scrollHeight, stageRect.height) / z;
+      const scrollW = Math.max(bracket.scrollWidth, stageRect.width / z);
+      const scrollH = Math.max(bracket.scrollHeight, stageRect.height / z);
       svg.setAttribute("width", scrollW);
       svg.setAttribute("height", scrollH);
       svg.setAttribute("viewBox", `0 0 ${scrollW} ${scrollH}`);
