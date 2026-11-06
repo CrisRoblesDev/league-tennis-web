@@ -120,6 +120,18 @@
         "sb": null,
         "slot": 1,
         "cardNo": 4
+      },
+      {
+        "id": "xmw5cmm3a1",
+        "stageId": "xmw5bu0b75",
+        "groupId": null,
+        "a": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
+        "b": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 0,
+        "cardNo": 5
       }
     ],
     "groupAssignments": {},
