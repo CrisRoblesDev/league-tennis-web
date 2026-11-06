@@ -17,7 +17,6 @@
         "kind": "groups"
       },
       {
-<<<<<<< HEAD
         "id": "stage-qf",
         "name": "Cuartos de final",
         "kind": "bracket"
@@ -30,26 +29,11 @@
       {
         "id": "stage-final",
         "name": "Final",
-=======
-        "id": "xmw59c6s22",
-        "name": "WEEK 1",
-        "kind": "bracket"
-      },
-      {
-        "id": "xmw59evu05",
-        "name": "WEEK 2",
-        "kind": "bracket"
-      },
-      {
-        "id": "xmw59fdcg7",
-        "name": "WEEK 3",
->>>>>>> da7926b7d77309025a5378a8bf7ca4722d5116da
         "kind": "bracket"
       }
     ],
     "groups": [
       {
-<<<<<<< HEAD
         "id": "grp-a",
         "name": "Grupo A"
       },
@@ -83,48 +67,19 @@
       "user-292dc535-3d97-4ca0-ad8a-356cc668c40b",
       "user-11549a34-ef61-47de-ba87-bb63924deeb1",
       "user-29bb2990-ee1e-46a0-a498-f4ae67549d3d"
-=======
-        "id": "xmw59b8wc1",
-        "name": "GRUPO A"
-      }
-    ],
-    "participants": [
-      "user-a0105a54-6253-46b6-a266-43b17d35dde5",
-      "user-c214871c-3e87-483c-864c-d7042443fbbc",
-      "user-75152e59-4308-46f7-a73e-ae78a415bd67",
-      "user-e9b6d508-100b-4a74-810a-ed08b966b83c"
->>>>>>> da7926b7d77309025a5378a8bf7ca4722d5116da
     ],
     "requests": [],
     "matches": [
       {
-<<<<<<< HEAD
         "id": "mmatch-1",
         "cardNo": 1,
         "stageId": "xmw58tqat1",
         "groupId": "grp-a",
-=======
-        "id": "xmw59cu953",
-        "stageId": "xmw59c6s22",
-        "groupId": null,
-        "a": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
-        "b": "user-c214871c-3e87-483c-864c-d7042443fbbc",
-        "date": "",
-        "sa": null,
-        "sb": null,
-        "slot": 0
-      },
-      {
-        "id": "xmw59e5gp4",
-        "stageId": "xmw59c6s22",
-        "groupId": null,
->>>>>>> da7926b7d77309025a5378a8bf7ca4722d5116da
         "a": "user-75152e59-4308-46f7-a73e-ae78a415bd67",
         "b": "user-a0105a54-6253-46b6-a266-43b17d35dde5",
         "date": "",
         "sa": null,
         "sb": null,
-<<<<<<< HEAD
         "slot": null
       },
       {
@@ -410,41 +365,22 @@
         "groupId": null,
         "a": null,
         "b": null,
-=======
-        "slot": 1
-      },
-      {
-        "id": "xmw59f3su6",
-        "stageId": "xmw59evu05",
-        "groupId": null,
-        "a": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
-        "b": "user-a0105a54-6253-46b6-a266-43b17d35dde5",
->>>>>>> da7926b7d77309025a5378a8bf7ca4722d5116da
         "date": "",
         "sa": null,
         "sb": null,
         "slot": 0
       },
       {
-<<<<<<< HEAD
         "id": "qf-2",
         "cardNo": 26,
         "stageId": "stage-qf",
         "groupId": null,
         "a": null,
         "b": null,
-=======
-        "id": "xmw59fvr28",
-        "stageId": "xmw59evu05",
-        "groupId": null,
-        "a": "user-c214871c-3e87-483c-864c-d7042443fbbc",
-        "b": "user-75152e59-4308-46f7-a73e-ae78a415bd67",
->>>>>>> da7926b7d77309025a5378a8bf7ca4722d5116da
         "date": "",
         "sa": null,
         "sb": null,
         "slot": 1
-<<<<<<< HEAD
       },
       {
         "id": "qf-3",
@@ -526,11 +462,6 @@
       "user-29bb2990-ee1e-46a0-a498-f4ae67549d3d": "grp-d"
     },
     "connections": []
-=======
-      }
-    ],
-    "groupAssignments": {}
->>>>>>> da7926b7d77309025a5378a8bf7ca4722d5116da
   },
   {
     "id": "tournament-womens-35-2026",
@@ -568,6 +499,7 @@
     "matches": [
       {
         "id": "wmatch-1",
+        "cardNo": 1,
         "stageId": "stage-rr",
         "groupId": "grp-w",
         "a": "user-94c3d05c-a460-4993-b0f7-1c92f3ac470e",
@@ -575,11 +507,11 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null,
-        "cardNo": 1
+        "slot": null
       },
       {
         "id": "wmatch-2",
+        "cardNo": 2,
         "stageId": "stage-rr",
         "groupId": "grp-w",
         "a": "user-94c3d05c-a460-4993-b0f7-1c92f3ac470e",
@@ -587,11 +519,11 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null,
-        "cardNo": 2
+        "slot": null
       },
       {
         "id": "wmatch-3",
+        "cardNo": 3,
         "stageId": "stage-rr",
         "groupId": "grp-w",
         "a": "user-94c3d05c-a460-4993-b0f7-1c92f3ac470e",
@@ -599,11 +531,11 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null,
-        "cardNo": 3
+        "slot": null
       },
       {
         "id": "wmatch-4",
+        "cardNo": 4,
         "stageId": "stage-rr",
         "groupId": "grp-w",
         "a": "user-94c3d05c-a460-4993-b0f7-1c92f3ac470e",
@@ -611,11 +543,11 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null,
-        "cardNo": 4
+        "slot": null
       },
       {
         "id": "wmatch-5",
+        "cardNo": 5,
         "stageId": "stage-rr",
         "groupId": "grp-w",
         "a": "user-94c3d05c-a460-4993-b0f7-1c92f3ac470e",
@@ -623,11 +555,11 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null,
-        "cardNo": 5
+        "slot": null
       },
       {
         "id": "wmatch-6",
+        "cardNo": 6,
         "stageId": "stage-rr",
         "groupId": "grp-w",
         "a": "user-aa23fcfa-6c58-4588-bb92-9b6fb6f0407c",
@@ -635,11 +567,11 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null,
-        "cardNo": 6
+        "slot": null
       },
       {
         "id": "wmatch-7",
+        "cardNo": 7,
         "stageId": "stage-rr",
         "groupId": "grp-w",
         "a": "user-aa23fcfa-6c58-4588-bb92-9b6fb6f0407c",
@@ -647,11 +579,11 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null,
-        "cardNo": 7
+        "slot": null
       },
       {
         "id": "wmatch-8",
+        "cardNo": 8,
         "stageId": "stage-rr",
         "groupId": "grp-w",
         "a": "user-aa23fcfa-6c58-4588-bb92-9b6fb6f0407c",
@@ -659,11 +591,11 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null,
-        "cardNo": 8
+        "slot": null
       },
       {
         "id": "wmatch-9",
+        "cardNo": 9,
         "stageId": "stage-rr",
         "groupId": "grp-w",
         "a": "user-aa23fcfa-6c58-4588-bb92-9b6fb6f0407c",
@@ -671,11 +603,11 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null,
-        "cardNo": 9
+        "slot": null
       },
       {
         "id": "wmatch-10",
+        "cardNo": 10,
         "stageId": "stage-rr",
         "groupId": "grp-w",
         "a": "user-f6f97712-6bcc-460a-82e8-0dda349b43c6",
@@ -683,11 +615,11 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null,
-        "cardNo": 10
+        "slot": null
       },
       {
         "id": "wmatch-11",
+        "cardNo": 11,
         "stageId": "stage-rr",
         "groupId": "grp-w",
         "a": "user-f6f97712-6bcc-460a-82e8-0dda349b43c6",
@@ -695,11 +627,11 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null,
-        "cardNo": 11
+        "slot": null
       },
       {
         "id": "wmatch-12",
+        "cardNo": 12,
         "stageId": "stage-rr",
         "groupId": "grp-w",
         "a": "user-f6f97712-6bcc-460a-82e8-0dda349b43c6",
@@ -707,11 +639,11 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null,
-        "cardNo": 12
+        "slot": null
       },
       {
         "id": "wmatch-13",
+        "cardNo": 13,
         "stageId": "stage-rr",
         "groupId": "grp-w",
         "a": "user-20e75353-a755-4bc3-9c0d-74a75346b832",
@@ -719,11 +651,11 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null,
-        "cardNo": 13
+        "slot": null
       },
       {
         "id": "wmatch-14",
+        "cardNo": 14,
         "stageId": "stage-rr",
         "groupId": "grp-w",
         "a": "user-20e75353-a755-4bc3-9c0d-74a75346b832",
@@ -731,11 +663,11 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null,
-        "cardNo": 14
+        "slot": null
       },
       {
         "id": "wmatch-15",
+        "cardNo": 15,
         "stageId": "stage-rr",
         "groupId": "grp-w",
         "a": "user-ce4c01a9-fa20-4033-9c47-884d3a754602",
@@ -743,8 +675,7 @@
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": null,
-        "cardNo": 15
+        "slot": null
       }
     ],
     "groupAssignments": {
