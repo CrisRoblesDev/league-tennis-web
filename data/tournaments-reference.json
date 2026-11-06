@@ -123,16 +123,7 @@
       }
     ],
     "groupAssignments": {},
-    "connections": [
-      {
-        "from": "xmw5c6g1ng",
-        "to": "xmw5c7vvqi"
-      },
-      {
-        "from": "xmw5c6g1ng",
-        "to": "xmw5c6y38h"
-      }
-    ]
+    "connections": []
   },
   {
     "id": "tournament-womens-35-2026",
