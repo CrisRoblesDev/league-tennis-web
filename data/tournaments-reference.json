@@ -15,6 +15,11 @@
         "id": "xmw58tqat1",
         "name": "GROUPS",
         "kind": "groups"
+      },
+      {
+        "id": "xmw59c6s22",
+        "name": "WEEK 1",
+        "kind": "bracket"
       }
     ],
     "groups": [
