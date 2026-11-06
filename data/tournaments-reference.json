@@ -15,6 +15,11 @@
         "id": "xmw5btadh1",
         "name": "GROUPS",
         "kind": "groups"
+      },
+      {
+        "id": "xmw5bts432",
+        "name": "Nueva etapa",
+        "kind": "bracket"
       }
     ],
     "groups": [
