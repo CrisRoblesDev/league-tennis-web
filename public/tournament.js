@@ -68,6 +68,7 @@
     let wizard = null;
     let drag = null;
     let modalReturn = null;
+    let drawZoom = 0.75;
     let saveChain = Promise.resolve();
     // New: track which participant belongs to which group (participantId -> groupId)
     let groupAssignments = new Map();
@@ -248,13 +249,13 @@
       }
 
       if (tab === "draw") {
-        el.innerHTML = `<div class="card p-5 md:p-6"><div class="flex flex-wrap justify-between gap-3 items-start"><div><p class="eyebrow text-[#668957] mb-2">CUADRO PRINCIPAL</p><h3 class="display text-2xl font-bold">${esc((FORMATS[tournament.mode] || FORMATS.knockout).label)}</h3><p class="muted text-sm mt-1">${admin ? "Gestión por arrastre: arrastra jugadores entre grupos, partidos entre etapas/grupos y reordena con el ratón. Haz clic en un partido para editarlo o en “+” para crear uno nuevo." : "Los ganadores avanzan conforme se registran los resultados."}</p></div>${
+        el.innerHTML = `<div class="card p-5 md:p-6"><div class="flex flex-wrap justify-between gap-3 items-start"><div><p class="eyebrow text-[#668957] mb-2">CUADRO PRINCIPAL</p><h3 class="display text-2xl font-bold">${esc((FORMATS[tournament.mode] || FORMATS.knockout).label)}</h3><p class="muted text-sm mt-1">${admin ? "Gestión por arrastre: arrastra jugadores entre grupos, partidos entre etapas/grupos y reordena con el ratón. Haz clic en un partido para editarlo." : "Los ganadores avanzan conforme se registran los resultados."}</p></div>${
           admin
             ? `<div class="flex flex-wrap gap-2">${btn("+ Participante", "add-participant-draw", "", "")}${btn("+ Partido", "add-match-top", "", "")}${btn("+ Grupo", "add-group")}${btn("+ Etapa", "add-stage", "", "")}${btn("Editar torneo", "edit-tournament")}</div>`
             : `<span class="pill">${tournament.participants.length} jugadores</span>`
-        }</div>${admin ? `<div class="mb-3 p-2 rounded-lg bg-[#f7fbf2] border border-[#dce5d8] text-xs text-[#4b6b3a]">Arrastra jugadores y partidos. Suelta sobre un grupo/etapa para moverlos. Las líneas se actualizan automáticamente.</div>` : ""}${drawMarkup(tournament, admin)}</div>`;
+        }</div><div class="flex flex-wrap items-center gap-2 mb-3 mt-2"><span class="muted text-xs font-bold">Zoom</span>${btn("−", "zoom-out", "", "secondary")}${btn("+", "zoom-in", "", "secondary")}${btn("Ajustar", "zoom-reset", "", "secondary")}<span class="muted text-xs" id="zoom-label">${Math.round(drawZoom * 100)}%</span></div>${admin ? `<div class="mb-3 p-2 rounded-lg bg-[#f7fbf2] border border-[#dce5d8] text-xs text-[#4b6b3a]">Arrastra jugadores y partidos. Suelta sobre un grupo/etapa para moverlos.</div>` : ""}${drawMarkup(tournament, admin)}</div>`;
       }
-      if (tab === "draw") setTimeout(() => drawConnections(), 50);
+      if (tab === "draw") setTimeout(() => { drawConnections(); applyDrawZoom(); }, 50);
     }
 
     function bracketStages(tournament) {
@@ -394,6 +395,13 @@
       return `<div class="bracket-scroll mt-6" aria-label="Main Draw desplazable"><div class="bracket" style="position:relative;">${groups}${columns || '<p class="muted">Añade una etapa de eliminación para mostrar el cuadro.</p>'}<svg class="draw-connectors" aria-hidden="true" style="position:absolute;top:0;left:0;pointer-events:none;z-index:2;"></svg></div></div>${admin ? '<p class="muted text-xs mt-2">Las flechas permiten reordenar sin arrastrar. Para mover un jugador entre grupos, arrástralo sobre la zona "Soltar jugador aquí" del grupo de destino. Para mover un partido entre grupos, arrástralo sobre la zona "Soltar partido aquí" del grupo de destino. Haz clic en "+ Crear partido" para añadir partidos al cuadro. Las líneas conectan cada partido con el de la siguiente etapa.</p>' : ""}`;
     }
 
+    function applyDrawZoom() {
+      const bracket = root.querySelector(".bracket");
+      if (!bracket) return;
+      bracket.style.zoom = String(drawZoom);
+      const label = root.querySelector("#zoom-label");
+      if (label) label.textContent = `${Math.round(drawZoom * 100)}%`;
+    }
     function drawConnections() {
       const tournament = tNow();
       if (!tournament) return;
@@ -1086,6 +1094,21 @@
         if (!playerId) return;
         setGroupForPlayer(tournament, playerId, null);
         refresh(`Jugador retirado de ${tournament.groups.find(g => g.id === groupId)?.name || "grupo"}.`);
+        return;
+      }
+      if (action === "zoom-in") {
+        drawZoom = Math.min(2, Math.round((drawZoom + 0.1) * 100) / 100);
+        applyDrawZoom();
+        return;
+      }
+      if (action === "zoom-out") {
+        drawZoom = Math.max(0.4, Math.round((drawZoom - 0.1) * 100) / 100);
+        applyDrawZoom();
+        return;
+      }
+      if (action === "zoom-reset") {
+        drawZoom = 0.75;
+        applyDrawZoom();
         return;
       }
       if (action === "add-bracket-match") {
