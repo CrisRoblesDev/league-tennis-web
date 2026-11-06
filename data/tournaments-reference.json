@@ -469,6 +469,18 @@
         "sb": null,
         "slot": 0,
         "cardNo": 32
+      },
+      {
+        "id": "xmw5fxcnvf",
+        "stageId": "xmw5bubzw9",
+        "groupId": null,
+        "a": null,
+        "b": null,
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 1,
+        "cardNo": 33
       }
     ],
     "groupAssignments": {
