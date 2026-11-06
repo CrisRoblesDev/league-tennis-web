@@ -687,7 +687,9 @@
     ],
     "requests": [],
     "matches": [],
-    "groupAssignments": {},
+    "groupAssignments": {
+      "user-94c3d05c-a460-4993-b0f7-1c92f3ac470e": "xmw5ibchb1"
+    },
     "connections": []
   }
 ]
