@@ -15,6 +15,21 @@
         "id": "xmw3w56oo1",
         "name": "Grupos",
         "kind": "groups"
+      },
+      {
+        "id": "stage-cuartos-de-final",
+        "name": "Cuartos de final",
+        "kind": "bracket"
+      },
+      {
+        "id": "stage-semifinal",
+        "name": "Semifinal",
+        "kind": "bracket"
+      },
+      {
+        "id": "stage-final",
+        "name": "Final",
+        "kind": "bracket"
       }
     ],
     "groups": [
@@ -40,16 +55,380 @@
       "user-a0105a54-6253-46b6-a266-43b17d35dde5",
       "user-c214871c-3e87-483c-864c-d7042443fbbc",
       "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
-      "user-f7d37d06-a9b5-4d05-8634-f7029bd6c7ac"
+      "user-f7d37d06-a9b5-4d05-8634-f7029bd6c7ac",
+      "user-18574db8-0b20-451f-9693-ed7eb24e8a97",
+      "user-9b9b2373-bf4b-47fc-9857-8afd9f3efef8",
+      "user-a98b85b1-552e-45d2-9353-07a3d648109a",
+      "user-28f7f695-a6d0-47fd-8a16-9d4fcd8b6d1e",
+      "user-c8b785f6-e933-4736-b352-e3c5132afe61",
+      "user-d1f35a4a-b9c6-4b1c-a9d9-3de3b06fe82d",
+      "user-b6fa3c18-dff4-458b-947d-a86cc9dba534",
+      "user-7929e9a9-e4df-4ed9-8a47-189bcb2d3daf",
+      "user-0243ad0c-dc30-48de-8c76-366be2d7192a",
+      "user-2f60c373-73b3-43d9-a3ff-fa923487c313",
+      "user-be1b251f-f2bc-4fc3-9b08-dcb16eb5788a"
     ],
     "requests": [],
-    "matches": [],
+    "matches": [
+      {
+        "id": "gmatch-1",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw3xhb1k1",
+        "a": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
+        "b": "user-75152e59-4308-46f7-a73e-ae78a415bd67",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-2",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw3xhb1k1",
+        "a": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
+        "b": "user-a0105a54-6253-46b6-a266-43b17d35dde5",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-3",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw3xhb1k1",
+        "a": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
+        "b": "user-c214871c-3e87-483c-864c-d7042443fbbc",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-4",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw3xhb1k1",
+        "a": "user-75152e59-4308-46f7-a73e-ae78a415bd67",
+        "b": "user-a0105a54-6253-46b6-a266-43b17d35dde5",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-5",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw3xhb1k1",
+        "a": "user-75152e59-4308-46f7-a73e-ae78a415bd67",
+        "b": "user-c214871c-3e87-483c-864c-d7042443fbbc",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-6",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw3xhb1k1",
+        "a": "user-a0105a54-6253-46b6-a266-43b17d35dde5",
+        "b": "user-c214871c-3e87-483c-864c-d7042443fbbc",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-7",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hpnxa3",
+        "a": "user-f7d37d06-a9b5-4d05-8634-f7029bd6c7ac",
+        "b": "user-a98b85b1-552e-45d2-9353-07a3d648109a",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-8",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hpnxa3",
+        "a": "user-f7d37d06-a9b5-4d05-8634-f7029bd6c7ac",
+        "b": "user-d1f35a4a-b9c6-4b1c-a9d9-3de3b06fe82d",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-9",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hpnxa3",
+        "a": "user-f7d37d06-a9b5-4d05-8634-f7029bd6c7ac",
+        "b": "user-0243ad0c-dc30-48de-8c76-366be2d7192a",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-10",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hpnxa3",
+        "a": "user-a98b85b1-552e-45d2-9353-07a3d648109a",
+        "b": "user-d1f35a4a-b9c6-4b1c-a9d9-3de3b06fe82d",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-11",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hpnxa3",
+        "a": "user-a98b85b1-552e-45d2-9353-07a3d648109a",
+        "b": "user-0243ad0c-dc30-48de-8c76-366be2d7192a",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-12",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hpnxa3",
+        "a": "user-d1f35a4a-b9c6-4b1c-a9d9-3de3b06fe82d",
+        "b": "user-0243ad0c-dc30-48de-8c76-366be2d7192a",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-13",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hs5k04",
+        "a": "user-18574db8-0b20-451f-9693-ed7eb24e8a97",
+        "b": "user-28f7f695-a6d0-47fd-8a16-9d4fcd8b6d1e",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-14",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hs5k04",
+        "a": "user-18574db8-0b20-451f-9693-ed7eb24e8a97",
+        "b": "user-b6fa3c18-dff4-458b-947d-a86cc9dba534",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-15",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hs5k04",
+        "a": "user-18574db8-0b20-451f-9693-ed7eb24e8a97",
+        "b": "user-2f60c373-73b3-43d9-a3ff-fa923487c313",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-16",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hs5k04",
+        "a": "user-28f7f695-a6d0-47fd-8a16-9d4fcd8b6d1e",
+        "b": "user-b6fa3c18-dff4-458b-947d-a86cc9dba534",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-17",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hs5k04",
+        "a": "user-28f7f695-a6d0-47fd-8a16-9d4fcd8b6d1e",
+        "b": "user-2f60c373-73b3-43d9-a3ff-fa923487c313",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-18",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hs5k04",
+        "a": "user-b6fa3c18-dff4-458b-947d-a86cc9dba534",
+        "b": "user-2f60c373-73b3-43d9-a3ff-fa923487c313",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-19",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hsagk5",
+        "a": "user-9b9b2373-bf4b-47fc-9857-8afd9f3efef8",
+        "b": "user-c8b785f6-e933-4736-b352-e3c5132afe61",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-20",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hsagk5",
+        "a": "user-9b9b2373-bf4b-47fc-9857-8afd9f3efef8",
+        "b": "user-7929e9a9-e4df-4ed9-8a47-189bcb2d3daf",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-21",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hsagk5",
+        "a": "user-9b9b2373-bf4b-47fc-9857-8afd9f3efef8",
+        "b": "user-be1b251f-f2bc-4fc3-9b08-dcb16eb5788a",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-22",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hsagk5",
+        "a": "user-c8b785f6-e933-4736-b352-e3c5132afe61",
+        "b": "user-7929e9a9-e4df-4ed9-8a47-189bcb2d3daf",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-23",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hsagk5",
+        "a": "user-c8b785f6-e933-4736-b352-e3c5132afe61",
+        "b": "user-be1b251f-f2bc-4fc3-9b08-dcb16eb5788a",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "gmatch-24",
+        "stageId": "xmw3w56oo1",
+        "groupId": "xmw2hsagk5",
+        "a": "user-7929e9a9-e4df-4ed9-8a47-189bcb2d3daf",
+        "b": "user-be1b251f-f2bc-4fc3-9b08-dcb16eb5788a",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": null
+      },
+      {
+        "id": "qf-1",
+        "stageId": "stage-cuartos-de-final",
+        "groupId": null,
+        "a": null,
+        "b": null,
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 0
+      },
+      {
+        "id": "qf-2",
+        "stageId": "stage-cuartos-de-final",
+        "groupId": null,
+        "a": null,
+        "b": null,
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 1
+      },
+      {
+        "id": "qf-3",
+        "stageId": "stage-cuartos-de-final",
+        "groupId": null,
+        "a": null,
+        "b": null,
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 2
+      },
+      {
+        "id": "qf-4",
+        "stageId": "stage-cuartos-de-final",
+        "groupId": null,
+        "a": null,
+        "b": null,
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 3
+      },
+      {
+        "id": "sf-1",
+        "stageId": "stage-semifinal",
+        "groupId": null,
+        "a": null,
+        "b": null,
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 0
+      },
+      {
+        "id": "sf-2",
+        "stageId": "stage-semifinal",
+        "groupId": null,
+        "a": null,
+        "b": null,
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 1
+      },
+      {
+        "id": "final-1",
+        "stageId": "stage-final",
+        "groupId": null,
+        "a": null,
+        "b": null,
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 0
+      }
+    ],
     "groupAssignments": {
       "user-e9b6d508-100b-4a74-810a-ed08b966b83c": "xmw3xhb1k1",
       "user-75152e59-4308-46f7-a73e-ae78a415bd67": "xmw3xhb1k1",
       "user-a0105a54-6253-46b6-a266-43b17d35dde5": "xmw3xhb1k1",
       "user-f7d37d06-a9b5-4d05-8634-f7029bd6c7ac": "xmw2hpnxa3",
-      "user-c214871c-3e87-483c-864c-d7042443fbbc": "xmw3xhb1k1"
+      "user-c214871c-3e87-483c-864c-d7042443fbbc": "xmw3xhb1k1",
+      "user-18574db8-0b20-451f-9693-ed7eb24e8a97": "xmw2hs5k04",
+      "user-9b9b2373-bf4b-47fc-9857-8afd9f3efef8": "xmw2hsagk5",
+      "user-a98b85b1-552e-45d2-9353-07a3d648109a": "xmw2hpnxa3",
+      "user-28f7f695-a6d0-47fd-8a16-9d4fcd8b6d1e": "xmw2hs5k04",
+      "user-c8b785f6-e933-4736-b352-e3c5132afe61": "xmw2hsagk5",
+      "user-d1f35a4a-b9c6-4b1c-a9d9-3de3b06fe82d": "xmw2hpnxa3",
+      "user-b6fa3c18-dff4-458b-947d-a86cc9dba534": "xmw2hs5k04",
+      "user-7929e9a9-e4df-4ed9-8a47-189bcb2d3daf": "xmw2hsagk5",
+      "user-0243ad0c-dc30-48de-8c76-366be2d7192a": "xmw2hpnxa3",
+      "user-2f60c373-73b3-43d9-a3ff-fa923487c313": "xmw2hs5k04",
+      "user-be1b251f-f2bc-4fc3-9b08-dcb16eb5788a": "xmw2hsagk5"
     }
   },
   {

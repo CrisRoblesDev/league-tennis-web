@@ -5,6 +5,14 @@ function validImage(value) {
     (/^\//.test(value.trim()) || /^https:\/\//i.test(value.trim()));
 }
 
+function validLink(value) {
+  if (value === null || value === undefined) return true;
+  if (typeof value !== "string") return false;
+  const v = value.trim();
+  if (v === "") return true;
+  return v.length <= 1000 && (/^https?:\/\//i.test(v) || /^\//.test(v));
+}
+
 export async function onRequestPut(context) {
   const { request, env, params } = context;
   const userId = await requireAuth(request, env);
@@ -59,6 +67,29 @@ export async function onRequestPut(context) {
   if (updates.image !== undefined) {
     if (!validImage(updates.image)) return jsonResponse({ error: "Imagen inválida" }, 400);
     products[idx].image = updates.image.trim() || null;
+  }
+  const linkAliasKeys = ["link", "url", "purchaseUrl", "purchaseLink", "buyUrl", "buyLink", "href", "productUrl", "externalUrl", "externalLink", "linkUrl"];
+  const presentLinkKeys = linkAliasKeys.filter(key => Object.prototype.hasOwnProperty.call(updates, key));
+  if (presentLinkKeys.length) {
+    let linkValue;
+    for (const key of presentLinkKeys) {
+      if (!validLink(updates[key])) return jsonResponse({ error: "Enlace inválido" }, 400);
+      if (linkValue === undefined) {
+        linkValue = typeof updates[key] === "string" ? updates[key].trim() : "";
+      }
+    }
+    const v = linkValue || "";
+    if (v) {
+      products[idx].link = v;
+      products[idx].url = v;
+    } else {
+      delete products[idx].link;
+      delete products[idx].url;
+    }
+    for (const key of presentLinkKeys) {
+      if (v) products[idx][key] = v;
+      else delete products[idx][key];
+    }
   }
   await gWrite(env, "products", products);
   return jsonResponse(products[idx]);
