@@ -49,10 +49,6 @@
     ],
     "groups": [
       {
-        "id": "grp-c",
-        "name": "Grupo C"
-      },
-      {
         "id": "grp-d",
         "name": "Grupo D"
       }
@@ -78,10 +74,6 @@
     "requests": [],
     "matches": [],
     "groupAssignments": {
-      "user-7929e9a9-e4df-4ed9-8a47-189bcb2d3daf": "grp-c",
-      "user-0243ad0c-dc30-48de-8c76-366be2d7192a": "grp-c",
-      "user-2f60c373-73b3-43d9-a3ff-fa923487c313": "grp-c",
-      "user-be1b251f-f2bc-4fc3-9b08-dcb16eb5788a": "grp-c",
       "user-18574db8-0b20-451f-9693-ed7eb24e8a97": "grp-d",
       "user-292dc535-3d97-4ca0-ad8a-356cc668c40b": "grp-d",
       "user-29bb2990-ee1e-46a0-a498-f4ae67549d3d": "grp-d"
