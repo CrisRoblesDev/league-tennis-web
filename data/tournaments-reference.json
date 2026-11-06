@@ -17,6 +17,7 @@
         "kind": "groups"
       },
       {
+<<<<<<< HEAD
         "id": "stage-qf",
         "name": "Cuartos de final",
         "kind": "bracket"
@@ -29,11 +30,26 @@
       {
         "id": "stage-final",
         "name": "Final",
+=======
+        "id": "xmw59c6s22",
+        "name": "WEEK 1",
+        "kind": "bracket"
+      },
+      {
+        "id": "xmw59evu05",
+        "name": "WEEK 2",
+        "kind": "bracket"
+      },
+      {
+        "id": "xmw59fdcg7",
+        "name": "WEEK 3",
+>>>>>>> da7926b7d77309025a5378a8bf7ca4722d5116da
         "kind": "bracket"
       }
     ],
     "groups": [
       {
+<<<<<<< HEAD
         "id": "grp-a",
         "name": "Grupo A"
       },
@@ -67,19 +83,48 @@
       "user-292dc535-3d97-4ca0-ad8a-356cc668c40b",
       "user-11549a34-ef61-47de-ba87-bb63924deeb1",
       "user-29bb2990-ee1e-46a0-a498-f4ae67549d3d"
+=======
+        "id": "xmw59b8wc1",
+        "name": "GRUPO A"
+      }
+    ],
+    "participants": [
+      "user-a0105a54-6253-46b6-a266-43b17d35dde5",
+      "user-c214871c-3e87-483c-864c-d7042443fbbc",
+      "user-75152e59-4308-46f7-a73e-ae78a415bd67",
+      "user-e9b6d508-100b-4a74-810a-ed08b966b83c"
+>>>>>>> da7926b7d77309025a5378a8bf7ca4722d5116da
     ],
     "requests": [],
     "matches": [
       {
+<<<<<<< HEAD
         "id": "mmatch-1",
         "cardNo": 1,
         "stageId": "xmw58tqat1",
         "groupId": "grp-a",
+=======
+        "id": "xmw59cu953",
+        "stageId": "xmw59c6s22",
+        "groupId": null,
+        "a": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
+        "b": "user-c214871c-3e87-483c-864c-d7042443fbbc",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 0
+      },
+      {
+        "id": "xmw59e5gp4",
+        "stageId": "xmw59c6s22",
+        "groupId": null,
+>>>>>>> da7926b7d77309025a5378a8bf7ca4722d5116da
         "a": "user-75152e59-4308-46f7-a73e-ae78a415bd67",
         "b": "user-a0105a54-6253-46b6-a266-43b17d35dde5",
         "date": "",
         "sa": null,
         "sb": null,
+<<<<<<< HEAD
         "slot": null
       },
       {
@@ -365,22 +410,41 @@
         "groupId": null,
         "a": null,
         "b": null,
+=======
+        "slot": 1
+      },
+      {
+        "id": "xmw59f3su6",
+        "stageId": "xmw59evu05",
+        "groupId": null,
+        "a": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
+        "b": "user-a0105a54-6253-46b6-a266-43b17d35dde5",
+>>>>>>> da7926b7d77309025a5378a8bf7ca4722d5116da
         "date": "",
         "sa": null,
         "sb": null,
         "slot": 0
       },
       {
+<<<<<<< HEAD
         "id": "qf-2",
         "cardNo": 26,
         "stageId": "stage-qf",
         "groupId": null,
         "a": null,
         "b": null,
+=======
+        "id": "xmw59fvr28",
+        "stageId": "xmw59evu05",
+        "groupId": null,
+        "a": "user-c214871c-3e87-483c-864c-d7042443fbbc",
+        "b": "user-75152e59-4308-46f7-a73e-ae78a415bd67",
+>>>>>>> da7926b7d77309025a5378a8bf7ca4722d5116da
         "date": "",
         "sa": null,
         "sb": null,
         "slot": 1
+<<<<<<< HEAD
       },
       {
         "id": "qf-3",
@@ -462,6 +526,11 @@
       "user-29bb2990-ee1e-46a0-a498-f4ae67549d3d": "grp-d"
     },
     "connections": []
+=======
+      }
+    ],
+    "groupAssignments": {}
+>>>>>>> da7926b7d77309025a5378a8bf7ca4722d5116da
   },
   {
     "id": "tournament-womens-35-2026",
