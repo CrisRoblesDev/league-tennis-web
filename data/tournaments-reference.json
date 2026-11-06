@@ -413,14 +413,14 @@
       },
       {
         "id": "sf-1",
-        "stageId": "stage-sf",
-        "groupId": null,
+        "stageId": "xmw58tqat1",
+        "groupId": "grp-a",
         "a": null,
         "b": null,
         "date": "",
         "sa": null,
         "sb": null,
-        "slot": 0,
+        "slot": null,
         "cardNo": 29
       },
       {
