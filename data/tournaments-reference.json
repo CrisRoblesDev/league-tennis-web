@@ -514,16 +514,7 @@
       "user-2f60c373-73b3-43d9-a3ff-fa923487c313": "xmw5bzkage",
       "user-f2c616c5-cb34-417a-9696-e131af91c372": "xmw5bzkage"
     },
-    "connections": [
-      {
-        "from": "xmw5c5x6tf",
-        "to": "xmw5c6y38h"
-      },
-      {
-        "from": "xmw5c5x6tf",
-        "to": "xmw5c7vvqi"
-      }
-    ]
+    "connections": []
   },
   {
     "id": "tournament-womens-35-2026",
