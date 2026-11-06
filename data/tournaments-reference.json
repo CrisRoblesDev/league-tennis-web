@@ -17,7 +17,12 @@
         "kind": "groups"
       }
     ],
-    "groups": [],
+    "groups": [
+      {
+        "id": "xmw59b8wc1",
+        "name": "GRUPO A"
+      }
+    ],
     "participants": [
       "user-a0105a54-6253-46b6-a266-43b17d35dde5",
       "user-c214871c-3e87-483c-864c-d7042443fbbc",
