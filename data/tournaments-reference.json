@@ -57,12 +57,12 @@
         "name": "GROUP B"
       },
       {
-        "id": "xmw5bzegxd",
-        "name": "GROUP C"
-      },
-      {
         "id": "xmw5bzkage",
         "name": "GROUP D"
+      },
+      {
+        "id": "xmw5bzegxd",
+        "name": "GROUP C"
       }
     ],
     "participants": [
