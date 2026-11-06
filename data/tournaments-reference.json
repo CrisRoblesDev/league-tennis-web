@@ -433,6 +433,18 @@
         "sb": null,
         "slot": 1,
         "cardNo": 29
+      },
+      {
+        "id": "xmw5fwjocc",
+        "stageId": "xmw5bu5kz7",
+        "groupId": null,
+        "a": null,
+        "b": null,
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 2,
+        "cardNo": 30
       }
     ],
     "groupAssignments": {
