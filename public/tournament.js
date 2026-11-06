@@ -356,9 +356,9 @@
                   </div>
                   ${[match.a, match.b].map((id, i) => `<div class="slot ${mWin === id && id ? "winner" : ""}" ${admin ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${id ? esc(name(id)) : "— Por definir"}</div>`).join("")}
                   ${admin ? '<span class="muted text-[10px]">Clic para editar · arrastra para mover</span>' : ""}
-                  ${admin ? `<button type="button" class="button light small" style="margin-top:6px;" data-action="unir-linea" data-match-id="${esc(match.id)}" draggable="false" title="unir linea">Unir línea</button>` : ""}
+                  ${admin ? `<button type="button" class="button light small" style="margin-top:6px;" data-action="unir-linea" data-match-id="${esc(match.id)}" draggable="false" title="unir linea">Unir linea</button>` : ""}${admin ? `<button type="button" class="button light small" style="margin-top:6px;margin-left:4px;" data-action="desunir-linea" data-match-id="${esc(match.id)}" draggable="false" title="desunir linea">Desunir linea</button>` : ""}
                 </div>`;
-              }).join("") : '<p class="muted text-xs text-center py-2">Sin partidos</p>'}</div>${admin && matches.length > 0 ? `<div class="match-drop-zone" data-drop="group" data-id="${esc(group.id)}" style="margin-top:8px;padding:8px;border:2px dashed #c9dd9d;border-radius:6px;text-align:center;color:#598044;font-size:11px;">Soltar partido aquí para mover a ${esc(group.name)}</div>` : ""}</div>`;
+              }).join("") : ''}</div>${admin && matches.length > 0 ? `<div class="match-drop-zone" data-drop="group" data-id="${esc(group.id)}" style="margin-top:8px;padding:8px;border:2px dashed #c9dd9d;border-radius:6px;text-align:center;color:#598044;font-size:11px;">Soltar partido aquí para mover a ${esc(group.name)}</div>` : ""}</div>`;
             }).join("") || '<p class="muted text-sm">Añade un grupo.</p>'
           }</div></div>`
         : "";
@@ -383,12 +383,12 @@
               const [a, b] = [match.a, match.b];
               return `<div class="match-node ${last ? "last" : ""} ${win ? "win" : ""}" data-slot="${slot}" data-card-no="${esc(match.cardNo || "")}" data-match-id="${esc(match.id)}" ${admin ? `data-action="draw-match" draggable="true" data-drag="match" data-drop="match" data-id="${esc(match.id)}" role="button" tabindex="0" aria-label="Editar partido ${slot + 1} de ${esc(round.stage.name)}"` : ""}><div class="flex justify-between gap-2 text-[10px] muted mb-1"><span>PARTIDO ${slot + 1}${admin ? ` · #${esc(match.cardNo || match.id)}` : ""}</span><span>${match.date ? new Date(match.date).toLocaleDateString("es-CL") : "Por programar"}</span></div>${
                 [a, b].map(id => `<div class="slot ${win === id && id ? "winner" : ""}" ${admin && roundIndex === 0 && id ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${id ? esc(name(id)) : "— Por definir"}</div>`).join("")
-              }${admin ? '<span class="muted text-[10px]">Clic para editar · arrastra para mover</span>' : ""}${admin ? `<button type="button" class="button light small" style="margin-top:6px;" data-action="unir-linea" data-match-id="${esc(match.id)}" draggable="false" title="unir linea">Unir línea</button>` : ""}</div>`;
+              }${admin ? '<span class="muted text-[10px]">Clic para editar · arrastra para mover</span>' : ""}${admin ? `<button type="button" class="button light small" style="margin-top:6px;" data-action="unir-linea" data-match-id="${esc(match.id)}" draggable="false" title="unir linea">Unir linea</button>` : ""}${admin ? `<button type="button" class="button light small" style="margin-top:6px;margin-left:4px;" data-action="desunir-linea" data-match-id="${esc(match.id)}" draggable="false" title="desunir linea">Desunir linea</button>` : ""}</div>`;
             }
-            // Empty slot: show "+" button to create match (admin only)
-            return admin ? `<div class="match-node empty-slot ${last ? "last" : ""}" data-action="add-bracket-match" data-stage="${esc(stageId)}" data-slot="${slot}" style="border-style:dashed;border-color:#c9dd9d;background:#f8fdf3;min-height:86px;display:flex;align-items:center;justify-content:center;"><button type="button" class="button light small" style="width:100%;">+ Crear partido ${slot + 1}</button></div>` : `<div class="match-node empty-slot ${last ? "last" : ""}" data-slot="${slot}" style="border-style:dashed;border-color:#c9dd9d;background:#f8fdf3;min-height:86px;display:flex;align-items:center;justify-content:center;color:#a3c979;font-size:11px;">Partido ${slot + 1} (vacío)</div>`;
+            // Empty slot (sin botón de creación; el admin usa el botón superior "+ Partido")
+            return admin ? `<div class="match-node empty-slot ${last ? "last" : ""}" data-slot="${slot}" style="border-style:dashed;border-color:#c9dd9d;background:#f8fdf3;min-height:86px;display:flex;align-items:center;justify-content:center;color:#a3c979;font-size:11px;">Partido ${slot + 1} (vacío)</div>` : `<div class="match-node empty-slot ${last ? "last" : ""}" data-slot="${slot}" style="border-style:dashed;border-color:#c9dd9d;background:#f8fdf3;min-height:86px;display:flex;align-items:center;justify-content:center;color:#a3c979;font-size:11px;">Partido ${slot + 1} (vacío)</div>`;
           }).join("")
-        }${admin ? `<div style="margin-top:8px;text-align:center;"><button type="button" class="button light small" data-action="add-bracket-match" data-stage="${esc(stageId)}" data-slot="${slotsToShow}">+ Añadir partido</button></div>` : ""}</div></div>`;
+        }</div></div>`;
       }).join("");
 
       return `<div class="bracket-scroll mt-6" aria-label="Main Draw desplazable"><div class="bracket" style="position:relative;">${groups}${columns || '<p class="muted">Añade una etapa de eliminación para mostrar el cuadro.</p>'}<svg class="draw-connectors" aria-hidden="true" style="position:absolute;top:0;left:0;pointer-events:none;z-index:2;"></svg></div></div>${admin ? '<p class="muted text-xs mt-2">Las flechas permiten reordenar sin arrastrar. Para mover un jugador entre grupos, arrástralo sobre la zona "Soltar jugador aquí" del grupo de destino. Para mover un partido entre grupos, arrástralo sobre la zona "Soltar partido aquí" del grupo de destino. Haz clic en "+ Crear partido" para añadir partidos al cuadro. Las líneas conectan cada partido con el de la siguiente etapa.</p>' : ""}`;
@@ -407,40 +407,7 @@
       svg.setAttribute("height", scrollH);
       svg.setAttribute("viewBox", `0 0 ${scrollW} ${scrollH}`);
       svg.innerHTML = "";
-      // Identify bracket stage columns (those without group cards).
-      const rounds = [...bracket.querySelectorAll(":scope > .bracket > div > .round, :scope > div > .round")];
-      // Fallback: query all .round inside bracket
-      const allRounds = [...bracket.querySelectorAll(".round")].filter(round => !round.querySelector(".group-card") && round.querySelector(".match-node"));
-      // Only adjacent columns
-      for (let i = 0; i < allRounds.length - 1; i++) {
-        const left = allRounds[i];
-        const right = allRounds[i + 1];
-        const leftNodes = [...left.querySelectorAll(".round-body > .match-node:not(.empty-slot)")];
-        const rightNodes = [...right.querySelectorAll(".round-body > .match-node:not(.empty-slot)")];
-        if (!leftNodes.length || !rightNodes.length) continue;
-        leftNodes.forEach((node) => {
-          const slot = node.dataset.slot !== undefined ? +node.dataset.slot : null;
-          const targetSlot = slot !== null && !Number.isNaN(slot) ? Math.floor(slot / 2) : null;
-          const target = targetSlot !== null
-            ? rightNodes.find(n => +n.dataset.slot === targetSlot)
-            : rightNodes[Math.floor(leftNodes.indexOf(node) / 2)];
-          if (!target) return;
-          const a = node.getBoundingClientRect();
-          const b = target.getBoundingClientRect();
-          const x1 = (a.right - stageRect.left) + bracket.scrollLeft;
-          const y1 = (a.top - stageRect.top + a.height / 2) + bracket.scrollTop;
-          const x2 = (b.left - stageRect.left) + bracket.scrollLeft;
-          const y2 = (b.top - stageRect.top + b.height / 2) + bracket.scrollTop;
-          const mid = x1 + Math.max(18, (x2 - x1) / 2);
-          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-          path.setAttribute("d", `M ${x1} ${y1} H ${mid} V ${y2} H ${x2}`);
-          path.setAttribute("class", "draw-connector");
-          path.setAttribute("fill", "none");
-          path.setAttribute("stroke", "#a3c979");
-          path.setAttribute("stroke-width", "2");
-          svg.appendChild(path);
-        });
-      }
+      // Las líneas automáticas entre etapas se eliminaron: el admin controla las conexiones manualmente.
 
       // Manual connections between cards
       const manualConnections = Array.isArray(tournament.connections) ? tournament.connections : [];
@@ -1148,6 +1115,15 @@
           if (!exists) tournament.connections.push({ from: match.id, to: targetMatch.id });
           refresh("Línea asignada.");
         }, "Unir linea");
+        return;
+      }
+      if (action === "desunir-linea" || action === "unjoin-line" || action === "desunir linea") {
+        const matchId = target.dataset.matchId || target.dataset.id;
+        if (!Array.isArray(tournament.connections)) tournament.connections = [];
+        const before = tournament.connections.length;
+        tournament.connections = tournament.connections.filter(c => c.from !== matchId && c.to !== matchId);
+        if (tournament.connections.length !== before) refresh("Línea eliminada.");
+        else notify("Esta tarjeta no tiene líneas anexadas.");
         return;
       }
       if (action === "delete-group") {
