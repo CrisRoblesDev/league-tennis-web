@@ -248,12 +248,11 @@
       }
 
       if (tab === "draw") {
-        const availableMembers = users.filter(u => member(u.id) && !tournament.participants.includes(u.id));
         el.innerHTML = `<div class="card p-5 md:p-6"><div class="flex flex-wrap justify-between gap-3 items-start"><div><p class="eyebrow text-[#668957] mb-2">CUADRO PRINCIPAL</p><h3 class="display text-2xl font-bold">${esc((FORMATS[tournament.mode] || FORMATS.knockout).label)}</h3><p class="muted text-sm mt-1">${admin ? "Gestión por arrastre: arrastra jugadores entre grupos, partidos entre etapas/grupos y reordena con el ratón. Haz clic en un partido para editarlo o en “+” para crear uno nuevo." : "Los ganadores avanzan conforme se registran los resultados."}</p></div>${
           admin
             ? `<div class="flex flex-wrap gap-2">${btn("+ Participante", "add-participant-draw", "", "")}${btn("+ Partido", "add-match-top", "", "")}${btn("+ Grupo", "add-group")}${btn("+ Etapa", "add-stage", "", "")}${btn("Editar torneo", "edit-tournament")}</div>`
             : `<span class="pill">${tournament.participants.length} jugadores</span>`
-        }</div>${admin && availableMembers.length ? `<div class="mb-4 p-3 rounded-xl bg-[#f0f9dd] border border-[#c9dd9d]"><strong class="text-sm">Miembros sin inscribir:</strong> ${availableMembers.map(u => `<button type="button" class="button light small mx-1 my-1" data-action="add-participant-draw" data-id="${esc(u.id)}">${esc(u.name)}</button>`).join("")}</div>` : ""}${admin ? `<div class="mb-3 p-2 rounded-lg bg-[#f7fbf2] border border-[#dce5d8] text-xs text-[#4b6b3a]">Arrastra jugadores y partidos. Suelta sobre un grupo/etapa para moverlos. Las líneas se actualizan automáticamente.</div>` : ""}${drawMarkup(tournament, admin)}</div>`;
+        }</div>${admin ? `<div class="mb-3 p-2 rounded-lg bg-[#f7fbf2] border border-[#dce5d8] text-xs text-[#4b6b3a]">Arrastra jugadores y partidos. Suelta sobre un grupo/etapa para moverlos. Las líneas se actualizan automáticamente.</div>` : ""}${drawMarkup(tournament, admin)}</div>`;
       }
       if (tab === "draw") setTimeout(() => drawConnections(), 50);
     }
@@ -1006,18 +1005,50 @@
         return;
       }
       if (action === "add-participant-draw") {
-        const playerId = target.dataset.id || $id("add-player")?.value;
-        if (!playerId || !member(playerId) || tournament.participants.includes(playerId)) {
-          notify("Selecciona un miembro disponible.");
+        const playerId = target.dataset.id;
+        if (playerId) {
+          if (!member(playerId) || tournament.participants.includes(playerId) || !tournament.requests.includes(playerId)) {
+            notify("Solo se pueden agregar participantes inscritos.");
+            return;
+          }
+          if (tournament.participants.length >= tournament.capacity) {
+            notify("No quedan cupos.");
+            return;
+          }
+          tournament.participants.push(playerId);
+          tournament.requests = tournament.requests.filter(requestId => requestId !== playerId);
+          refresh("Participante añadido al torneo.");
+          return;
+        }
+        // No direct member selected: choose among enrolled (requested) members.
+        const enrolled = (tournament.requests || []).filter(id => member(id) && !tournament.participants.includes(id));
+        if (!enrolled.length) {
+          notify("No hay miembros inscritos pendientes de agregar.");
           return;
         }
         if (tournament.participants.length >= tournament.capacity) {
           notify("No quedan cupos.");
           return;
         }
-        tournament.participants.push(playerId);
-        tournament.requests = tournament.requests.filter(requestId => requestId !== playerId);
-        refresh("Participante añadido al torneo.");
+        const options = enrolled.map(id => `<option value="${esc(id)}">${esc(name(id))}</option>`).join("");
+        modal("Añadir participante inscrito", `<div><label class="label" for="modal-enrolled-player">Miembro inscrito</label><select id="modal-enrolled-player" name="playerId" class="field">${options}</select></div><p class="muted text-xs mt-2">Solo miembros con inscripción pendiente.</p>`, form => {
+          const selected = form.get("playerId");
+          if (!selected || !enrolled.includes(selected)) {
+            notify("Selecciona un miembro inscrito.");
+            return;
+          }
+          if (tournament.participants.includes(selected)) {
+            notify("El miembro ya es participante.");
+            return;
+          }
+          if (tournament.participants.length >= tournament.capacity) {
+            notify("No quedan cupos.");
+            return;
+          }
+          tournament.participants.push(selected);
+          tournament.requests = tournament.requests.filter(requestId => requestId !== selected);
+          refresh("Participante añadido al torneo.");
+        }, "Añadir");
         return;
       }
       if (action === "add-group-match") {
