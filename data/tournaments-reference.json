@@ -72,7 +72,20 @@
       "user-e9b6d508-100b-4a74-810a-ed08b966b83c"
     ],
     "requests": [],
-    "matches": [],
+    "matches": [
+      {
+        "id": "xmw5c5x6tf",
+        "stageId": "xmw5bts432",
+        "groupId": null,
+        "a": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
+        "b": "user-c214871c-3e87-483c-864c-d7042443fbbc",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 0,
+        "cardNo": 1
+      }
+    ],
     "groupAssignments": {},
     "connections": []
   },
