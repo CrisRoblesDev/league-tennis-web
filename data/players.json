@@ -283,7 +283,8 @@
     "gender": "hombres",
     "matches": 0,
     "points": 0,
-    "created": "2026-11-03T02:50:34.510Z"
+    "created": "2026-11-03T02:50:34.510Z",
+    "manualPoints": 3
   },
   {
     "id": "player-d7ed665d-17d1-4349-8899-0522fcf95113",
