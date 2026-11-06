@@ -307,16 +307,8 @@
     function groupPlayers(tournament, index) {
       const group = tournament.groups[index];
       if (!group) return [];
-      // Use explicit group assignments if available, fall back to modulo for backwards compatibility
-      const assigned = tournament.participants.filter(pId => {
-        const assignedGroupId = tournament.groupAssignments?.[pId];
-        return assignedGroupId === group.id;
-      });
-      // If no explicit assignments exist, fall back to modulo distribution
-      if (assigned.length === 0 && tournament.groupAssignments && Object.keys(tournament.groupAssignments).length === 0) {
-        return tournament.participants.filter((_, playerIndex) => playerIndex % tournament.groups.length === index);
-      }
-      return assigned;
+      // Solo jugadores asignados explícitamente a este grupo (sin prellenado automático)
+      return tournament.participants.filter(pId => tournament.groupAssignments?.[pId] === group.id);
     }
 
     function groupMatches(tournament, groupId) {
@@ -324,15 +316,7 @@
     }
 
     function getGroupForPlayer(tournament, playerId) {
-      if (tournament.groupAssignments && tournament.groupAssignments[playerId]) {
-        return tournament.groupAssignments[playerId];
-      }
-      // Fallback: calculate from modulo
-      const index = tournament.participants.indexOf(playerId);
-      if (index >= 0 && tournament.groups.length > 0) {
-        return tournament.groups[index % tournament.groups.length]?.id;
-      }
-      return null;
+      return tournament.groupAssignments?.[playerId] || null;
     }
 
     function setGroupForPlayer(tournament, playerId, groupId) {
