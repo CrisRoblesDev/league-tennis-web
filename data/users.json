@@ -330,8 +330,12 @@
     "name": "Luis Ureta",
     "email": "luis.ureta@temp.aventuratennisleague.com",
     "password": "pbkdf2$100000$-cqgr8fo2Hn9uqUASiF6rg$C-U8MpZmTH5Zv5MSctdCam8BKa2pP7CejKwSlwZt0QY",
-    "role": "member",
+    "role": "user",
     "nationality": null,
-    "created": "2026-11-06T19:37:11.124Z"
+    "created": "2026-11-06T19:37:11.124Z",
+    "membershipActive": false,
+    "level": null,
+    "zone": null,
+    "phone": null
   }
 ]
