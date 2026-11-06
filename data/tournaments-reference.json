@@ -49,12 +49,12 @@
     ],
     "groups": [
       {
-        "id": "xmw5bzkage",
-        "name": "GROUP D"
-      },
-      {
         "id": "xmw5byxvkb",
         "name": "GROUP A"
+      },
+      {
+        "id": "xmw5bzkage",
+        "name": "GROUP D"
       },
       {
         "id": "xmw5bz8g9c",
