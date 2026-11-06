@@ -62,6 +62,17 @@
         "sa": null,
         "sb": null,
         "slot": 1
+      },
+      {
+        "id": "xmw59f3su6",
+        "stageId": "xmw59evu05",
+        "groupId": null,
+        "a": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
+        "b": "user-a0105a54-6253-46b6-a266-43b17d35dde5",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 0
       }
     ],
     "groupAssignments": {}
