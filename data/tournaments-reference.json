@@ -15,11 +15,6 @@
         "id": "xmw4118yv3",
         "name": "WEEK 1",
         "kind": "groups"
-      },
-      {
-        "id": "stage-semifinal",
-        "name": "Semifinal",
-        "kind": "bracket"
       }
     ],
     "groups": [],
@@ -42,30 +37,7 @@
       "user-be1b251f-f2bc-4fc3-9b08-dcb16eb5788a"
     ],
     "requests": [],
-    "matches": [
-      {
-        "id": "sf-1",
-        "stageId": "stage-semifinal",
-        "groupId": null,
-        "a": null,
-        "b": null,
-        "date": "",
-        "sa": null,
-        "sb": null,
-        "slot": 0
-      },
-      {
-        "id": "sf-2",
-        "stageId": "stage-semifinal",
-        "groupId": null,
-        "a": null,
-        "b": null,
-        "date": "",
-        "sa": null,
-        "sb": null,
-        "slot": 1
-      }
-    ],
+    "matches": [],
     "groupAssignments": {}
   },
   {
