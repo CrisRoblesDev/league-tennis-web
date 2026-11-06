@@ -596,10 +596,6 @@
         const y = (newIsBracket && !match && slot !== null) ? b : form.get("b");
         const sa = form.get("sa");
         const sb = form.get("sb");
-        if ((x && y && x === y) || (sa === "") !== (sb === "") || (sa !== "" && (+sa === +sb || !x || !y))) {
-          notify("Elige jugadores distintos y un resultado completo sin empate.");
-          return false;
-        }
         // For group matches, require group and players from that group
         if (!newIsBracket && !groupId) {
           notify("Los partidos de fase de grupos requieren seleccionar un grupo.");
