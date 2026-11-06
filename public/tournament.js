@@ -69,6 +69,8 @@
     let drag = null;
     let modalReturn = null;
     let drawZoom = 0.75;
+    let isPanning = false;
+    let panStart = null;
     let saveChain = Promise.resolve();
     // New: track which participant belongs to which group (participantId -> groupId)
     let groupAssignments = new Map();
@@ -256,10 +258,11 @@
         }</div><div class="flex flex-wrap items-center gap-2 mb-3 mt-2"><span class="muted text-xs font-bold">Zoom</span>${btn("−", "zoom-out", "", "secondary")}${btn("+", "zoom-in", "", "secondary")}${btn("Ajustar", "zoom-reset", "", "secondary")}<span class="muted text-xs" id="zoom-label">${Math.round(drawZoom * 100)}%</span></div>${admin ? `<div class="mb-3 p-2 rounded-lg bg-[#f7fbf2] border border-[#dce5d8] text-xs text-[#4b6b3a]">Arrastra jugadores y partidos. Suelta sobre un grupo/etapa para moverlos.</div>` : ""}${drawMarkup(tournament, admin)}</div>`;
       }
       if (tab === "draw") setTimeout(() => {
-        drawConnections(); applyDrawZoom();
+        applyDrawZoom(); drawConnections();
         const scroll = root.querySelector(".bracket-scroll");
         if (scroll && !scroll.dataset.zoomBound) {
           scroll.dataset.zoomBound = "1";
+          scroll.style.cursor = "grab";
           scroll.addEventListener("wheel", (e) => {
             e.preventDefault();
             const delta = e.deltaY < 0 ? 0.1 : -0.1;
@@ -267,6 +270,31 @@
             applyDrawZoom();
             drawConnections();
           }, { passive: false });
+          scroll.addEventListener("mousedown", (e) => {
+            if (e.button !== 0) return;
+            if (e.target.closest("[data-drag],button,input,select,textarea,a")) return;
+            isPanning = true;
+            panStart = { x: e.clientX, y: e.clientY, sl: scroll.scrollLeft, st: scroll.scrollTop };
+            scroll.style.cursor = "grabbing";
+            e.preventDefault();
+          });
+        }
+        if (!window.__panBound) {
+          window.__panBound = true;
+          window.addEventListener("mousemove", (e) => {
+            if (!isPanning || !panStart) return;
+            const sc = root.querySelector(".bracket-scroll");
+            if (!sc) return;
+            sc.scrollLeft = panStart.sl - (e.clientX - panStart.x);
+            sc.scrollTop = panStart.st - (e.clientY - panStart.y);
+          });
+          window.addEventListener("mouseup", () => {
+            if (!isPanning) return;
+            isPanning = false;
+            panStart = null;
+            const sc = root.querySelector(".bracket-scroll");
+            if (sc) sc.style.cursor = "grab";
+          });
         }
       }, 50);
     }
@@ -941,16 +969,19 @@
       if (action === "zoom-in") {
         drawZoom = Math.min(2, Math.round((drawZoom + 0.1) * 100) / 100);
         applyDrawZoom();
+        drawConnections();
         return;
       }
       if (action === "zoom-out") {
         drawZoom = Math.max(0.4, Math.round((drawZoom - 0.1) * 100) / 100);
         applyDrawZoom();
+        drawConnections();
         return;
       }
       if (action === "zoom-reset") {
         drawZoom = 0.75;
         applyDrawZoom();
+        drawConnections();
         return;
       }
       if (!admin) {
