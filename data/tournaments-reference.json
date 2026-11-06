@@ -65,7 +65,9 @@
         "name": "GROUP D"
       }
     ],
-    "participants": [],
+    "participants": [
+      "user-75152e59-4308-46f7-a73e-ae78a415bd67"
+    ],
     "requests": [],
     "matches": [],
     "groupAssignments": {},
