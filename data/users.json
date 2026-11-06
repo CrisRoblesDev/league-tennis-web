@@ -337,5 +337,14 @@
     "level": null,
     "zone": null,
     "phone": null
+  },
+  {
+    "id": "user-d7206caf-b37e-4cee-9a26-1af2d7a52f9f",
+    "name": "Josef Platt",
+    "email": "josef.platt@temp.aventuratennisleague.com",
+    "password": "pbkdf2$100000$2BuH4guE-lhA6tGZfyX1Zw$0PWS4jfmYpUw5swNB9q-mwd5lae-FtlsNYT752QTX8g",
+    "role": "user",
+    "nationality": null,
+    "created": "2026-11-06T21:57:20.322Z"
   }
 ]
