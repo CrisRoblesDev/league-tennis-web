@@ -1005,49 +1005,30 @@
         return;
       }
       if (action === "add-participant-draw") {
-        const playerId = target.dataset.id;
-        if (playerId) {
-          if (!member(playerId) || tournament.participants.includes(playerId) || !tournament.requests.includes(playerId)) {
-            notify("Solo se pueden agregar participantes inscritos.");
-            return;
-          }
-          if (tournament.participants.length >= tournament.capacity) {
-            notify("No quedan cupos.");
-            return;
-          }
-          tournament.participants.push(playerId);
-          tournament.requests = tournament.requests.filter(requestId => requestId !== playerId);
-          refresh("Participante añadido al torneo.");
+        const enrolledParticipants = (tournament.participants || []).slice();
+        if (!enrolledParticipants.length) {
+          notify("No hay participantes inscritos.");
           return;
         }
-        // No direct member selected: choose among enrolled (requested) members.
-        const enrolled = (tournament.requests || []).filter(id => member(id) && !tournament.participants.includes(id));
-        if (!enrolled.length) {
-          notify("No hay miembros inscritos pendientes de agregar.");
+        if (!tournament.groups || !tournament.groups.length) {
+          notify("Crea al menos un grupo primero.");
           return;
         }
-        if (tournament.participants.length >= tournament.capacity) {
-          notify("No quedan cupos.");
-          return;
-        }
-        const options = enrolled.map(id => `<option value="${esc(id)}">${esc(name(id))}</option>`).join("");
-        modal("Añadir participante inscrito", `<div><label class="label" for="modal-enrolled-player">Miembro inscrito</label><select id="modal-enrolled-player" name="playerId" class="field">${options}</select></div><p class="muted text-xs mt-2">Solo miembros con inscripción pendiente.</p>`, form => {
-          const selected = form.get("playerId");
-          if (!selected || !enrolled.includes(selected)) {
-            notify("Selecciona un miembro inscrito.");
+        const playerOptions = enrolledParticipants.map(id => `<option value="${esc(id)}">${esc(name(id))}</option>`).join("");
+        const groupOptions = tournament.groups.map(g => `<option value="${esc(g.id)}">${esc(g.name)}</option>`).join("");
+        modal("Añadir participante a un grupo", `<div><label class="label" for="modal-draw-player">Participante inscrito</label><select id="modal-draw-player" name="playerId" class="field">${playerOptions}</select></div><div class="mt-3"><label class="label" for="modal-draw-group">Grupo</label><select id="modal-draw-group" name="groupId" class="field">${groupOptions}</select></div><p class="muted text-xs mt-2">Solo participantes inscritos en el torneo.</p>`, form => {
+          const selectedPlayer = form.get("playerId");
+          const selectedGroup = form.get("groupId");
+          if (!selectedPlayer || !enrolledParticipants.includes(selectedPlayer)) {
+            notify("Selecciona un participante inscrito.");
             return;
           }
-          if (tournament.participants.includes(selected)) {
-            notify("El miembro ya es participante.");
+          if (!selectedGroup || !tournament.groups.some(g => g.id === selectedGroup)) {
+            notify("Selecciona un grupo válido.");
             return;
           }
-          if (tournament.participants.length >= tournament.capacity) {
-            notify("No quedan cupos.");
-            return;
-          }
-          tournament.participants.push(selected);
-          tournament.requests = tournament.requests.filter(requestId => requestId !== selected);
-          refresh("Participante añadido al torneo.");
+          setGroupForPlayer(tournament, selectedPlayer, selectedGroup);
+          refresh("Participante agregado al grupo.");
         }, "Añadir");
         return;
       }
