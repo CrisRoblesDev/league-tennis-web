@@ -517,10 +517,6 @@
     "connections": [
       {
         "from": "xmw5c6g1ng",
-        "to": "xmw5c6y38h"
-      },
-      {
-        "from": "xmw5c6g1ng",
         "to": "xmw5c7vvqi"
       },
       {
@@ -534,10 +530,6 @@
       {
         "from": "xmw5cuoc24",
         "to": "xmw5cvi5u6"
-      },
-      {
-        "from": "xmw5c5x6tf",
-        "to": "xmw5c6y38h"
       },
       {
         "from": "xmw5d2s9k9",
@@ -570,10 +562,6 @@
       {
         "from": "xmw5ee63a1",
         "to": "xmw5eh4b96"
-      },
-      {
-        "from": "xmw5c6y38h",
-        "to": "xmw5cmm3a1"
       }
     ]
   },
