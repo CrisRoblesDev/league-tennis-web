@@ -345,6 +345,8 @@
     "password": "pbkdf2$100000$2BuH4guE-lhA6tGZfyX1Zw$0PWS4jfmYpUw5swNB9q-mwd5lae-FtlsNYT752QTX8g",
     "role": "user",
     "nationality": null,
-    "created": "2026-11-06T21:57:20.322Z"
+    "created": "2026-11-06T21:57:20.322Z",
+    "level": "4.0",
+    "zone": "Aventura / Sunny Isles"
   }
 ]
