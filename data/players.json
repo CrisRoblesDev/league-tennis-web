@@ -276,5 +276,17 @@
     "matches": 0,
     "points": 0,
     "created": "2026-11-03T02:50:34.510Z"
+  },
+  {
+    "id": "player-d7ed665d-17d1-4349-8899-0522fcf95113",
+    "userId": "user-d7206caf-b37e-4cee-9a26-1af2d7a52f9f",
+    "name": "Josef Platt",
+    "level": "4.0",
+    "zone": "Aventura / Sunny Isles",
+    "category": "singles",
+    "gender": "hombres",
+    "matches": 0,
+    "points": 0,
+    "created": "2026-11-06T21:58:15.317Z"
   }
 ]
