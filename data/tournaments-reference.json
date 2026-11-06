@@ -325,6 +325,18 @@
         "sb": null,
         "slot": 7,
         "cardNo": 20
+      },
+      {
+        "id": "xmw5efngu3",
+        "stageId": "xmw5bts432",
+        "groupId": null,
+        "a": "user-f2c616c5-cb34-417a-9696-e131af91c372",
+        "b": "user-7929e9a9-e4df-4ed9-8a47-189bcb2d3daf",
+        "date": "",
+        "sa": null,
+        "sb": null,
+        "slot": 8,
+        "cardNo": 21
       }
     ],
     "groupAssignments": {
