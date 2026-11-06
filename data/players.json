@@ -293,5 +293,17 @@
     "points": 0,
     "created": "2026-11-06T21:58:15.317Z",
     "manualPoints": 13
+  },
+  {
+    "id": "player-cc06f448-6d9a-4cfa-bd2e-8e968255cb16",
+    "userId": "user-964a7577-84e7-4b43-b7a4-0dc326610874",
+    "name": "Alan Gary",
+    "level": "3.5",
+    "zone": "Aventura / Sunny Isles",
+    "category": "singles",
+    "gender": "hombres",
+    "matches": 0,
+    "points": 0,
+    "created": "2026-11-06T22:01:24.007Z"
   }
 ]
