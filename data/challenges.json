@@ -9,5 +9,13 @@
     "acceptedBy": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
     "acceptedPlayerId": "player-6dd454f9-531c-484f-996b-33e6c6f5a976",
     "acceptedAt": "2026-11-07T00:42:46.800Z"
+  },
+  {
+    "id": "challenge-bd94d227-43f8-4359-8b80-5781ccf755d4",
+    "playerId": "player-6dd454f9-531c-484f-996b-33e6c6f5a976",
+    "creatorUserId": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
+    "availability": "Tardes",
+    "status": "open",
+    "created": "2026-11-07T20:53:54.216Z"
   }
 ]
