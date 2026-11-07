@@ -22,7 +22,8 @@
     "zone": "Aventura / Sunny Isles",
     "role": "user",
     "created": "2026-11-03T01:01:39.269Z",
-    "membershipActive": false
+    "membershipActive": false,
+    "nationality": "Chile"
   },
   {
     "id": "user-94c3d05c-a460-4993-b0f7-1c92f3ac470e",
