@@ -141,14 +141,15 @@
     "id": "user-d1f35a4a-b9c6-4b1c-a9d9-3de3b06fe82d",
     "name": "Ignacio Garcia",
     "email": "ignacio.garcia@temp.aventuratennisleague.com",
-    "password": "pbkdf2$100000$temp$placeholder",
+    "password": "pbkdf2$100000$oyBDt28IB0ToVY0mC9nfHw$ZwYtjz4MdX1S0NaZ8LDBllmL_kBAsi57DtYZ0QtMsOg",
     "phone": null,
     "level": "4.0",
     "zone": "Aventura / Sunny Isles",
     "role": "user",
     "created": "2026-11-03T02:50:34.510Z",
     "membershipActive": false,
-    "temporary": true
+    "temporary": true,
+    "nationality": null
   },
   {
     "id": "user-b6fa3c18-dff4-458b-947d-a86cc9dba534",
