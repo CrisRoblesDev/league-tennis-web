@@ -314,13 +314,15 @@
   {
     "id": "user-f3607eec-25f4-4775-a46e-bcdc45be58f0",
     "name": "Allison f",
-    "email": "Alihilton12@gmail.com",
-    "password": "pbkdf2$100000$VV-K5gH5a54_Zq8fhrWT_A$THfwv5cNwedBNZ_VB-l_M7ZpVsYVSrru8Daz7sAII7o",
-    "level": "",
-    "zone": "",
+    "email": "alihilton12@gmail.com",
+    "password": "pbkdf2$100000$Wpf6VUWKhIEF5NU7Q2wg4w$TKU5O6tmj0Ghubnsl6sopqj81kqVPCzhSQOUxQpuAoE",
+    "level": null,
+    "zone": null,
     "role": "user",
     "created": "2026-11-04T16:28:24.411Z",
-    "membershipActive": false
+    "membershipActive": false,
+    "nationality": null,
+    "phone": null
   },
   {
     "id": "user-a8a4122b-dc85-46aa-bfe8-831c61b62b4d",
