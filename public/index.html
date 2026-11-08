@@ -29,7 +29,6 @@
     <a href="/tienda#ropa"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M8 3 4 6l2 3 2-1v13h8V8l2 1 2-3-4-3a4 4 0 0 1-8 0Z"/></svg><span>ROPA</span></a>
     <a href="/tienda#libros"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15ZM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg><span>LIBROS</span></a>
     <a href="#membresia"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="m12 2 3 6.5 7 .8-5.2 4.7 1.5 7-6.3-3.7L5.7 21l1.5-7L2 9.3l7-.8L12 2Z"/></svg><span>MEMBRESÍA</span></a>
-    <a href="#donaciones"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 21s-7-4.6-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.4-9.5 9-9.5 9Z"/></svg><span>DONACIONES</span></a>
   </nav>
   <div class="header-actions">
     <label class="language-picker-wrap">
@@ -205,39 +204,6 @@
         <span class="tag">LEAGUE MEMBER</span>
         <h3>Planes de membresía</h3>
         <p class="muted">Cargando planes disponibles...</p>
-      </article>
-    </div>
-  </section>
-
-  <section class="section" id="donaciones">
-    <div class="section-head">
-      <div>
-        <span class="section-kicker">APOYA LA LIGA</span>
-        <h2>Donaciones</h2>
-        <p class="section-sub">Tu apoyo mantiene los torneos, los libros y la comunidad en marcha.</p>
-      </div>
-    </div>
-    <div class="grid grid-3">
-      <article class="card donation-card">
-        <span class="tag">PATRONO</span>
-        <h3>Aventurero</h3>
-        <p class="muted">Aporte único para sostener el circuito y los torneos.</p>
-        <div class="price">$100</div>
-        <button class="btn btn-primary btn-full" onclick="donate(10000, '')">Donar $100</button>
-      </article>
-      <article class="card donation-card">
-        <span class="tag tag-blue">APOYO RECURRENTE</span>
-        <h3>Club de la cancha</h3>
-        <p class="muted">Contribución mensual para cubrir costos de torneo y logística.</p>
-        <div class="price">$25<span class="price-period">/mes</span></div>
-        <button class="btn btn-primary btn-full" onclick="donate(2500, 'month')">Donar $25/mes</button>
-      </article>
-      <article class="card donation-card">
-        <span class="tag tag-red">FAMILIA</span>
-        <h3>Amigos de la cancha</h3>
-        <p class="muted">Contribución para jugadores y familias que quieren el tenis.</p>
-        <div class="price">$10</div>
-        <button class="btn btn-primary btn-full" onclick="donate(1000, '')">Donar $10</button>
       </article>
     </div>
   </section>
@@ -524,7 +490,11 @@
       <label>Nombre<input name="name" maxlength="100" required></label>
       <label>Email<input name="email" type="email" required></label>
       <label>Teléfono<input name="phone" type="tel" placeholder="Ej. +1 305 555 0123"></label>
-      <label>Nacionalidad<input name="nationality" maxlength="60" placeholder="Ej. Argentina"></label>
+      <label>País / Bandera<select name="country" id="profileCountrySelect"><option value="">Selecciona un país</option></select></label>
+      <label class="full">Foto de perfil (PNG, JPG o WebP, máximo 400 KB)
+        <input name="photoFile" type="file" accept="image/png,image/jpeg,image/webp" onchange="previewProfilePhotoFile(this)">
+      </label>
+      <img id="profilePhotoPreview" alt="Vista previa" style="display:none; width:120px; height:120px; object-fit:cover; border-radius:50%; border:2px solid var(--line); margin:8px 0;">
       <label class="full"><span><input name="password" type="password" minlength="8" maxlength="128" placeholder="Dejar vacío para no cambiar la contraseña"></span></label>
       <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar cambios</button><button class="btn btn-secondary" type="button" onclick="closeModal('profileEditModal')">Cancelar</button></div>
     </form>

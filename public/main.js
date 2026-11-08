@@ -17,6 +17,19 @@ const GENDER_LABELS = {
   mujeres: "Mujeres"
 };
 
+const COUNTRIES = [
+  { name: "Argentina", flag: "🇦🇷" }, { name: "Bolivia", flag: "🇧🇴" }, { name: "Brasil", flag: "🇧🇷" },
+  { name: "Canadá", flag: "🇨🇦" }, { name: "Chile", flag: "🇨🇱" }, { name: "Colombia", flag: "🇨🇴" },
+  { name: "Costa Rica", flag: "🇨🇷" }, { name: "Cuba", flag: "🇨🇺" }, { name: "Ecuador", flag: "🇪🇨" },
+  { name: "El Salvador", flag: "🇸🇻" }, { name: "España", flag: "🇪🇸" }, { name: "Estados Unidos", flag: "🇺🇸" },
+  { name: "Guatemala", flag: "🇬🇹" }, { name: "Honduras", flag: "🇭🇳" }, { name: "México", flag: "🇲🇽" },
+  { name: "Nicaragua", flag: "🇳🇮" }, { name: "Panamá", flag: "🇵🇦" }, { name: "Paraguay", flag: "🇵🇾" },
+  { name: "Perú", flag: "🇵🇪" }, { name: "Puerto Rico", flag: "🇵🇷" }, { name: "República Dominicana", flag: "🇩🇴" },
+  { name: "Uruguay", flag: "🇺🇾" }, { name: "Venezuela", flag: "🇻🇪" }, { name: "Alemania", flag: "🇩🇪" },
+  { name: "Francia", flag: "🇫🇷" }, { name: "Italia", flag: "🇮🇹" }, { name: "Portugal", flag: "🇵🇹" },
+  { name: "Reino Unido", flag: "🇬🇧" }, { name: "Otro", flag: "🏳️" }
+];
+
 let currentUser = null;
 let players = [];
 let products = [];
@@ -26,6 +39,7 @@ let tournaments = [];
 let adminUsers = [];
 let adminTournaments = [];
 let adminOrdersChecked = false;
+let adminOrders = [];
 let paymentNoticeState = null;
 let currentAdminModule = "tournaments";
 const isStorePage = /\/tienda(?:\.html)?\/?$/.test(window.location.pathname);
@@ -850,10 +864,11 @@ function openResultModal() {
     showToast("Crea tu perfil de jugador primero.");
     return;
   }
-  const options = players.map(item =>
-    `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)} · ${escapeHtml(item.level)}</option>`
-  ).join("");
-  document.querySelectorAll("#resultForm select").forEach(select => {
+  const options = players.map(item => {
+    const categoryLabel = CATEGORY_LABELS[item.category || "singles"] || "Singles";
+    return `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)} · ${escapeHtml(item.level)} · ${escapeHtml(categoryLabel)}</option>`;
+  }).join("");
+  document.querySelectorAll("#resultForm select[name='winnerId'], #resultForm select[name='loserId']").forEach(select => {
     select.innerHTML = `<option value="">Seleccionar</option>${options}`;
   });
   document.getElementById("resultForm").date.value = new Date().toISOString().slice(0, 10);
@@ -1222,6 +1237,78 @@ async function syncAdminOrders() {
   }
 }
 
+async function deleteAdminOrder(orderId) {
+  const order = adminOrders.find(item => item.id === orderId);
+  if (!order) return;
+  if (!window.confirm(`¿Eliminar la compra "${escapeHtml(order.productName || "")}" de ${escapeHtml(order.userName || "")}? Esta acción no se puede deshacer.`)) return;
+  try {
+    await api("/api/admin/orders", {
+      method: "DELETE",
+      body: JSON.stringify({ orderId })
+    });
+    await showAdminPanel();
+    showToast("Compra eliminada.");
+  } catch (error) {
+    showToast(`No se pudo eliminar: ${error.message}`);
+  }
+}
+
+function editAdminOrder(orderId) {
+  const order = adminOrders.find(item => item.id === orderId);
+  if (!order) return;
+  const form = document.getElementById("adminOrderForm");
+  if (!form) return;
+  form.elements.namedItem("orderId").value = order.id;
+  form.elements.namedItem("status").value = order.status || "pending";
+  form.elements.namedItem("productName").value = order.productName || "";
+  form.elements.namedItem("amount").value = order.amount ? (order.amount / 100).toFixed(2) : "";
+  openAdminDynamicEditModal("adminOrderForm", "Editar compra");
+}
+
+async function saveAdminOrder(event) {
+  event.preventDefault();
+  const form = event.target;
+  try {
+    await api("/api/admin/orders", {
+      method: "PUT",
+      body: JSON.stringify({
+        orderId: form.elements.namedItem("orderId").value,
+        status: form.elements.namedItem("status").value,
+        productName: form.elements.namedItem("productName").value.trim(),
+        amount: parseFloat(form.elements.namedItem("amount").value) || 0
+      })
+    });
+    closeAdminDynamicEditModal();
+    await showAdminPanel();
+    showToast("Compra actualizada.");
+  } catch (error) {
+    showToast(`No se pudo actualizar: ${error.message}`);
+  }
+}
+
+function resetAdminOrderForm() {
+  const form = document.getElementById("adminOrderForm");
+  if (!form) return;
+  form.reset();
+  closeAdminDynamicEditModal();
+}
+
+async function setUserMember(userId) {
+  const user = adminUsers.find(item => item.id === userId);
+  if (!user) return;
+  if (!window.confirm("¿Cambiar a " + escapeHtml(user.name) + " a miembro?")) return;
+  try {
+    await api("/api/admin/users", {
+      method: "POST",
+      body: JSON.stringify({ userId: userId, updates: { role: "member" } })
+    });
+    await showAdminPanel();
+    showToast(escapeHtml(user.name) + " es ahora miembro.");
+  } catch (error) {
+    showToast(`No se pudo cambiar el rol: ${error.message}`);
+  }
+}
+
 // ========================================
 // PANEL DE ADMINISTRACIÓN - ORQUESTADOR
 // ========================================
@@ -1265,6 +1352,9 @@ async function showAdminPanel() {
   adminTournaments = allTournaments;
   matchResults = results;
   adminUsers = users;
+  adminOrders = orders;
+  const membersList = (users || []).filter(function(u) { return u.role === "member"; });
+  const nonMembersList = (users || []).filter(function(u) { return u.role === "user"; });
   let allPlayers;
   try {
     allPlayers = await api("/api/admin/players");
@@ -1316,6 +1406,7 @@ async function showAdminPanel() {
   html += '<option value="challenges">Desafíos</option>';
   html += '<option value="products">Tienda</option>';
   html += '<option value="orders">Compras</option>';
+  html += '<option value="members">Miembros</option>';
   html += '<option value="users">Cuentas</option>';
   html += '<option value="ranking">Ranking</option>';
   html += '<option value="settings">Ajustes</option>';
@@ -1328,6 +1419,7 @@ async function showAdminPanel() {
   html += '<button type="button" data-module-btn="challenges" onclick="setAdminModule(\'challenges\')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg>Desafíos</button>';
   html += '<button type="button" data-module-btn="products" onclick="setAdminModule(\'products\')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6ZM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>Tienda</button>';
   html += '<button type="button" data-module-btn="orders" onclick="setAdminModule(\'orders\')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6ZM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>Compras</button>';
+html += '<button type="button" data-module-btn="members" onclick="setAdminModule(\'members\')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87"/></svg>Miembros</button>';
   html += '<button type="button" data-module-btn="users" onclick="setAdminModule(\'users\')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87"/></svg>Cuentas</button>';
   html += '<button type="button" data-module-btn="ranking" onclick="setAdminModule(\'ranking\')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3 21h18M7 17V9M12 17V5M17 17v-6"/></svg>Ranking</button>';
   html += '<button type="button" data-module-btn="settings" onclick="setAdminModule(\'settings\')"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.4-3a7.4 7.4 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7.5 7.5 0 0 0-2-1.2L14.5 2h-5l-.4 2.6a7.5 7.5 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7.5 7.5 0 0 0 2 1.2l.4 2.6h5l.4-2.6a7.5 7.5 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z"/></svg>Ajustes</button>';
@@ -1339,7 +1431,7 @@ async function showAdminPanel() {
   html += '</section>';
 
   // Sección de pedidos / compras
-  html += '<section class="admin-section admin-module" data-module="orders" hidden><h3>Compras recientes</h3><div class="admin-order-tools"><p class="admin-section-help">Consulta las compras y pagos realizados en la tienda.</p><button class="btn btn-secondary btn-sm" type="button" onclick="syncAdminOrders()">Sincronizar pagos con Stripe</button></div>' + (orderSyncMessage ? '<p class="admin-order-sync-message" role="status">' + escapeHtml(orderSyncMessage) + '</p>' : "") + '<div class="table-wrap" style="margin-bottom:20px"><table><thead><tr><th>ID</th><th>Usuario</th><th>Producto</th><th>Monto</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>' + orders.map(function(o) { return '<tr><td title="' + escapeHtml(o.id) + '">' + escapeHtml(o.id.slice(0, 8)) + '</td><td>' + escapeHtml(o.userName) + '</td><td>' + escapeHtml(o.productName) + '</td><td>$' + (o.amount / 100).toFixed(2) + '</td><td><span class="tag">' + escapeHtml(orderStatusLabel(o.status)) + '</span></td><td>' + (o.created ? formatLocalDate(o.created) : '-') + '</td></tr>'; }).join("") + '</tbody></table></div></section>';
+  html += '<section class="admin-section admin-module" data-module="orders" hidden><h3>Compras recientes</h3><div class="admin-order-tools"><p class="admin-section-help">Consulta las compras y pagos realizados en la tienda.</p><button class="btn btn-secondary btn-sm" type="button" onclick="syncAdminOrders()">Sincronizar pagos con Stripe</button></div>' + (orderSyncMessage ? '<p class="admin-order-sync-message" role="status">' + escapeHtml(orderSyncMessage) + '</p>' : "") + '<div class="table-wrap" style="margin-bottom:20px"><table><thead><tr><th>ID</th><th>Usuario</th><th>Producto</th><th>Monto</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>' + orders.map(function(o) { return '<tr><td title="' + escapeHtml(o.id) + '">' + escapeHtml(o.id.slice(0, 8)) + '</td><td>' + escapeHtml(o.userName) + '</td><td>' + escapeHtml(o.productName) + '</td><td>$' + (o.amount / 100).toFixed(2) + '</td><td><span class="tag">' + escapeHtml(orderStatusLabel(o.status)) + '</span></td><td>' + (o.created ? formatLocalDate(o.created) : '-') + '</td><td><button class="btn btn-sm btn-dark" onclick="editAdminOrder(\'' + escapeHtml(o.id) + '\')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminOrder(\'' + escapeHtml(o.id) + '\')">Eliminar</button></td></tr>'; }).join("") + '</tbody></table></div><form id="adminOrderForm" class="admin-form" hidden><input type="hidden" name="orderId"><label>Estado<select name="status"><option value="pending">Pendiente</option><option value="paid">Pagado</option><option value="cancelled">Cancelado</option><option value="refunded">Reembolsado</option></select></label><label>Producto<input name="productName" maxlength="120"></label><label>Monto (USD)<input name="amount" type="number" min="0" step="0.01"></label><div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar cambios</button><button type="button" class="btn btn-secondary" onclick="resetAdminOrderForm()">Cancelar</button></div></form></section>';
 
   html += '<section class="admin-section admin-module" data-module="results" hidden><h3>Resultados de partidos</h3><p class="admin-section-help">Confirma, rechaza o elimina un reporte. Los resultados confirmados impactan el ranking.</p><div class="grid grid-2 admin-records">' + (pendingResults.length ? pendingResults.map(function(r) {
     return '<article class="card admin-record"><span class="tag ' + (r.status === "disputed" ? "tag-red" : "") + '">' + (r.status === "disputed" ? "En disputa" : "Pendiente") + '</span><h4>' + escapeHtml(r.winnerName) + ' vs ' + escapeHtml(r.loserName) + '</h4><p class="muted">' + escapeHtml(r.score) + '</p><div class="admin-form-actions"><button class="btn btn-primary" onclick="moderateResult(\'' + escapeHtml(r.id) + '\',\'confirm\')">Confirmar</button><button class="btn btn-secondary" onclick="moderateResult(\'' + escapeHtml(r.id) + '\',\'reject\')">Rechazar</button><button class="btn btn-dark" onclick="editAdminResult(\'' + escapeHtml(r.id) + '\')">Editar</button><button class="btn btn-danger" onclick="deleteAdminResult(\'' + escapeHtml(r.id) + '\')">Eliminar</button></div></article>';
@@ -1352,6 +1444,8 @@ async function showAdminPanel() {
   html += '<section class="admin-section admin-module" data-module="challenges" hidden><h3>Desafíos publicados</h3><p class="admin-section-help">Revisa la actividad de la comunidad, cierra publicaciones resueltas o elimina contenido inválido.</p><div class="grid grid-3 admin-records">' + allChallenges.map(function(challenge) { return '<article class="card admin-record"><span class="tag ' + (challenge.status === "accepted" ? "tag-blue" : "") + '">' + challengeStatusLabel(challenge.status) + '</span><h4>' + escapeHtml(challenge.playerName) + '</h4><p>' + escapeHtml(challenge.availability || "") + '</p>' + (challenge.acceptedPlayerName ? '<p class="muted">Aceptado por ' + escapeHtml(challenge.acceptedPlayerName) + '</p>' : "") + '<p class="muted">' + (challenge.created ? formatLocalDate(challenge.created) : "") + '</p><div class="admin-form-actions">' + (challenge.status !== "closed" ? '<button class="btn btn-sm btn-dark" onclick="setChallengeStatus(\'' + escapeHtml(challenge.id) + '\',\'closed\')">Cerrar</button>' : "") + (challenge.status === "closed" ? '<button class="btn btn-sm btn-secondary" onclick="setChallengeStatus(\'' + escapeHtml(challenge.id) + '\',\'open\')">Reabrir</button>' : "") + '<button class="btn btn-sm btn-danger" onclick="deleteAdminChallenge(\'' + escapeHtml(challenge.id) + '\')">Eliminar</button>' + '</div></article>'; }).join("") + '</div></section>';
 
   html += '<section class="admin-section admin-module" data-module="users" hidden><h3>Cuentas registradas</h3><p class="admin-section-help">Crea cuentas, gestiona emails y contraseñas, permisos y membresías. Por seguridad, las contraseñas nunca se muestran.</p><label class="admin-search">Buscar usuario<input id="adminUserSearch" type="search" placeholder="Nombre o email"></label><div class="grid grid-2"><label>Rol<select id="adminUserRoleFilter"><option value="all">Todos</option><option value="user">Usuario</option><option value="member">Miembro</option><option value="admin">Administrador</option></select></label><label>Teléfono<select id="adminUserPhoneFilter"><option value="all">Todos</option><option value="with">Con teléfono</option><option value="without">Sin teléfono</option></select></label></div><form id="adminUserForm" class="admin-form" hidden><input type="hidden" name="userId"><label>Nombre<input name="name" maxlength="100"></label><label>Email<input name="email" type="email" required></label><label>Contraseña<input name="password" type="password" minlength="8" maxlength="128" placeholder="Dejar vacío para no cambiar (editar) / Mínimo 8 caracteres (nuevo)"></label><label>Rol<select name="role"><option value="user">Usuario</option><option value="member">Miembro</option><option value="admin">Administrador</option></select></label><label>Nivel<select name="level"><option value="">Sin nivel</option><option value="2.5">2.5</option><option value="3.0">3.0</option><option value="3.5">3.5</option><option value="4.0">4.0</option><option value="4.5">4.5</option><option value="5.0">5.0</option></select></label><label>Zona<select name="zone"><option value="">Sin zona</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label><label>Teléfono<input name="phone" type="tel" placeholder="Ej. +1 305 555 0123"></label><label>Nacionalidad<input name="nationality" maxlength="60" placeholder="Ej. Argentina"></label><label class="full"><span><input name="membershipActive" type="checkbox"> Membresía activa</span></label><div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar usuario</button><button type="button" class="btn btn-secondary" onclick="resetAdminUserForm()">Cancelar</button></div></form><button class="btn btn-primary" style="margin-bottom:16px" type="button" onclick="openAdminDynamicEditModal(\'adminUserForm\', \'Nuevo usuario\')">Nuevo usuario</button><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Rol</th><th>Nivel</th><th>Zona</th><th>Membresía</th><th>Acciones</th></tr></thead><tbody id="adminUsersBody">' + users.map(function(u) { return '<tr data-role="' + (u.role || "user") + '" data-has-phone="' + (u.phone ? "true" : "false") + '"><td>' + escapeHtml(u.name) + '</td><td>' + escapeHtml(u.email) + '</td><td>' + escapeHtml(u.phone || '-') + '</td><td><span class="tag ' + (u.role === "admin" ? "tag-blue" : "") + '">' + (u.role === "admin" ? "Administrador" : u.role === "member" ? "Miembro" : "Usuario") + '</span></td><td>' + escapeHtml(u.level || '-') + '</td><td>' + escapeHtml(u.zone || '-') + '</td><td>' + (u.membershipActive ? "Activa" : "-") + '</td><td><button class="btn btn-sm btn-dark" onclick="editAdminUser(\'' + escapeHtml(u.id) + '\')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminUser(\'' + escapeHtml(u.id) + '\')">Eliminar</button></td></tr>'; }).join("") + '</tbody></table></div></section>';
+
+  html += '<section class="admin-section admin-module" data-module="members" hidden><h3>Gestión de miembros</h3><p class="admin-section-help">Cambia usuarios a miembro y consulta cuántos miembros y no miembros hay en la liga.</p><div class="admin-stats" style="margin-bottom:16px"><div class="stat-card"><div class="stat-number">' + membersList.length + '</div><div class="stat-label">Miembros</div></div><div class="stat-card"><div class="stat-number">' + nonMembersList.length + '</div><div class="stat-label">Usuarios no miembros</div></div></div><div class="grid grid-2"><div><h4>Convertir a miembro</h4><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Email</th><th>Rol actual</th><th>Acción</th></tr></thead><tbody>' + nonMembersList.map(function(u) { return '<tr><td>' + escapeHtml(u.name) + '</td><td>' + escapeHtml(u.email) + '</td><td>' + (u.role === "member" ? "Miembro" : u.role === "admin" ? "Administrador" : "Usuario") + '</td><td>' + (u.role === "user" ? '<button class="btn btn-sm btn-primary" onclick="setUserMember(\'' + escapeHtml(u.id) + '\')">Hacer miembro</button>' : '<span class="muted">-</span>') + '</td></tr>'; }).join("") + '</tbody></table></div></div><div><h4>Miembros actuales</h4><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Email</th><th>Nivel</th><th>Zona</th></tr></thead><tbody>' + membersList.map(function(u) { return '<tr><td>' + escapeHtml(u.name) + '</td><td>' + escapeHtml(u.email) + '</td><td>' + escapeHtml(u.level || '-') + '</td><td>' + escapeHtml(u.zone || '-') + '</td></tr>'; }).join("") + '</tbody></table></div></div></div></section>';
 
   html += '<section class="admin-section admin-module" data-module="ranking" hidden><h3>Ranking</h3><p class="admin-section-help">Ajusta la base manual de puntos por jugador. El total suma esa base y los puntos automáticos de victorias confirmadas. Filtra por torneo o general.</p><div class="admin-form" style="margin-bottom:10px"><label>Vista del ranking<select id="adminRankingScope" onchange="renderAdminRanking(this.value)"></select></label></div><div class="table-wrap"><table><thead><tr><th>Pos.</th><th>Jugador</th><th>Nivel</th><th>Partidos</th><th>Puntos manuales</th><th>Total</th></tr></thead><tbody id="adminRankingBody"></tbody></table></div></section>';
 
@@ -1368,6 +1462,7 @@ async function showAdminPanel() {
   document.getElementById("adminUserForm")?.addEventListener("submit", saveAdminUser);
   document.getElementById("adminPlayerForm")?.addEventListener("submit", saveAdminPlayer);
   document.getElementById("adminResultForm")?.addEventListener("submit", saveAdminResult);
+document.getElementById("adminOrderForm")?.addEventListener("submit", saveAdminOrder);
   document.getElementById("adminSettingsForm")?.addEventListener("submit", saveAdminSettings);
   resetAdminUserForm();
   resetProductForm();
@@ -1415,6 +1510,19 @@ function previewProductImageFile(input) {
   reader.readAsDataURL(file);
 }
 
+function previewProfilePhotoFile(input) {
+  const preview = document.getElementById("profilePhotoPreview");
+  const file = input.files && input.files[0];
+  if (!preview) return;
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    preview.src = reader.result;
+    preview.style.display = "block";
+  };
+  reader.readAsDataURL(file);
+}
+
 async function compressProductImage(file) {
   const dataUrl = await new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1447,6 +1555,40 @@ async function uploadProductImage(form) {
     body: JSON.stringify({ image: compressed, filename: file.name })
   });
   return uploaded.url;
+}
+
+async function compressProfileImage(file) {
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("No se pudo leer la imagen."));
+    reader.readAsDataURL(file);
+  });
+  const image = await new Promise((resolve, reject) => {
+    const element = new Image();
+    element.onload = () => resolve(element);
+    element.onerror = () => reject(new Error("Formato de imagen no soportado."));
+    element.src = dataUrl;
+  });
+  const maxSize = 400;
+  const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(image.width * scale));
+  canvas.height = Math.max(1, Math.round(image.height * scale));
+  canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.82);
+}
+
+async function uploadProfileImage(form) {
+  const fileInput = form.elements.namedItem("photoFile");
+  const file = fileInput?.files?.[0];
+  if (!file) return null;
+  const compressed = await compressProfileImage(file);
+  const uploaded = await api("/api/profile/photo", {
+    method: "POST",
+    body: JSON.stringify({ image: compressed, country: form.elements.namedItem("nationality").value.trim() })
+  });
+  return uploaded.photo;
 }
 
 function resetProductForm() {
@@ -1680,8 +1822,18 @@ function openProfileEditModal() {
   form.elements.namedItem("name").value = currentUser.name || "";
   form.elements.namedItem("email").value = currentUser.email || "";
   form.elements.namedItem("phone").value = currentUser.phone || "";
-  form.elements.namedItem("nationality").value = currentUser.nationality || "";
+  const countrySelect = document.getElementById("profileCountrySelect");
+  if (countrySelect && countrySelect.options.length <= 1) {
+    countrySelect.innerHTML = '<option value="">Selecciona un país</option>' +
+      COUNTRIES.map(function(c) { return '<option value="' + escapeHtml(c.name) + '">' + c.flag + ' ' + escapeHtml(c.name) + '</option>'; }).join("");
+  }
+  form.elements.namedItem("country").value = currentUser.nationality || "";
   form.elements.namedItem("password").value = "";
+  const preview = document.getElementById("profilePhotoPreview");
+  if (preview) {
+    preview.style.display = currentUser.photo ? "block" : "none";
+    if (currentUser.photo) preview.src = currentUser.photo;
+  }
   openModal("profileEditModal");
 }
 
@@ -1692,7 +1844,8 @@ async function saveProfileEdit(event) {
   const name = form.elements.namedItem("name").value.trim();
   const email = form.elements.namedItem("email").value.trim();
   const phone = form.elements.namedItem("phone").value.trim();
-  const nationality = form.elements.namedItem("nationality").value.trim();
+  const countryEl = form.elements.namedItem("country");
+  const nationality = (countryEl ? countryEl.value : "").trim();
   const password = form.elements.namedItem("password").value;
 
   if (!name || !email) {
@@ -1701,9 +1854,11 @@ async function saveProfileEdit(event) {
   }
 
   try {
+    const photo = await uploadProfileImage(form);
     const body = { phone: phone || null, nationality: nationality || null, name };
     if (password) body.password = password;
     if (email !== currentUser.email) body.email = email;
+    if (photo) body.photo = photo;
 
     const data = await api("/api/profile/phone", {
       method: "POST",
@@ -1712,6 +1867,7 @@ async function saveProfileEdit(event) {
 
     if (data.user) {
       currentUser = { ...currentUser, ...data.user };
+      if (photo) currentUser.photo = photo;
       updateAuthUI();
     }
     closeModal("profileEditModal");
