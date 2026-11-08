@@ -262,13 +262,15 @@
   {
     "id": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
     "name": "Andres melnick",
-    "email": "Am160284@gmail.com",
-    "password": "pbkdf2$100000$NpP4yoNomzp-P8pDxdKH2A$WD8CFp5TgTTlHSUTblbzmPj-PyMVuALN3bc0akKcHTg",
-    "level": "",
-    "zone": "",
+    "email": "am160284@gmail.com",
+    "password": "pbkdf2$100000$G3nFj9CdYDTfw5J9ZAoqyA$hi1-T6bjBC28YYGi90uohSNf-xDEa2QOsYZpQOJiFtY",
+    "level": null,
+    "zone": null,
     "role": "user",
     "created": "2026-11-04T16:28:24.345Z",
-    "membershipActive": false
+    "membershipActive": false,
+    "nationality": null,
+    "phone": null
   },
   {
     "id": "user-a3002558-7133-4cf2-a246-aec97fc783e0",
