@@ -289,12 +289,14 @@
     "id": "user-29bb2990-ee1e-46a0-a498-f4ae67549d3d",
     "name": "Phillpie Burleigh",
     "email": "phillipe.burleigh@gmail.com",
-    "password": "pbkdf2$100000$pvuidsXSBLL9AnUvEFLZsw$kRmui_EoUPSzQdA8nb0iqUsaf6NsmYxqVMpvvsVg87Q",
-    "level": "",
-    "zone": "",
+    "password": "pbkdf2$100000$x7qoIiPfvXwDFBad5JCZlg$zEKvtCiv2su70WyBTPXlWJtpExjG_J5ZhObR1e3jnio",
+    "level": null,
+    "zone": null,
     "role": "user",
     "created": "2026-11-04T16:28:24.378Z",
-    "membershipActive": false
+    "membershipActive": false,
+    "nationality": null,
+    "phone": null
   },
   {
     "id": "user-d09c35f2-579a-4fac-bdb4-18fb5369ff53",
