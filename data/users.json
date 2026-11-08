@@ -29,14 +29,15 @@
     "id": "user-94c3d05c-a460-4993-b0f7-1c92f3ac470e",
     "name": "Diana Sanchez",
     "email": "dianacristel84@gmail.com",
-    "password": "pbkdf2$100000$temp$placeholder",
+    "password": "pbkdf2$100000$-vih_zu1Y9_OlFRGHeL-7w$YvKGkRKNROCxEu2aBghPeSxV7fn2jMC64kppRnymoeA",
     "phone": null,
     "level": "3.5",
     "zone": "Aventura / Sunny Isles",
     "role": "user",
     "created": "2026-11-03T02:50:34.509Z",
     "membershipActive": false,
-    "temporary": true
+    "temporary": true,
+    "nationality": null
   },
   {
     "id": "user-56b60b3d-8236-46d5-aaa2-542d5ca0586b",
