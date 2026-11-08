@@ -99,14 +99,15 @@
     "id": "user-a98b85b1-552e-45d2-9353-07a3d648109a",
     "name": "Ivan Rossman",
     "email": "ivanrosman@gmail.com",
-    "password": "pbkdf2$100000$temp$placeholder",
+    "password": "pbkdf2$100000$eC0DRpx2V4QPi_q3_CTwIA$D59tye0Z7bpuCGv2d7Pu1ctboE0IevIzf7pSl6jhjvw",
     "phone": null,
     "level": "4.0",
     "zone": "Aventura / Sunny Isles",
     "role": "user",
     "created": "2026-11-03T02:50:34.510Z",
     "membershipActive": false,
-    "temporary": true
+    "temporary": true,
+    "nationality": null
   },
   {
     "id": "user-28f7f695-a6d0-47fd-8a16-9d4fcd8b6d1e",
