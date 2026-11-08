@@ -255,7 +255,11 @@ function renderProducts() {
   const membership = products.find(product => product.type === "subscription");
   const membershipLink = membership ? (membership.link || membership.url) : "";
   if (membershipPlan) {
+    const membershipImage = membership?.image
+      ? `<div class="membership-image"><img src="${escapeHtml(membership.image)}" alt="${escapeHtml(membership.name)}" loading="lazy"></div>`
+      : "";
     membershipPlan.innerHTML = membership ? `
+      ${membershipImage}
       <h3>${escapeHtml(membership.name)}</h3>
       <div class="price-big">$${(membership.price / 100).toFixed(2)}<span class="price-period">/${membership.interval === "year" ? "año" : "mes"}</span></div>
       <p class="muted">${escapeHtml(membership.description || "Cancela cuando quieras.")}</p>
@@ -290,7 +294,9 @@ function renderProductCard(p) {
     : `<div class="price">$${(p.price / 100).toFixed(2)}</div>`;
   const productLink = p.link || p.url;
   const buttonHtml = member && isBook
-    ? `<button class="btn btn-secondary" disabled>Incluido en tu membresia</button>`
+    ? (productLink
+        ? `<button class="btn btn-primary" onclick="window.open('${escapeHtml(productLink)}','_blank','noopener,noreferrer')">Descargar</button>`
+        : `<button class="btn btn-secondary" disabled>Incluido en tu membresia</button>`)
     : productLink
       ? `<button class="btn btn-dark" onclick="window.open('${escapeHtml(productLink)}','_blank','noopener,noreferrer')">Comprar</button>`
       : `<button class="btn btn-dark" onclick="checkout('${p.id}')">Comprar</button>`;

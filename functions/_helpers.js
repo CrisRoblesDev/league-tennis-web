@@ -25,7 +25,7 @@ const DEFAULTS = {
   products: [
     { id: "book-1", name: "Estrategia para competir", price: 1500, type: "digital", active: true, description: "Guía digital" },
     { id: "book-2", name: "Entrenamiento inteligente", price: 1000, type: "digital", active: true, description: "Guía digital" },
-    { id: "member-1", name: "League Member", price: 999, type: "subscription", active: true, description: "Suscripción mensual", interval: "month" }
+    { id: "member-1", name: "League Member", price: 999, type: "subscription", active: true, description: "Suscripción mensual", interval: "month", image: "/api/uploads/membership.jpg" }
   ],
   orders: [],
   players: [],

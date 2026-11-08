@@ -1,7 +1,7 @@
 [
   {
     "id": "book-1",
-    "name": "The Inner Game of Tennis",
+    "name": "Estrategia para competir",
     "price": 1000,
     "type": "digital",
     "active": true,
@@ -10,7 +10,7 @@
   },
   {
     "id": "book-2",
-    "name": "25 winning Doubles tactic",
+    "name": "Entrenamiento inteligente",
     "price": 1000,
     "type": "digital",
     "active": true,
@@ -26,7 +26,7 @@
     "description": "Suscripción mensual",
     "interval": "month",
     "category": "",
-    "image": "/api/uploads/1794002780839-6332.jpg",
+    "image": "/api/uploads/membership.jpg",
     "link": "https://buy.stripe.com/5kQ14pgPhg8jfRs2NTbMQ02",
     "url": "https://buy.stripe.com/5kQ14pgPhg8jfRs2NTbMQ02"
   },
@@ -45,5 +45,137 @@
     "type": "digital",
     "description": "Learn to play doubles",
     "active": true
+  },
+  {
+    "id": "book-11-volley-tennis",
+    "name": "11 Volley Tennis",
+    "price": 1000,
+    "type": "digital",
+    "category": "libros",
+    "active": true,
+    "description": "Libro digital de tenis",
+    "link": "/api/books/11-volley-tennis-en.pdf",
+    "url": "/api/books/11-volley-tennis-en.pdf"
+  },
+  {
+    "id": "book-the-art-of-modern-tennis",
+    "name": "The Art of Modern Tennis",
+    "price": 1000,
+    "type": "digital",
+    "category": "libros",
+    "active": true,
+    "description": "Libro digital de tenis",
+    "link": "/api/books/1-the-art-of-modern-tennis-en.pdf",
+    "url": "/api/books/1-the-art-of-modern-tennis-en.pdf"
+  },
+  {
+    "id": "book-focused-for-tennis",
+    "name": "Focused for Tennis",
+    "price": 1000,
+    "type": "digital",
+    "category": "libros",
+    "active": true,
+    "description": "Libro digital de tenis",
+    "link": "",
+    "url": ""
+  },
+  {
+    "id": "book-mastering-the-art-of-winning-tennis",
+    "name": "Mastering the Art of Winning Tennis",
+    "price": 1000,
+    "type": "digital",
+    "category": "libros",
+    "active": true,
+    "description": "Libro digital de tenis",
+    "link": "",
+    "url": ""
+  },
+  {
+    "id": "book-game-set-match",
+    "name": "Game Set Match",
+    "price": 1000,
+    "type": "digital",
+    "category": "libros",
+    "active": true,
+    "description": "Libro digital de tenis",
+    "link": "",
+    "url": ""
+  },
+  {
+    "id": "book-if-i-m-the-better-player-why-can-t-i-win",
+    "name": "If I'm the Better Player Why Can't I Win",
+    "price": 1000,
+    "type": "digital",
+    "category": "libros",
+    "active": true,
+    "description": "Libro digital de tenis",
+    "link": "",
+    "url": ""
+  },
+  {
+    "id": "book-maximum-tennis-10-keys",
+    "name": "Maximum Tennis: 10 Keys",
+    "price": 1000,
+    "type": "digital",
+    "category": "libros",
+    "active": true,
+    "description": "Libro digital de tenis",
+    "link": "",
+    "url": ""
+  },
+  {
+    "id": "book-jimmy-connors-how-to-play-tougher-tennis",
+    "name": "Jimmy Connors: How to Play Tougher Tennis",
+    "price": 1000,
+    "type": "digital",
+    "category": "libros",
+    "active": true,
+    "description": "Libro digital de tenis",
+    "link": "",
+    "url": ""
+  },
+  {
+    "id": "book-25-winning-doubles-tactics",
+    "name": "25 Winning Doubles Tactics",
+    "price": 1000,
+    "type": "digital",
+    "category": "libros",
+    "active": true,
+    "description": "Libro digital de tenis",
+    "link": "/api/books/ebook-25-winning-doubles-tactics.pdf",
+    "url": "/api/books/ebook-25-winning-doubles-tactics.pdf"
+  },
+  {
+    "id": "book-real-tennis-the-doubles-game",
+    "name": "Real Tennis: The Doubles Game",
+    "price": 1000,
+    "type": "digital",
+    "category": "libros",
+    "active": true,
+    "description": "Libro digital de tenis",
+    "link": "/api/books/real-tennis-the-doubles-game.pdf",
+    "url": "/api/books/real-tennis-the-doubles-game.pdf"
+  },
+  {
+    "id": "book-the-inner-game-of-tennis",
+    "name": "The Inner Game of Tennis",
+    "price": 1000,
+    "type": "digital",
+    "category": "libros",
+    "active": true,
+    "description": "Libro digital de tenis",
+    "link": "/api/books/the-inner-game-of-tennis.pdf",
+    "url": "/api/books/the-inner-game-of-tennis.pdf"
+  },
+  {
+    "id": "book-el-juego-interior-del-tenis",
+    "name": "El Juego Interior del Tenis",
+    "price": 1000,
+    "type": "digital",
+    "category": "libros",
+    "active": true,
+    "description": "Libro digital de tenis",
+    "link": "/api/books/el-juego-interior-del-tenis.pdf",
+    "url": "/api/books/el-juego-interior-del-tenis.pdf"
   }
 ]
