@@ -272,6 +272,10 @@ main { max-width: 1200px; margin: auto; padding: 0 5%; }
 .store-page .header .brand-name { font-size: clamp(14px, 3.4vw, 18px); }
 .store-page .header .brand-sub { font-size: 10px; }
 .store-page .header-actions { flex: 0 1 auto; justify-content: flex-end; }
+@media (max-width: 640px) {
+  .membership-image { margin: -20px -20px 14px; }
+  .membership-image img { max-height: 200px; }
+}
 @media (max-width: 520px) {
   .store-page .header { padding: 8px 4%; }
   .store-page .header .brand-copy { gap: 0; }
