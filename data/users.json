@@ -127,14 +127,15 @@
     "id": "user-c8b785f6-e933-4736-b352-e3c5132afe61",
     "name": "Ricardo Rolim",
     "email": "ricardo_rolim@me.com",
-    "password": "pbkdf2$100000$temp$placeholder",
+    "password": "pbkdf2$100000$m3ktRdDl-G-ujSat-cKguQ$anvTq3PLbxlZDd7NwRBiDvLzSqcJxi86F_LioEc1REY",
     "phone": null,
     "level": "4.0",
     "zone": "Aventura / Sunny Isles",
     "role": "user",
     "created": "2026-11-03T02:50:34.510Z",
     "membershipActive": false,
-    "temporary": true
+    "temporary": true,
+    "nationality": null
   },
   {
     "id": "user-d1f35a4a-b9c6-4b1c-a9d9-3de3b06fe82d",
