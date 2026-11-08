@@ -113,14 +113,15 @@
     "id": "user-28f7f695-a6d0-47fd-8a16-9d4fcd8b6d1e",
     "name": "Rodrigo Silva",
     "email": "rodrigo@gmail.com",
-    "password": "pbkdf2$100000$Z8CeWKxB2cvzXKg7BnHdqA$DF4puGfhfs-D9xCRw0JP-HagroCEiRLn1bVz7JeNoN0",
+    "password": "pbkdf2$100000$ykUG5uaX0UVrUxF524IyXQ$rJxmnAFLhpiw2Cun1-iXOqlDJ43e8KsdLeKhD3zwE7M",
     "phone": null,
     "level": "4.0",
     "zone": "Aventura / Sunny Isles",
     "role": "user",
     "created": "2026-11-03T02:50:34.510Z",
     "membershipActive": false,
-    "temporary": true
+    "temporary": true,
+    "nationality": null
   },
   {
     "id": "user-c8b785f6-e933-4736-b352-e3c5132afe61",
