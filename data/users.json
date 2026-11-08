@@ -340,13 +340,15 @@
   {
     "id": "user-069497f2-7431-41c5-ae25-01121d8dfa17",
     "name": "Kelly ruller",
-    "email": "Kelly_rullier16@hotmail.com",
-    "password": "pbkdf2$100000$7Fuy7f8MXrBlYB2MDkx55A$ylc9m0q8K8mh3JjsMzGLPiqR_BVkNzS-kT2TgR-BxhU",
-    "level": "",
-    "zone": "",
+    "email": "kelly_rullier16@hotmail.com",
+    "password": "pbkdf2$100000$aPigKkFVXv10kahFzmJuZA$3jOUj699ISGwlDH469pPB4HakNephKLKNW2WAkCHDW4",
+    "level": null,
+    "zone": null,
     "role": "user",
     "created": "2026-11-04T16:28:24.446Z",
-    "membershipActive": false
+    "membershipActive": false,
+    "nationality": null,
+    "phone": null
   },
   {
     "id": "user-f7d37d06-a9b5-4d05-8634-f7029bd6c7ac",
