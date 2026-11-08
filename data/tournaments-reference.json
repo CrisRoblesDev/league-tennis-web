@@ -9,7 +9,7 @@
     "venue": "Aventura Tennis League",
     "category": "Men's Singles",
     "description": "Round Robin: 4 groups of 4 players. Top 2 from each group advance to quarterfinals.",
-    "status": "abierto",
+    "status": "en proceso",
     "stages": [
       {
         "id": "xmw5bts432",
@@ -667,7 +667,7 @@
     "venue": "Aventura Tennis League",
     "category": "Women's Singles",
     "description": "Round Robin: 6 players, all vs all. 15 matches. Ranking by W-L then games.",
-    "status": "abierto",
+    "status": "en proceso",
     "stages": [
       {
         "id": "stage-rr",
