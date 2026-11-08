@@ -43,14 +43,15 @@
     "id": "user-56b60b3d-8236-46d5-aaa2-542d5ca0586b",
     "name": "Laurie Milgrim",
     "email": "lauriemilgrim@gmail.com",
-    "password": "pbkdf2$100000$temp$placeholder",
+    "password": "pbkdf2$100000$AFu7YtRQlqroPe2fyQrBwQ$Y-CRkOWQPmWIOhS6Qe3dUOy_L3rAv9E6R3xSxsGbpUw",
     "phone": null,
     "level": "3.5",
     "zone": "Aventura / Sunny Isles",
     "role": "user",
     "created": "2026-11-03T02:50:34.510Z",
     "membershipActive": false,
-    "temporary": true
+    "temporary": true,
+    "nationality": null
   },
   {
     "id": "user-75152e59-4308-46f7-a73e-ae78a415bd67",
