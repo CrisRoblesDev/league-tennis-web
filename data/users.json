@@ -57,14 +57,15 @@
     "id": "user-75152e59-4308-46f7-a73e-ae78a415bd67",
     "name": "Juan Carlos Perez",
     "email": "realestatesalesintl@gmail.com",
-    "password": "pbkdf2$100000$temp$placeholder",
+    "password": "pbkdf2$100000$dYsEbF8pYGxMEzZKNq3t7A$s0c30T2xpMxjOK6t3b3E2WBLH7hXUW7lMQbmxnUmBkk",
     "phone": null,
     "level": "4.0",
     "zone": "Aventura / Sunny Isles",
     "role": "user",
     "created": "2026-11-03T02:50:34.510Z",
     "membershipActive": false,
-    "temporary": true
+    "temporary": true,
+    "nationality": null
   },
   {
     "id": "user-a0105a54-6253-46b6-a266-43b17d35dde5",
