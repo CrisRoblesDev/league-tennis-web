@@ -311,5 +311,17 @@
     "points": 0,
     "created": "2026-11-06T22:01:24.007Z",
     "manualPoints": 4
+  },
+  {
+    "id": "player-1554f1e0-7d32-4950-b127-efe3b3018b4a",
+    "userId": "user-f2c616c5-cb34-417a-9696-e131af91c372",
+    "name": "Luis Ureta",
+    "level": "3.5",
+    "zone": "Aventura / Sunny Isles",
+    "category": "singles",
+    "gender": "hombres",
+    "matches": 0,
+    "points": 0,
+    "created": "2026-11-08T04:52:57.286Z"
   }
 ]
