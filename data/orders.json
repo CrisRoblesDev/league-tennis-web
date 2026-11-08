@@ -9,16 +9,5 @@
     "status": "paid",
     "stripeSessionId": "cs_test_a1wgium3wAJ7YcYKALsYKGqpBv36WuNRiVpQRvBJqfnwAWKjs4vMVHN219",
     "created": "2026-11-01T23:24:12.000Z"
-  },
-  {
-    "id": "ord-00e99c41-8fda-45e8-9f4d-28686ee61a80",
-    "userId": "user-a1baecda-879a-4cde-b3ae-4e11c21310f9",
-    "productId": "book-2",
-    "productName": "Entrenamiento inteligente",
-    "amount": 1000,
-    "currency": "usd",
-    "status": "paid",
-    "stripeSessionId": "cs_test_a1pKuwCJLAeQ4AAy7vwpiE2tV7shwU2NduvHuZn9PRxaOYCddKkSz2pJJb",
-    "created": "2026-11-01T23:33:45.656Z"
   }
 ]
