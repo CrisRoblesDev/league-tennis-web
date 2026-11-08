@@ -852,7 +852,7 @@ async function respondToResult(resultId, action) {
   }
 }
 
-async function openResultModal() {
+async function openResultModal(presetWinnerId, presetLoserId) {
   if (!currentUser) {
     openModal("loginModal");
     showToast("Inicia sesión para registrar un resultado.");
@@ -878,31 +878,66 @@ async function openResultModal() {
   const tournamentSelect = document.getElementById("resultTournamentSelect");
   const matchSelect = document.getElementById("resultMatchSelect");
   if (tournamentSelect && matchSelect) {
-    try {
-      const tournaments = await api("/api/admin/tournaments");
+    // Fuentes de torneos: el array global ya cargado (loadTournaments), el del admin, y la API pública como respaldo
+    const sourceTournaments = (tournaments || []).filter(item => !isMonthlyTournament(item));
+    const adminTournamentsList = (adminTournaments || []).filter(item => !isMonthlyTournament(item));
+    const merged = [];
+    const seenIds = new Set();
+    [...sourceTournaments, ...adminTournamentsList].forEach(t => {
+      if (t && t.id && !seenIds.has(t.id)) { seenIds.add(t.id); merged.push(t); }
+    });
+
+    function fillTournamentSelect(list) {
       tournamentSelect.innerHTML = '<option value="">Seleccionar torneo (opcional)</option>' +
-        (tournaments || []).map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.title || t.month || "Torneo")}</option>`).join("");
-    } catch {
-      tournamentSelect.innerHTML = '<option value="">Seleccionar torneo (opcional)</option>';
+        (list || []).map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.title || t.month || "Torneo")}</option>`).join("");
     }
+    function fillMatchSelect(tid, list) {
+      const t = (list || []).find(item => item.id === tid);
+      const matches = (t && t.matches || []).filter(m => m.status === "scheduled" || m.status === "completed");
+      matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>' +
+        matches.map(m => `<option value="${escapeHtml(m.id)}">${escapeHtml(m.round || "Partido")} · ${escapeHtml(m.playerAName || "Jugador A")} vs ${escapeHtml(m.playerBName || "Jugador B")}</option>`).join("");
+    }
+
+    fillTournamentSelect(merged.length ? merged : sourceTournaments);
     matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>';
-    tournamentSelect.onchange = async function() {
-      matchSelect.innerHTML = '<option value="">Cargando partidos...</option>';
-      const tid = this.value;
-      if (!tid) { matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>'; return; }
+
+    // Intentar cargar desde la API pública si no hay nada en memoria
+    if (merged.length === 0) {
       try {
-        const data = await api(`/api/admin/tournaments/${encodeURIComponent(tid)}`);
-        const t = data.tournament || data;
-        const matches = (t.matches || []).filter(m => m.status === "scheduled" || m.status === "completed");
-        matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>' +
-          matches.map(m => `<option value="${escapeHtml(m.id)}">${escapeHtml(m.round || "Partido")} · ${escapeHtml(m.playerAName || "Jugador A")} vs ${escapeHtml(m.playerBName || "Jugador B")}</option>`).join("");
-      } catch {
-        matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>';
+        const data = await api("/api/tournament");
+        const fromApi = (data && data.tournaments) || [];
+        fillTournamentSelect(fromApi);
+        tournamentSelect.onchange = async function() {
+          matchSelect.innerHTML = '<option value="">Cargando partidos...</option>';
+          const tid = this.value;
+          if (!tid) { matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>'; return; }
+          fillMatchSelect(tid, fromApi);
+        };
+      } catch (error) {
+        tournamentSelect.innerHTML = '<option value="">Seleccionar torneo (opcional)</option>';
+        showToast("No se pudieron cargar los torneos. El partido y el torneo quedan opcionales.");
       }
-    };
+    } else {
+      tournamentSelect.onchange = function() {
+        const tid = this.value;
+        if (!tid) { matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>'; return; }
+        fillMatchSelect(tid, merged);
+      };
+    }
   }
 
   showNotice("resultNotice", "", false);
+
+  // Preseleccionar jugadores si se pasaron (útil desde el admin de desafíos)
+  if (presetWinnerId || presetLoserId) {
+    try {
+      const winnerSelect = document.querySelector("#resultForm select[name='winnerId']");
+      const loserSelect = document.querySelector("#resultForm select[name='loserId']");
+      if (winnerSelect && presetWinnerId) winnerSelect.value = presetWinnerId;
+      if (loserSelect && presetLoserId) loserSelect.value = presetLoserId;
+    } catch { /* no bloquear si los selects aún no están listos */ }
+  }
+
   openModal("resultModal");
 }
 
@@ -1483,13 +1518,13 @@ html += '<button type="button" data-module-btn="members" onclick="setAdminModule
 
   html += '<section class="admin-section admin-module" data-module="results" hidden><h3>Resultados de partidos</h3><p class="admin-section-help">Confirma, rechaza o elimina un reporte. Los resultados confirmados impactan el ranking.</p><div class="grid grid-2 admin-records">' + (pendingResults.length ? pendingResults.map(function(r) {
     return '<article class="card admin-record"><span class="tag ' + (r.status === "disputed" ? "tag-red" : "") + '">' + (r.status === "disputed" ? "En disputa" : "Pendiente") + '</span><h4>' + escapeHtml(r.winnerName) + ' vs ' + escapeHtml(r.loserName) + '</h4><p class="muted">' + escapeHtml(r.score) + '</p><div class="admin-form-actions"><button class="btn btn-primary" onclick="moderateResult(\'' + escapeHtml(r.id) + '\',\'confirm\')">Confirmar</button><button class="btn btn-secondary" onclick="moderateResult(\'' + escapeHtml(r.id) + '\',\'reject\')">Rechazar</button><button class="btn btn-dark" onclick="editAdminResult(\'' + escapeHtml(r.id) + '\')">Editar</button><button class="btn btn-danger" onclick="deleteAdminResult(\'' + escapeHtml(r.id) + '\')">Eliminar</button></div></article>';
-  }).join("") : '<p class="muted">No hay resultados pendientes.</p>') + '</div><details class="admin-history"><summary>Historial de resultados (' + results.length + ')</summary><div class="table-wrap"><table><thead><tr><th>Partido</th><th>Marcador</th><th>Estado</th><th>Fecha</th><th></th></tr></thead><tbody>' + results.map(function(r) { return '<tr><td>' + escapeHtml(r.winnerName) + ' vs ' + escapeHtml(r.loserName) + '</td><td>' + escapeHtml(r.score) + '</td><td>' + r.status + '</td><td>' + (r.playedAt ? formatLocalDate(r.playedAt) : '-') + '</td><td><button class="btn btn-sm btn-dark" onclick="editAdminResult(\'' + escapeHtml(r.id) + '\')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminResult(\'' + escapeHtml(r.id) + '\')">Eliminar</button></td></tr>'; }).join("") + '</tbody></table></div></details>' + '<form id="adminResultForm" class="admin-form admin-result-form" hidden><input type="hidden" name="resultId"><h4 class="full admin-form-title">Editar resultado reportado</h4><p class="full muted">Al guardar, volverá a estado pendiente para que el rival confirme el cambio.</p><label>Ganador<select name="winnerId" required>' + allPlayers.map(function(player) { return '<option value="' + escapeHtml(player.id) + '">' + escapeHtml(player.name) + '</option>'; }).join("") + '</select></label><label>Rival<select name="loserId" required>' + allPlayers.map(function(player) { return '<option value="' + escapeHtml(player.id) + '">' + escapeHtml(player.name) + '</option>'; }).join("") + '</select></label><label>Marcador desde el ganador<input name="score" required placeholder="6-4, 4-6, 10-7"></label><label>Fecha<input name="playedAt" type="date" required></label><div class="admin-form-actions full"><button class="btn btn-primary">Guardar y solicitar confirmación</button><button type="button" class="btn btn-secondary" onclick="cancelAdminResultEdit()">Cancelar</button></div></form></section>';
+  }).join("") : '<p class="muted">No hay resultados pendientes.</p>') + '</div><details class="admin-history"><summary>Historial de resultados (' + results.length + ')</summary><div class="table-wrap"><table><thead><tr><th>Partido</th><th>Marcador</th><th>Estado</th><th>Fecha</th><th></th></tr></thead><tbody>' + results.map(function(r) { return '<tr><td>' + escapeHtml(r.winnerName) + ' vs ' + escapeHtml(r.loserName) + '</td><td>' + escapeHtml(r.score) + '</td><td>' + r.status + '</td><td>' + (r.playedAt ? formatLocalDate(r.playedAt) : '-') + '</td><td><button class="btn btn-sm btn-dark" onclick="editAdminResult(\'' + escapeHtml(r.id) + '\')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminResult(\'' + escapeHtml(r.id) + '\')">Eliminar</button></td></tr>'; }).join("") + '</tbody></table></div></details>' + '<form id="adminResultForm" class="admin-form admin-result-form" hidden><input type="hidden" name="resultId"><h4 class="full admin-form-title">Editar resultado reportado</h4><p class="full muted">Al guardar, volverá a estado pendiente para que el rival confirme el cambio.</p><label>Ganador<select name="winnerId" required>' + allPlayers.map(function(player) { return '<option value="' + escapeHtml(player.id) + '">' + escapeHtml(player.name) + '</option>'; }).join("") + '</select></label><label>Rival<select name="loserId" required>' + allPlayers.map(function(player) { return '<option value="' + escapeHtml(player.id) + '">' + escapeHtml(player.name) + '</option>'; }).join("") + '</select></label><label>Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label><label>Torneo<select name="tournamentId"><option value="">Seleccionar torneo (opcional)</option>' + (allTournaments || []).map(function(t) { return '<option value="' + escapeHtml(t.id) + '">' + escapeHtml(t.title || t.month || "Torneo") + '</option>'; }).join("") + '</select></label><label>Partido<select name="matchId"><option value="">Seleccionar partido (opcional)</option></select></label><label>Marcador desde el ganador<input name="score" required placeholder="6-4, 4-6, 10-7"></label><label>Fecha<input name="playedAt" type="date" required></label><div class="admin-form-actions full"><button class="btn btn-primary">Guardar y solicitar confirmación</button><button type="button" class="btn btn-secondary" onclick="cancelAdminResultEdit()">Cancelar</button></div></form></section>';
 
   html += '<section class="admin-section admin-module" data-module="players" hidden><h3>Jugadores de la liga</h3><p class="admin-section-help">Administra el nombre, nivel y zona que aparecen en la clasificación. Los perfiles con historial deportivo no se pueden borrar.</p><form id="adminPlayerForm" class="admin-form" hidden><input type="hidden" name="playerId"><label class="full">Cuenta vinculada<select name="accountId" required><option value="">Selecciona una cuenta sin perfil</option>' + playersWithoutProfile.map(function(user) { return '<option value="' + escapeHtml(user.id) + '">' + escapeHtml(user.name) + ' · ' + escapeHtml(user.email) + '</option>'; }).join("") + '</select></label><label>Nombre público<input name="name" maxlength="100" required></label><label>Nivel<select name="level" required>' + levels.map(function(level) { return '<option value="' + level + '">' + level + '</option>'; }).join("") + '</select></label><label>Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label><label>Modalidad<select name="gender" required><option value="hombres">Hombres</option><option value="mujeres">Mujeres</option></select></label><label class="full">Zona<select name="zone" required><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label><div class="admin-form-actions full"><button class="btn btn-primary">Guardar perfil</button><button type="button" class="btn btn-secondary" onclick="resetAdminPlayerForm()">Cancelar</button></div></form><button class="btn btn-primary" style="margin-bottom:16px" type="button" onclick="openAdminDynamicEditModal(\'adminPlayerForm\', \'Nuevo jugador\')">Nuevo jugador</button><div class="table-wrap"><table><thead><tr><th>Jugador</th><th>Email</th><th>Nivel</th><th>Categoría</th><th>Modalidad</th><th>Zona</th><th>Partidos</th><th>Puntos</th><th>Acciones</th></tr></thead><tbody>' + players.map(function(player) { return '<tr><td>' + escapeHtml(player.name) + '</td><td>' + escapeHtml(player.email || '-') + '</td><td>' + escapeHtml(player.level) + '</td><td>' + escapeHtml(CATEGORY_LABELS[player.category || "singles"] || "Singles") + '</td><td>' + escapeHtml(GENDER_LABELS[player.gender || "hombres"] || "Hombres") + '</td><td>' + escapeHtml(player.zone) + '</td><td>' + Number(player.matches) + '</td><td>' + Number(player.points) + '</td><td><button class="btn btn-sm btn-dark" onclick="editAdminPlayer(\'' + escapeHtml(player.id) + '\')">Editar</button><button class="btn btn-sm btn-danger" onclick="deleteAdminPlayer(\'' + escapeHtml(player.id) + '\')">Eliminar</button></td></tr>'; }).join("") + '</tbody></table></div></section>';
 
   html += '<section class="admin-section admin-module" data-module="products" hidden><h3>Tienda y membresías</h3><p class="admin-section-help">Lo que esté marcado como disponible se mostrará en la página principal.</p><form id="adminProductForm" class="admin-form" hidden><input type="hidden" name="id"><label>Nombre<input name="name" maxlength="120" required></label><label>Precio (USD)<input name="price" type="number" min="0.01" step="0.01" required></label><label>Tipo<select name="type"><option value="digital">Producto digital</option><option value="subscription">Suscripción</option></select></label><label>Frecuencia<select name="interval"><option value="month">Mensual</option><option value="year">Anual</option></select></label><label>Categoría<select name="category"><option value="">General</option><option value="libros">Libros digitales</option><option value="ropa">Ropa y accesorios</option></select></label><label class="full">Descripción<textarea name="description" rows="2" maxlength="500"></textarea></label><label class="full">Enlace de compra (opcional)<input name="link" type="url" placeholder="https://..."></label><label class="full">Imagen del producto<input name="imageFile" type="file" accept="image/png,image/jpeg,image/webp" onchange="previewProductImageFile(this)"></label><input type="hidden" name="image"><div class="full"><img id="productImagePreview" alt="" style="display:none; width:100%; max-height:160px; object-fit:cover; border-radius:8px; border:1px solid var(--line);"></div><label class="full"><span><input name="active" type="checkbox" checked> Disponible en la tienda</span></label><div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar producto</button><button class="btn btn-secondary" type="button" onclick="resetProductForm()">Limpiar</button></div></form><button class="btn btn-primary" style="margin-bottom:16px" type="button" onclick="openAdminDynamicEditModal(\'adminProductForm\', \'Nuevo producto\')">Nuevo producto</button><div class="grid grid-3 admin-records">' + allProducts.map(function(product) { return '<article class="card admin-record"><h4>' + escapeHtml(product.name) + '</h4><p class="muted">$' + (product.price / 100).toFixed(2) + (product.type === "subscription" ? ' /' + (product.interval === "year" ? "año" : "mes") : "") + '</p><span class="tag ' + (product.active ? "" : "tag-red") + '">' + (product.active ? "Activo" : "Inactivo") + '</span><p class="muted">' + escapeHtml(product.description || "") + '</p><div class="admin-form-actions"><button class="btn btn-sm btn-dark" onclick="editProduct(\'' + escapeHtml(product.id) + '\')">Editar</button><button class="btn btn-sm btn-secondary" onclick="toggleProduct(\'' + escapeHtml(product.id) + '\')">' + (product.active ? "Desactivar" : "Activar") + '</button><button class="btn btn-sm btn-secondary" onclick="deleteProduct(\'' + escapeHtml(product.id) + '\')">Eliminar</button></div></article>'; }).join("") + '</div></section>';
 
-  html += '<section class="admin-section admin-module" data-module="challenges" hidden><h3>Desafíos publicados</h3><p class="admin-section-help">Revisa la actividad de la comunidad, cierra publicaciones resueltas o elimina contenido inválido.</p><div class="grid grid-3 admin-records">' + allChallenges.map(function(challenge) { return '<article class="card admin-record"><span class="tag ' + (challenge.status === "accepted" ? "tag-blue" : "") + '">' + challengeStatusLabel(challenge.status) + '</span><h4>' + escapeHtml(challenge.playerName) + '</h4><p>' + escapeHtml(challenge.availability || "") + '</p>' + (challenge.acceptedPlayerName ? '<p class="muted">Aceptado por ' + escapeHtml(challenge.acceptedPlayerName) + '</p>' : "") + '<p class="muted">' + (challenge.created ? formatLocalDate(challenge.created) : "") + '</p><div class="admin-form-actions">' + (challenge.status !== "closed" ? '<button class="btn btn-sm btn-dark" onclick="setChallengeStatus(\'' + escapeHtml(challenge.id) + '\',\'closed\')">Cerrar</button>' : "") + (challenge.status === "closed" ? '<button class="btn btn-sm btn-secondary" onclick="setChallengeStatus(\'' + escapeHtml(challenge.id) + '\',\'open\')">Reabrir</button>' : "") + '<button class="btn btn-sm btn-danger" onclick="deleteAdminChallenge(\'' + escapeHtml(challenge.id) + '\')">Eliminar</button>' + '</div></article>'; }).join("") + '</div></section>';
+  html += '<section class="admin-section admin-module" data-module="challenges" hidden><h3>Desafíos publicados</h3><p class="admin-section-help">Revisa la actividad de la comunidad, cierra publicaciones resueltas o elimina contenido inválido. Desde un desafío aceptado puedes registrar directamente el resultado del partido.</p><div class="grid grid-3 admin-records">' + allChallenges.map(function(challenge) { return '<article class="card admin-record"><span class="tag ' + (challenge.status === "accepted" ? "tag-blue" : "") + '">' + challengeStatusLabel(challenge.status) + '</span><h4>' + escapeHtml(challenge.playerName) + '</h4><p>' + escapeHtml(challenge.availability || "") + '</p>' + (challenge.acceptedPlayerName ? '<p class="muted">Aceptado por ' + escapeHtml(challenge.acceptedPlayerName) + '</p>' : "") + '<p class="muted">' + (challenge.created ? formatLocalDate(challenge.created) : "") + '</p><div class="admin-form-actions">' + (challenge.status !== "closed" ? '<button class="btn btn-sm btn-dark" onclick="setChallengeStatus(\'' + escapeHtml(challenge.id) + '\',\'closed\')">Cerrar</button>' : "") + (challenge.status === "closed" ? '<button class="btn btn-sm btn-secondary" onclick="setChallengeStatus(\'' + escapeHtml(challenge.id) + '\',\'open\')">Reabrir</button>' : "") + (challenge.status === "accepted" && challenge.acceptedPlayerId ? '<button class="btn btn-sm btn-primary" onclick="openResultModal(\'' + escapeHtml(challenge.playerId) + '\',\'' + escapeHtml(challenge.acceptedPlayerId) + '\')">Registrar resultado</button>' : "") + '<button class="btn btn-sm btn-danger" onclick="deleteAdminChallenge(\'' + escapeHtml(challenge.id) + '\')">Eliminar</button>' + '</div></article>'; }).join("") + '</div></section>';
 
   html += '<section class="admin-section admin-module" data-module="users" hidden><h3>Cuentas registradas</h3><p class="admin-section-help">Crea cuentas, gestiona emails y contraseñas, permisos y membresías. Por seguridad, las contraseñas nunca se muestran.</p><label class="admin-search">Buscar usuario<input id="adminUserSearch" type="search" placeholder="Nombre o email"></label><div class="grid grid-2"><label>Rol<select id="adminUserRoleFilter"><option value="all">Todos</option><option value="user">Usuario</option><option value="member">Miembro</option><option value="admin">Administrador</option></select></label><label>Teléfono<select id="adminUserPhoneFilter"><option value="all">Todos</option><option value="with">Con teléfono</option><option value="without">Sin teléfono</option></select></label></div><form id="adminUserForm" class="admin-form" hidden><input type="hidden" name="userId"><label>Nombre<input name="name" maxlength="100"></label><label>Email<input name="email" type="email" required></label><label>Contraseña<input name="password" type="password" minlength="8" maxlength="128" placeholder="Dejar vacío para no cambiar (editar) / Mínimo 8 caracteres (nuevo)"></label><label>Rol<select name="role"><option value="user">Usuario</option><option value="member">Miembro</option><option value="admin">Administrador</option></select></label><label>Nivel<select name="level"><option value="">Sin nivel</option><option value="2.5">2.5</option><option value="3.0">3.0</option><option value="3.5">3.5</option><option value="4.0">4.0</option><option value="4.5">4.5</option><option value="5.0">5.0</option></select></label><label>Zona<select name="zone"><option value="">Sin zona</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label><label>Teléfono<input name="phone" type="tel" placeholder="Ej. +1 305 555 0123"></label><label>Nacionalidad<input name="nationality" maxlength="60" placeholder="Ej. Argentina"></label><label class="full"><span><input name="membershipActive" type="checkbox"> Membresía activa</span></label><div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar usuario</button><button type="button" class="btn btn-secondary" onclick="resetAdminUserForm()">Cancelar</button></div></form><button class="btn btn-primary" style="margin-bottom:16px" type="button" onclick="openAdminDynamicEditModal(\'adminUserForm\', \'Nuevo usuario\')">Nuevo usuario</button><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Rol</th><th>Nivel</th><th>Zona</th><th>Membresía</th><th>Acciones</th></tr></thead><tbody id="adminUsersBody">' + users.map(function(u) { return '<tr data-role="' + (u.role || "user") + '" data-has-phone="' + (u.phone ? "true" : "false") + '"><td>' + escapeHtml(u.name) + '</td><td>' + escapeHtml(u.email) + '</td><td>' + escapeHtml(u.phone || '-') + '</td><td><span class="tag ' + (u.role === "admin" ? "tag-blue" : "") + '">' + (u.role === "admin" ? "Administrador" : u.role === "member" ? "Miembro" : "Usuario") + '</span></td><td>' + escapeHtml(u.level || '-') + '</td><td>' + escapeHtml(u.zone || '-') + '</td><td>' + (u.membershipActive ? "Activa" : "-") + '</td><td><button class="btn btn-sm btn-dark" onclick="editAdminUser(\'' + escapeHtml(u.id) + '\')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminUser(\'' + escapeHtml(u.id) + '\')">Eliminar</button></td></tr>'; }).join("") + '</tbody></table></div></section>';
 
@@ -1510,6 +1545,17 @@ html += '<button type="button" data-module-btn="members" onclick="setAdminModule
   document.getElementById("adminUserForm")?.addEventListener("submit", saveAdminUser);
   document.getElementById("adminPlayerForm")?.addEventListener("submit", saveAdminPlayer);
   document.getElementById("adminResultForm")?.addEventListener("submit", saveAdminResult);
+  const adminResultTournamentInput = document.getElementById("adminResultForm")?.elements.namedItem("tournamentId");
+  const adminResultMatchInput = document.getElementById("adminResultForm")?.elements.namedItem("matchId");
+  if (adminResultTournamentInput && adminResultMatchInput) {
+    adminResultTournamentInput.addEventListener("change", function() {
+      const tid = this.value;
+      const t = (allTournaments || []).find(item => item.id === tid);
+      const matches = (t && t.matches || []).filter(m => m.status === "scheduled" || m.status === "completed");
+      adminResultMatchInput.innerHTML = '<option value="">Seleccionar partido (opcional)</option>' +
+        matches.map(m => `<option value="${escapeHtml(m.id)}">${escapeHtml(m.round || "Partido")} · ${escapeHtml(m.playerAName || "Jugador A")} vs ${escapeHtml(m.playerBName || "Jugador B")}</option>`).join("");
+    });
+  }
 document.getElementById("adminOrderForm")?.addEventListener("submit", saveAdminOrder);
   document.getElementById("adminSettingsForm")?.addEventListener("submit", saveAdminSettings);
   resetAdminUserForm();
@@ -1743,8 +1789,20 @@ function editAdminResult(resultId) {
   form.elements.namedItem("resultId").value = result.id;
   form.elements.namedItem("winnerId").value = result.winnerId;
   form.elements.namedItem("loserId").value = result.loserId;
+  form.elements.namedItem("category").value = result.category || "singles";
+  form.elements.namedItem("tournamentId").value = result.tournamentId || "";
+  form.elements.namedItem("matchId").value = result.matchId || "";
   form.elements.namedItem("score").value = result.score;
   form.elements.namedItem("playedAt").value = (result.playedAt || result.created || "").slice(0, 10);
+  // Rellenar partidos del torneo seleccionado si aplica
+  const tournamentInput = form.elements.namedItem("tournamentId");
+  const matchInput = form.elements.namedItem("matchId");
+  if (tournamentInput && matchInput && tournamentInput.value) {
+    const t = (allTournaments || []).find(item => item.id === tournamentInput.value);
+    const matches = (t && t.matches || []).filter(m => m.status === "scheduled" || m.status === "completed");
+    matchInput.innerHTML = '<option value="">Seleccionar partido (opcional)</option>' +
+      matches.map(m => `<option value="${escapeHtml(m.id)}" ${m.id === result.matchId ? "selected" : ""}>${escapeHtml(m.round || "Partido")} · ${escapeHtml(m.playerAName || "Jugador A")} vs ${escapeHtml(m.playerBName || "Jugador B")}</option>`).join("");
+  }
   form.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
@@ -1770,6 +1828,9 @@ async function saveAdminResult(event) {
         resultId: form.elements.namedItem("resultId").value,
         winnerId: form.elements.namedItem("winnerId").value,
         loserId: form.elements.namedItem("loserId").value,
+        category: form.elements.namedItem("category").value,
+        tournamentId: form.elements.namedItem("tournamentId").value || null,
+        matchId: form.elements.namedItem("matchId").value || null,
         score: form.elements.namedItem("score").value,
         playedAt: form.elements.namedItem("playedAt").value
       })
@@ -1957,8 +2018,8 @@ async function loadProfileMatches() {
   }
   container.innerHTML = '<p class="muted">Cargando partidos...</p>';
   try {
-    const data = await api("/api/admin/tournaments");
-    const list = (data || []).flatMap(t => {
+    const data = await api("/api/tournament");
+    const list = (data.tournaments || []).flatMap(t => {
       const matches = (t.matches || []).filter(m =>
         m.playerAId === player.id || m.playerBId === player.id);
       return matches.map(m => ({ ...m, tournament: t.title || t.month || "Torneo" }));
@@ -1980,7 +2041,7 @@ async function loadProfileMatches() {
             <div style="font-weight:700;">${escapeHtml(m.playerBName || "Jugador B")}</div>
           </div>
         </div>
-        ${m.result ? `<div class="muted" style="margin-top:6px;">Resultado: ${escapeHtml(m.result)}</div>` : ""}
+        ${m.score ? `<div class="muted" style="margin-top:6px;">Resultado: ${escapeHtml(m.score)}</div>` : ""}
       </div>
     `).join("");
   } catch (error) {
@@ -2061,10 +2122,12 @@ async function initProfileResultForm() {
   form.elements.namedItem("date").value = new Date().toISOString().slice(0, 10);
   const tournamentSelect = form.elements.namedItem("tournamentId");
   const matchSelect = form.elements.namedItem("matchId");
+  let tournaments = [];
   try {
-    const data = await api("/api/admin/tournaments");
+    const data = await api("/api/tournament");
+    tournaments = (data && data.tournaments) || [];
     tournamentSelect.innerHTML = '<option value="">Seleccionar torneo (opcional)</option>' +
-      (data || []).map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.title || t.month || "Torneo")}</option>`).join("");
+      tournaments.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.title || t.month || "Torneo")}</option>`).join("");
   } catch {
     tournamentSelect.innerHTML = '<option value="">Seleccionar torneo (opcional)</option>';
   }
@@ -2074,9 +2137,8 @@ async function initProfileResultForm() {
     const tid = this.value;
     if (!tid) { matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>'; return; }
     try {
-      const data = await api(`/api/admin/tournaments/${encodeURIComponent(tid)}`);
-      const t = data.tournament || data;
-      const matches = (t.matches || []).filter(m => m.status === "scheduled" || m.status === "completed");
+      const t = tournaments.find(item => item.id === tid);
+      const matches = (t && t.matches || []).filter(m => m.status === "scheduled" || m.status === "completed");
       matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>' +
         matches.map(m => `<option value="${escapeHtml(m.id)}">${escapeHtml(m.round || "Partido")} · ${escapeHtml(m.playerAName || "Jugador A")} vs ${escapeHtml(m.playerBName || "Jugador B")}</option>`).join("");
     } catch {

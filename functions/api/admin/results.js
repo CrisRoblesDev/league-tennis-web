@@ -32,6 +32,9 @@ export async function onRequestPatch({ request, env }) {
     }
     result.winnerId = winner.id;
     result.loserId = loser.id;
+    result.category = body.category || result.category || "singles";
+    result.tournamentId = body.tournamentId !== undefined ? body.tournamentId : result.tournamentId;
+    result.matchId = body.matchId !== undefined ? body.matchId : result.matchId;
     result.score = score;
     if (body.playedAt !== undefined) {
       if (typeof body.playedAt !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(body.playedAt) ||
