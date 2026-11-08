@@ -380,12 +380,14 @@
     "id": "user-d7206caf-b37e-4cee-9a26-1af2d7a52f9f",
     "name": "Josef Platt",
     "email": "josef.platt@temp.aventuratennisleague.com",
-    "password": "pbkdf2$100000$2BuH4guE-lhA6tGZfyX1Zw$0PWS4jfmYpUw5swNB9q-mwd5lae-FtlsNYT752QTX8g",
+    "password": "pbkdf2$100000$Qh4HbYyumpv_is2kd4BnIg$EQTolmN6DCstmD2bx3l3JcRNzqakdOXhflkwcW8nL3I",
     "role": "user",
     "nationality": null,
     "created": "2026-11-06T21:57:20.322Z",
     "level": "4.0",
-    "zone": "Aventura / Sunny Isles"
+    "zone": "Aventura / Sunny Isles",
+    "membershipActive": false,
+    "phone": null
   },
   {
     "id": "user-964a7577-84e7-4b43-b7a4-0dc326610874",
