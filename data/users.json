@@ -250,12 +250,14 @@
     "id": "user-c214871c-3e87-483c-864c-d7042443fbbc",
     "name": "Artemmi",
     "email": "aaukhimik@gmail.com",
-    "password": "pbkdf2$100000$hWZBWbrZZkAs1oL4uZoFZQ$VM-hzst_sztrRHmvEpP4svge_nuJ6zdyzRS2f3HqR9g",
-    "level": "",
-    "zone": "",
+    "password": "pbkdf2$100000$cR9xgGxwISrk2hBDcfWUXQ$LeyjhSrGILVq8LYYW1bDiJN9ZO1VMtNHIR_y4_BIuTQ",
+    "level": null,
+    "zone": null,
     "role": "user",
     "created": "2026-11-04T16:28:24.312Z",
-    "membershipActive": false
+    "membershipActive": false,
+    "nationality": null,
+    "phone": null
   },
   {
     "id": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
