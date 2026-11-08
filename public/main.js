@@ -852,14 +852,15 @@ async function respondToResult(resultId, action) {
   }
 }
 
-function openResultModal() {
+async function openResultModal() {
   if (!currentUser) {
     openModal("loginModal");
     showToast("Inicia sesión para registrar un resultado.");
     return;
   }
   const player = players.find(item => item.userId === currentUser.id);
-  if (!player) {
+  const isMember = currentUser.role === "member" || currentUser.membershipActive === true;
+  if (!player && !isMember) {
     openModal("createPlayerModal");
     showToast("Crea tu perfil de jugador primero.");
     return;
@@ -872,6 +873,35 @@ function openResultModal() {
     select.innerHTML = `<option value="">Seleccionar</option>${options}`;
   });
   document.getElementById("resultForm").date.value = new Date().toISOString().slice(0, 10);
+
+  // Cargar torneos para el select opcional
+  const tournamentSelect = document.getElementById("resultTournamentSelect");
+  const matchSelect = document.getElementById("resultMatchSelect");
+  if (tournamentSelect && matchSelect) {
+    try {
+      const tournaments = await api("/api/admin/tournaments");
+      tournamentSelect.innerHTML = '<option value="">Seleccionar torneo (opcional)</option>' +
+        (tournaments || []).map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.title || t.month || "Torneo")}</option>`).join("");
+    } catch {
+      tournamentSelect.innerHTML = '<option value="">Seleccionar torneo (opcional)</option>';
+    }
+    matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>';
+    tournamentSelect.onchange = async function() {
+      matchSelect.innerHTML = '<option value="">Cargando partidos...</option>';
+      const tid = this.value;
+      if (!tid) { matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>'; return; }
+      try {
+        const data = await api(`/api/admin/tournaments/${encodeURIComponent(tid)}`);
+        const t = data.tournament || data;
+        const matches = (t.matches || []).filter(m => m.status === "scheduled" || m.status === "completed");
+        matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>' +
+          matches.map(m => `<option value="${escapeHtml(m.id)}">${escapeHtml(m.round || "Partido")} · ${escapeHtml(m.playerAName || "Jugador A")} vs ${escapeHtml(m.playerBName || "Jugador B")}</option>`).join("");
+      } catch {
+        matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>';
+      }
+    };
+  }
+
   showNotice("resultNotice", "", false);
   openModal("resultModal");
 }
@@ -886,6 +916,8 @@ async function submitResult(event) {
         winnerId: form.winnerId.value,
         loserId: form.loserId.value,
         category: form.elements.namedItem("category").value,
+        tournamentId: form.elements.namedItem("tournamentId").value || null,
+        matchId: form.elements.namedItem("matchId").value || null,
         score: form.score.value,
         playedAt: form.date.value
       })
@@ -1309,6 +1341,22 @@ async function setUserMember(userId) {
   }
 }
 
+async function setUserNonMember(userId) {
+  const user = adminUsers.find(item => item.id === userId);
+  if (!user) return;
+  if (!window.confirm("¿Quitar la membresía a " + escapeHtml(user.name) + "?")) return;
+  try {
+    await api("/api/admin/users", {
+      method: "POST",
+      body: JSON.stringify({ userId: userId, updates: { role: "user" } })
+    });
+    await showAdminPanel();
+    showToast(escapeHtml(user.name) + " ya no es miembro.");
+  } catch (error) {
+    showToast(`No se pudo cambiar el rol: ${error.message}`);
+  }
+}
+
 // ========================================
 // PANEL DE ADMINISTRACIÓN - ORQUESTADOR
 // ========================================
@@ -1445,7 +1493,7 @@ html += '<button type="button" data-module-btn="members" onclick="setAdminModule
 
   html += '<section class="admin-section admin-module" data-module="users" hidden><h3>Cuentas registradas</h3><p class="admin-section-help">Crea cuentas, gestiona emails y contraseñas, permisos y membresías. Por seguridad, las contraseñas nunca se muestran.</p><label class="admin-search">Buscar usuario<input id="adminUserSearch" type="search" placeholder="Nombre o email"></label><div class="grid grid-2"><label>Rol<select id="adminUserRoleFilter"><option value="all">Todos</option><option value="user">Usuario</option><option value="member">Miembro</option><option value="admin">Administrador</option></select></label><label>Teléfono<select id="adminUserPhoneFilter"><option value="all">Todos</option><option value="with">Con teléfono</option><option value="without">Sin teléfono</option></select></label></div><form id="adminUserForm" class="admin-form" hidden><input type="hidden" name="userId"><label>Nombre<input name="name" maxlength="100"></label><label>Email<input name="email" type="email" required></label><label>Contraseña<input name="password" type="password" minlength="8" maxlength="128" placeholder="Dejar vacío para no cambiar (editar) / Mínimo 8 caracteres (nuevo)"></label><label>Rol<select name="role"><option value="user">Usuario</option><option value="member">Miembro</option><option value="admin">Administrador</option></select></label><label>Nivel<select name="level"><option value="">Sin nivel</option><option value="2.5">2.5</option><option value="3.0">3.0</option><option value="3.5">3.5</option><option value="4.0">4.0</option><option value="4.5">4.5</option><option value="5.0">5.0</option></select></label><label>Zona<select name="zone"><option value="">Sin zona</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label><label>Teléfono<input name="phone" type="tel" placeholder="Ej. +1 305 555 0123"></label><label>Nacionalidad<input name="nationality" maxlength="60" placeholder="Ej. Argentina"></label><label class="full"><span><input name="membershipActive" type="checkbox"> Membresía activa</span></label><div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar usuario</button><button type="button" class="btn btn-secondary" onclick="resetAdminUserForm()">Cancelar</button></div></form><button class="btn btn-primary" style="margin-bottom:16px" type="button" onclick="openAdminDynamicEditModal(\'adminUserForm\', \'Nuevo usuario\')">Nuevo usuario</button><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Rol</th><th>Nivel</th><th>Zona</th><th>Membresía</th><th>Acciones</th></tr></thead><tbody id="adminUsersBody">' + users.map(function(u) { return '<tr data-role="' + (u.role || "user") + '" data-has-phone="' + (u.phone ? "true" : "false") + '"><td>' + escapeHtml(u.name) + '</td><td>' + escapeHtml(u.email) + '</td><td>' + escapeHtml(u.phone || '-') + '</td><td><span class="tag ' + (u.role === "admin" ? "tag-blue" : "") + '">' + (u.role === "admin" ? "Administrador" : u.role === "member" ? "Miembro" : "Usuario") + '</span></td><td>' + escapeHtml(u.level || '-') + '</td><td>' + escapeHtml(u.zone || '-') + '</td><td>' + (u.membershipActive ? "Activa" : "-") + '</td><td><button class="btn btn-sm btn-dark" onclick="editAdminUser(\'' + escapeHtml(u.id) + '\')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminUser(\'' + escapeHtml(u.id) + '\')">Eliminar</button></td></tr>'; }).join("") + '</tbody></table></div></section>';
 
-  html += '<section class="admin-section admin-module" data-module="members" hidden><h3>Gestión de miembros</h3><p class="admin-section-help">Cambia usuarios a miembro y consulta cuántos miembros y no miembros hay en la liga.</p><div class="admin-stats" style="margin-bottom:16px"><div class="stat-card"><div class="stat-number">' + membersList.length + '</div><div class="stat-label">Miembros</div></div><div class="stat-card"><div class="stat-number">' + nonMembersList.length + '</div><div class="stat-label">Usuarios no miembros</div></div></div><div class="grid grid-2"><div><h4>Convertir a miembro</h4><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Email</th><th>Rol actual</th><th>Acción</th></tr></thead><tbody>' + nonMembersList.map(function(u) { return '<tr><td>' + escapeHtml(u.name) + '</td><td>' + escapeHtml(u.email) + '</td><td>' + (u.role === "member" ? "Miembro" : u.role === "admin" ? "Administrador" : "Usuario") + '</td><td>' + (u.role === "user" ? '<button class="btn btn-sm btn-primary" onclick="setUserMember(\'' + escapeHtml(u.id) + '\')">Hacer miembro</button>' : '<span class="muted">-</span>') + '</td></tr>'; }).join("") + '</tbody></table></div></div><div><h4>Miembros actuales</h4><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Email</th><th>Nivel</th><th>Zona</th></tr></thead><tbody>' + membersList.map(function(u) { return '<tr><td>' + escapeHtml(u.name) + '</td><td>' + escapeHtml(u.email) + '</td><td>' + escapeHtml(u.level || '-') + '</td><td>' + escapeHtml(u.zone || '-') + '</td></tr>'; }).join("") + '</tbody></table></div></div></div></section>';
+  html += '<section class="admin-section admin-module" data-module="members" hidden><h3>Gestión de miembros</h3><p class="admin-section-help">Convierte usuarios a miembro y quita la membresía de los miembros actuales cuando sea necesario.</p><div class="admin-stats" style="margin-bottom:16px"><div class="stat-card"><div class="stat-number">' + membersList.length + '</div><div class="stat-label">Miembros</div></div><div class="stat-card"><div class="stat-number">' + nonMembersList.length + '</div><div class="stat-label">Usuarios no miembros</div></div></div><div class="grid grid-2"><div><h4>Convertir a miembro</h4><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Email</th><th>Rol actual</th><th>Acción</th></tr></thead><tbody>' + nonMembersList.map(function(u) { return '<tr><td>' + escapeHtml(u.name) + '</td><td>' + escapeHtml(u.email) + '</td><td>' + (u.role === "member" ? "Miembro" : u.role === "admin" ? "Administrador" : "Usuario") + '</td><td>' + (u.role === "user" ? '<button class="btn btn-sm btn-primary" style="padding:4px 8px;font-size:12px" onclick="setUserMember(\'' + escapeHtml(u.id) + '\')">Miembro</button>' : '<span class="muted">-</span>') + '</td></tr>'; }).join("") + '</tbody></table></div></div><div><h4>Miembros actuales</h4><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Email</th><th>Nivel</th><th>Zona</th><th>Acción</th></tr></thead><tbody>' + membersList.map(function(u) { return '<tr><td>' + escapeHtml(u.name) + '</td><td>' + escapeHtml(u.email) + '</td><td>' + escapeHtml(u.level || '-') + '</td><td>' + escapeHtml(u.zone || '-') + '</td><td><button class="btn btn-sm btn-danger" style="padding:4px 8px;font-size:12px" onclick="setUserNonMember(\'' + escapeHtml(u.id) + '\')">Quitar membresía</button></td></tr>'; }).join("") + '</tbody></table></div></div></div></section>';
 
   html += '<section class="admin-section admin-module" data-module="ranking" hidden><h3>Ranking</h3><p class="admin-section-help">Ajusta la base manual de puntos por jugador. El total suma esa base y los puntos automáticos de victorias confirmadas. Filtra por torneo o general.</p><div class="admin-form" style="margin-bottom:10px"><label>Vista del ranking<select id="adminRankingScope" onchange="renderAdminRanking(this.value)"></select></label></div><div class="table-wrap"><table><thead><tr><th>Pos.</th><th>Jugador</th><th>Nivel</th><th>Partidos</th><th>Puntos manuales</th><th>Total</th></tr></thead><tbody id="adminRankingBody"></tbody></table></div></section>';
 
@@ -1586,7 +1634,7 @@ async function uploadProfileImage(form) {
   const compressed = await compressProfileImage(file);
   const uploaded = await api("/api/profile/photo", {
     method: "POST",
-    body: JSON.stringify({ image: compressed, country: form.elements.namedItem("nationality").value.trim() })
+    body: JSON.stringify({ image: compressed, country: form.elements.namedItem("country")?.value.trim() })
   });
   return uploaded.photo;
 }
@@ -1834,6 +1882,7 @@ function openProfileEditModal() {
     preview.style.display = currentUser.photo ? "block" : "none";
     if (currentUser.photo) preview.src = currentUser.photo;
   }
+  showProfileTab("datos");
   openModal("profileEditModal");
 }
 
@@ -1875,6 +1924,165 @@ async function saveProfileEdit(event) {
   } catch (error) {
     showToast(`No se pudo actualizar: ${error.message}`);
   }
+}
+
+// ============ PERFIL: PESTAÑAS ============
+function showProfileTab(tabName, btn) {
+  document.querySelectorAll("#profileEditModal .tab-panel").forEach(p => {
+    p.style.display = "none";
+    p.classList.remove("active");
+  });
+  document.querySelectorAll("#profileEditModal .tab-btn").forEach(b => {
+    b.classList.remove("active");
+  });
+  const panel = document.getElementById("profileTab-" + tabName);
+  if (panel) {
+    panel.style.display = "";
+    panel.classList.add("active");
+  }
+  if (btn) btn.classList.add("active");
+
+  if (tabName === "partidos") loadProfileMatches();
+  else if (tabName === "pendientes") loadProfilePendingResults();
+  else if (tabName === "reportar") initProfileResultForm();
+}
+
+async function loadProfileMatches() {
+  const container = document.getElementById("profileMatchesList");
+  if (!container || !currentUser) return;
+  const player = players.find(p => p && p.userId === currentUser.id);
+  if (!player) {
+    container.innerHTML = '<p class="muted">Crea tu perfil de jugador para ver tus partidos asignados.</p>';
+    return;
+  }
+  container.innerHTML = '<p class="muted">Cargando partidos...</p>';
+  try {
+    const data = await api("/api/admin/tournaments");
+    const list = (data || []).flatMap(t => {
+      const matches = (t.matches || []).filter(m =>
+        m.playerAId === player.id || m.playerBId === player.id);
+      return matches.map(m => ({ ...m, tournament: t.title || t.month || "Torneo" }));
+    });
+    if (!list.length) {
+      container.innerHTML = '<p class="muted">No tienes partidos asignados en ningún torneo.</p>';
+      return;
+    }
+    container.innerHTML = list.map(m => `
+      <div style="border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin:8px 0; background:#fff;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-weight:700;">${escapeHtml(m.tournament)}</div>
+            <div class="muted" style="font-size:12px;">Ronda: ${escapeHtml(m.round || "-")} · Estado: ${escapeHtml(m.status || "-")}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:700;">${escapeHtml(m.playerAName || "Jugador A")}</div>
+            <div style="font-size:16px; font-weight:700;">vs</div>
+            <div style="font-weight:700;">${escapeHtml(m.playerBName || "Jugador B")}</div>
+          </div>
+        </div>
+        ${m.result ? `<div class="muted" style="margin-top:6px;">Resultado: ${escapeHtml(m.result)}</div>` : ""}
+      </div>
+    `).join("");
+  } catch (error) {
+    container.innerHTML = `<p class="muted" style="color:#8e3028;">No se pudieron cargar los partidos: ${escapeHtml(error.message)}</p>`;
+  }
+}
+
+async function loadProfilePendingResults() {
+  const container = document.getElementById("profilePendingList");
+  if (!container || !currentUser) return;
+  container.innerHTML = '<p class="muted">Cargando resultados pendientes...</p>';
+  try {
+    const results = await api("/api/results");
+    const pending = results.filter(r =>
+      r.status === "pending" &&
+      (r.winnerUserId === currentUser.id || r.loserUserId === currentUser.id) &&
+      r.reportedBy !== currentUser.id);
+    if (!pending.length) {
+      container.innerHTML = '<p class="muted">No tienes resultados pendientes de confirmar.</p>';
+      return;
+    }
+    container.innerHTML = pending.map(r => {
+      const isWinner = r.winnerUserId === currentUser.id;
+      const rival = isWinner ? (r.loserName || "Jugador") : (r.winnerName || "Jugador");
+      return `
+        <div style="border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin:8px 0; background:#fff;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div>
+              <div style="font-weight:700;">${escapeHtml(r.categoryLabel || r.category || "Partido")}</div>
+              <div class="muted" style="font-size:12px;">Marcador reportado: ${escapeHtml(r.score || "-")}</div>
+            </div>
+            <div class="muted" style="font-size:12px;">${formatLocalDate(r.created)}</div>
+          </div>
+          <div style="text-align:center; font-weight:700; margin-bottom:8px;">Tú vs ${escapeHtml(rival)}</div>
+          <div style="display:flex; gap:8px; justify-content:center;">
+            <button class="btn btn-sm" style="background:#2e7d32;color:#fff;border:none;" onclick="respondProfilePending('${escapeHtml(r.id)}', 'confirm')">Confirmar</button>
+            <button class="btn btn-sm" style="background:#c62828;color:#fff;border:none;" onclick="respondProfilePending('${escapeHtml(r.id)}', 'dispute')">Disputar</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  } catch (error) {
+    container.innerHTML = `<p class="muted" style="color:#8e3028;">No se pudieron cargar: ${escapeHtml(error.message)}</p>`;
+  }
+}
+
+async function respondProfilePending(resultId, action) {
+  if (!confirm(action === "confirm" ? "¿Confirmar este resultado?" : "¿Disputar este resultado?")) return;
+  try {
+    await api("/api/results", {
+      method: "PATCH",
+      body: JSON.stringify({ resultId, action })
+    });
+    showToast(action === "confirm" ? "Resultado confirmado." : "Resultado disputado.");
+    loadProfilePendingResults();
+  } catch (error) {
+    showToast(`No se pudo responder: ${error.message}`);
+  }
+}
+
+async function initProfileResultForm() {
+  const form = document.getElementById("profileResultForm");
+  if (!form) return;
+  const player = players.find(p => p && p.userId === currentUser.id);
+  const isMember = currentUser.role === "member" || currentUser.membershipActive === true;
+  if (!player && !isMember) {
+    document.getElementById("profileResultNotice").textContent = "Crea tu perfil de jugador primero.";
+    return;
+  }
+  document.getElementById("profileResultNotice").textContent = "";
+  const options = players.map(item => {
+    const categoryLabel = CATEGORY_LABELS[item.category || "singles"] || "Singles";
+    return `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)} · ${escapeHtml(item.level)} · ${escapeHtml(categoryLabel)}</option>`;
+  }).join("");
+  form.querySelectorAll("select[name='winnerId'], select[name='loserId']").forEach(select => {
+    select.innerHTML = `<option value="">Seleccionar</option>${options}`;
+  });
+  form.elements.namedItem("date").value = new Date().toISOString().slice(0, 10);
+  const tournamentSelect = form.elements.namedItem("tournamentId");
+  const matchSelect = form.elements.namedItem("matchId");
+  try {
+    const data = await api("/api/admin/tournaments");
+    tournamentSelect.innerHTML = '<option value="">Seleccionar torneo (opcional)</option>' +
+      (data || []).map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.title || t.month || "Torneo")}</option>`).join("");
+  } catch {
+    tournamentSelect.innerHTML = '<option value="">Seleccionar torneo (opcional)</option>';
+  }
+  matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>';
+  tournamentSelect.onchange = async function() {
+    matchSelect.innerHTML = '<option value="">Cargando partidos...</option>';
+    const tid = this.value;
+    if (!tid) { matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>'; return; }
+    try {
+      const data = await api(`/api/admin/tournaments/${encodeURIComponent(tid)}`);
+      const t = data.tournament || data;
+      const matches = (t.matches || []).filter(m => m.status === "scheduled" || m.status === "completed");
+      matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>' +
+        matches.map(m => `<option value="${escapeHtml(m.id)}">${escapeHtml(m.round || "Partido")} · ${escapeHtml(m.playerAName || "Jugador A")} vs ${escapeHtml(m.playerBName || "Jugador B")}</option>`).join("");
+    } catch {
+      matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>';
+    }
+  };
 }
 
 document.querySelectorAll(".modal").forEach(m => {
@@ -2039,6 +2247,32 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("searchPlayer")?.addEventListener("input", filterPlayers);
   document.getElementById("adminUserForm")?.addEventListener("submit", saveAdminUser);
   document.getElementById("profileEditForm")?.addEventListener("submit", saveProfileEdit);
+  document.getElementById("profileResultForm")?.addEventListener("submit", async function(event) {
+    event.preventDefault();
+    const form = event.target;
+    try {
+      await api("/api/results", {
+        method: "POST",
+        body: JSON.stringify({
+          winnerId: form.winnerId.value,
+          loserId: form.loserId.value,
+          category: form.elements.namedItem("category").value,
+          tournamentId: form.elements.namedItem("tournamentId").value || null,
+          matchId: form.elements.namedItem("matchId").value || null,
+          score: form.score.value,
+          playedAt: form.elements.namedItem("date").value
+        })
+      });
+      form.reset();
+      showToast("Resultado enviado; el rival debe confirmarlo para actualizar el ranking.");
+      showProfileTab("datos");
+    } catch (error) {
+      document.getElementById("profileResultNotice").textContent = error.message;
+      document.getElementById("profileResultNotice").style.background = "#f8e8e5";
+      document.getElementById("profileResultNotice").style.color = "#8e3028";
+      document.getElementById("profileResultNotice").classList.add("show");
+    }
+  });
 
   syncHeaderLayout();
   HEADER_MOBILE_MEDIA.addEventListener("change", syncHeaderLayout);

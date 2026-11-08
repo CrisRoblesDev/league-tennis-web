@@ -440,6 +440,8 @@
       <label>Jugador ganador<select name="winnerId" required><option value="">Seleccionar</option></select></label>
       <label>Rival<select name="loserId" required><option value="">Seleccionar</option></select></label>
       <label>Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label>
+      <label>Torneo<select id="resultTournamentSelect" name="tournamentId"><option value="">Seleccionar torneo (opcional)</option></select></label>
+      <label>Partido<select id="resultMatchSelect" name="matchId"><option value="">Seleccionar partido (opcional)</option></select></label>
       <label class="full">Marcador desde el punto de vista del ganador
         <input name="score" required placeholder="6-4, 4-6, 10-7" aria-describedby="scoreHelp">
         <small id="scoreHelp" class="muted">Mejor de 3 sets; separa cada set con coma. Ejemplo: 6-4, 4-6, 10-7.</small>
@@ -484,20 +486,63 @@
 
 <!-- PROFILE EDIT MODAL -->
 <div class="modal" id="profileEditModal">
-  <div class="modal-box">
-    <div class="modal-head"><h2>Editar perfil</h2><button class="close" onclick="closeModal('profileEditModal')">×</button></div>
-    <form id="profileEditForm" class="admin-form">
-      <label>Nombre<input name="name" maxlength="100" required></label>
-      <label>Email<input name="email" type="email" required></label>
-      <label>Teléfono<input name="phone" type="tel" placeholder="Ej. +1 305 555 0123"></label>
-      <label>País / Bandera<select name="country" id="profileCountrySelect"><option value="">Selecciona un país</option></select></label>
+  <div class="modal-box" style="max-width:700px; width:92vw; max-height:90vh; overflow:auto; display:flex; flex-direction:column;">
+    <div class="modal-head"><h2>Mi perfil</h2><button class="close" onclick="closeModal('profileEditModal')">×</button></div>
+    <div class="profile-tabs" style="display:flex; gap:0; border-bottom:1px solid var(--line); margin-bottom:16px;">
+      <button class="tab-btn active" onclick="showProfileTab('datos', this)" data-tab="datos">Datos personales</button>
+      <button class="tab-btn" onclick="showProfileTab('foto', this)" data-tab="foto">Foto de perfil</button>
+      <button class="tab-btn" onclick="showProfileTab('partidos', this)" data-tab="partidos">Mis partidos</button>
+      <button class="tab-btn" onclick="showProfileTab('reportar', this)" data-tab="reportar">Reportar resultado</button>
+      <button class="tab-btn" onclick="showProfileTab('pendientes', this)" data-tab="pendientes">Resultados pendientes</button>
+    </div>
+
+    <!-- Datos personales -->
+    <div id="profileTab-datos" class="tab-panel active" style="padding:16px 0;">
+      <form id="profileEditForm" class="admin-form">
+        <label>Nombre<input name="name" maxlength="100" required></label>
+        <label>Email<input name="email" type="email" required></label>
+        <label>Teléfono<input name="phone" type="tel" placeholder="Ej. +1 305 555 0123"></label>
+        <label>País / Bandera<select name="country" id="profileCountrySelect"><option value="">Selecciona un país</option></select></label>
+        <label class="full"><span><input name="password" type="password" minlength="8" maxlength="128" placeholder="Dejar vacío para no cambiar la contraseña"></span></label>
+        <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar cambios</button><button class="btn btn-secondary" type="button" onclick="closeModal('profileEditModal')">Cancelar</button></div>
+      </form>
+    </div>
+
+    <!-- Foto de perfil -->
+    <div id="profileTab-foto" class="tab-panel" style="padding:16px 0; display:none;">
       <label class="full">Foto de perfil (PNG, JPG o WebP, máximo 400 KB)
         <input name="photoFile" type="file" accept="image/png,image/jpeg,image/webp" onchange="previewProfilePhotoFile(this)">
       </label>
       <img id="profilePhotoPreview" alt="Vista previa" style="display:none; width:120px; height:120px; object-fit:cover; border-radius:50%; border:2px solid var(--line); margin:8px 0;">
-      <label class="full"><span><input name="password" type="password" minlength="8" maxlength="128" placeholder="Dejar vacío para no cambiar la contraseña"></span></label>
-      <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar cambios</button><button class="btn btn-secondary" type="button" onclick="closeModal('profileEditModal')">Cancelar</button></div>
-    </form>
+      <p class="muted">La foto se guardará al pulsar "Guardar cambios" en la pestaña Datos personales.</p>
+    </div>
+
+    <!-- Mis partidos -->
+    <div id="profileTab-partidos" class="tab-panel" style="padding:16px 0; display:none;">
+      <div id="profileMatchesList" style="min-height:200px;"></div>
+    </div>
+
+    <!-- Reportar resultado -->
+    <div id="profileTab-reportar" class="tab-panel" style="padding:16px 0; display:none;">
+      <form id="profileResultForm" class="admin-form">
+        <label>Jugador ganador<select name="winnerId" required><option value="">Seleccionar</option></select></label>
+        <label>Rival<select name="loserId" required><option value="">Seleccionar</option></select></label>
+        <label>Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label>
+        <label>Torneo<select name="tournamentId"><option value="">Seleccionar torneo (opcional)</option></select></label>
+        <label>Partido<select name="matchId"><option value="">Seleccionar partido (opcional)</option></select></label>
+        <label class="full">Marcador desde el punto de vista del ganador
+          <input name="score" required placeholder="6-4, 4-6, 10-7">
+        </label>
+        <label>Fecha<input name="date" type="date" required></label>
+        <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Enviar resultado</button><button class="btn btn-secondary" type="button" onclick="document.getElementById('profileResultForm').reset()">Limpiar</button></div>
+      </form>
+      <div id="profileResultNotice" class="muted" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- Resultados pendientes -->
+    <div id="profileTab-pendientes" class="tab-panel" style="padding:16px 0; display:none;">
+      <div id="profilePendingList" style="min-height:200px;"></div>
+    </div>
   </div>
 </div>
 </body>

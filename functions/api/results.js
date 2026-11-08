@@ -66,6 +66,8 @@ export async function onRequestPost(context) {
     winnerId: winner.id,
     loserId: loser.id,
     category: MATCH_CATEGORIES.includes(body.category) ? body.category : (winner.category || "singles"),
+    tournamentId: typeof body.tournamentId === "string" ? body.tournamentId : null,
+    matchId: typeof body.matchId === "string" ? body.matchId : null,
     score,
     playedAt: typeof body.playedAt === "string" ? body.playedAt : new Date().toISOString(),
     reportedBy: userId,
