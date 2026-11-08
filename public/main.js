@@ -1144,14 +1144,21 @@ async function loadTournaments() {
     const data = await api("/api/tournament");
     tournaments = (data.tournaments || []).filter(item => !isMonthlyTournament(item));
     updateRankingScopeOptions();
-    const featured = tournaments.find(item => ["registration", "scheduled", "in_progress"].includes(item.status));
+    let featured = null;
+    try {
+      const publicData = await api("/api/tournaments");
+      const publicTournaments = Array.isArray(publicData.tournaments) ? publicData.tournaments : [];
+      featured = publicTournaments.find(item => item.status === "abierto" || item.status === "en proceso") || publicTournaments[0] || null;
+    } catch (error) {
+      featured = tournaments.find(item => ["registration", "scheduled", "in_progress"].includes(item.status)) || null;
+    }
     if (featured) {
       const title = document.getElementById("heroTournamentTitle");
       const date = document.getElementById("heroTournamentDate");
       const summary = document.getElementById("heroTournamentSummary");
-      if (title) title.textContent = featured.title || `Campeonato · ${featured.month}`;
-      if (date) date.textContent = featured.startDate ? formatLocalDate(new Date(`${featured.startDate}T00:00:00`)) : featured.month;
-      if (summary) summary.textContent = featured.description || `${(featured.entries || []).length} inscritos · ${featured.format || "Formato por anunciar"}`;
+      if (title) title.textContent = featured.name || featured.title || "Campeonato";
+      if (date) date.textContent = featured.date ? formatLocalDate(new Date(`${featured.date}T00:00:00`)) : (featured.month || "Próximamente");
+      if (summary) summary.textContent = featured.description || `${(featured.participants || featured.entries || []).length} inscritos`;
     } else {
       const title = document.getElementById("heroTournamentTitle");
       const date = document.getElementById("heroTournamentDate");

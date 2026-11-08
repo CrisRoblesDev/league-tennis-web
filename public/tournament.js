@@ -124,21 +124,13 @@
 
     function renderHome() {
       const admin = adminView();
-      const visibleTournaments = admin
-        ? tournaments
-        : (function () {
-            const candidate = tournaments.find(item => item.status === "abierto" || item.status === "en proceso");
-            return candidate ? [candidate] : [];
-          })();
       const ranking = showRankings ? `<section class="mt-9" aria-label="Rankings"><p class="eyebrow text-[#598044] mb-2">TEMPORADA 2026</p><h2 class="display text-3xl font-bold mb-5">Rankings</h2><div class="grid lg:grid-cols-2 gap-5"><div class="card p-5"><h3 class="font-bold">Ranking general 2026</h3><p class="muted text-sm">3 puntos por victoria registrada.</p>${scoreTable(null)}</div><div class="card p-5"><h3 class="font-bold">Ranking por torneo</h3><label class="label mt-3" for="ranking-tournament">Torneo</label><select id="ranking-tournament" class="field">${tournaments.map(tournament => `<option value="${esc(tournament.id)}">${esc(tournament.name)}</option>`).join("")}</select><div id="ranking-body">${tournaments.length ? scoreTable(tournaments[0]) : '<p class="muted mt-4">Sin torneos.</p>'}</div></div></div></section>` : "";
       app.innerHTML = `<div class="fade"><div class="flex flex-wrap justify-between items-end gap-4 mb-6"><div><p class="eyebrow text-[#598044] mb-2">${admin ? "CENTRO DE CONTROL" : "EN LA CANCHA"}</p><h2 class="display text-3xl md:text-4xl font-bold">${admin ? "Panel de torneos" : "Explora los torneos"}</h2><p class="muted mt-2">${admin ? "Organiza jugadores, partidos y cuadros." : "Consulta los cuadros e inscríbete para jugar."}</p></div>${
         admin
           ? `<div class="flex flex-wrap items-center gap-2"><span class="pill">${tournaments.length} torneos</span>${btn("+ Crear torneo", "wizard-start", "", "light")}</div>`
           : ""
       }</div><div class="grid md:grid-cols-2 gap-5">${
-        (visibleTournaments.length
-          ? visibleTournaments.map((tournament, index) => `<article class="card overflow-hidden"><div class="h-2 ${index % 2 ? "bg-[#a3c979]" : "bg-[#d9f274]"}"></div><div class="p-6"><div class="flex justify-between gap-2 mb-5"><span class="eyebrow text-[#69845b]">TORNEO ${String(index + 1).padStart(2, "0")} · 2026</span>${pill(tournament.status)}</div><h3 class="display text-2xl font-bold mb-2">${esc(tournament.name)}</h3><p class="muted text-sm">${esc(tournament.description)}</p><div class="grid grid-cols-2 gap-3 my-5 py-4 border-y border-[#dce5d8] text-sm"><div><span class="muted block text-xs">Formato</span><strong>${esc((FORMATS[tournament.mode] || FORMATS.knockout).label)}</strong></div><div><span class="muted block text-xs">Inicio</span><strong>${date(tournament.date)}</strong></div><div><span class="muted block text-xs">Jugadores</span><strong>${tournament.participants.length} / ${tournament.capacity}</strong></div><div><span class="muted block text-xs">Sede</span><strong>${esc(tournament.venue || "Por definir")}</strong></div></div><div class="flex flex-wrap gap-2">${btn(admin ? "Gestionar" : "Ver torneo", "open", tournament.id, "")}${btn("Main Draw", "open-draw", tournament.id)}</div></div></article>`).join("")
-          : '<p class="muted mt-4">Sin campeonatos disponibles.</p>')
+        tournaments.map((tournament, index) => `<article class="card overflow-hidden"><div class="h-2 ${index % 2 ? "bg-[#a3c979]" : "bg-[#d9f274]"}"></div><div class="p-6"><div class="flex justify-between gap-2 mb-5"><span class="eyebrow text-[#69845b]">TORNEO ${String(index + 1).padStart(2, "0")} · 2026</span>${pill(tournament.status)}</div><h3 class="display text-2xl font-bold mb-2">${esc(tournament.name)}</h3><p class="muted text-sm">${esc(tournament.description)}</p><div class="grid grid-cols-2 gap-3 my-5 py-4 border-y border-[#dce5d8] text-sm"><div><span class="muted block text-xs">Formato</span><strong>${esc((FORMATS[tournament.mode] || FORMATS.knockout).label)}</strong></div><div><span class="muted block text-xs">Inicio</span><strong>${date(tournament.date)}</strong></div><div><span class="muted block text-xs">Jugadores</span><strong>${tournament.participants.length} / ${tournament.capacity}</strong></div><div><span class="muted block text-xs">Sede</span><strong>${esc(tournament.venue || "Por definir")}</strong></div></div><div class="flex flex-wrap gap-2">${btn(admin ? "Gestionar" : "Ver torneo", "open", tournament.id, "")}${btn("Main Draw", "open-draw", tournament.id)}</div></div></article>`).join("")
       }</div>${ranking}</div>`;
     }
 
