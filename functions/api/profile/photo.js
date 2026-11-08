@@ -1,4 +1,4 @@
-import { gRead, gWriteRaw, requireAuth, jsonResponse } from "../../../_helpers.js";
+import { gRead, gWriteRaw, requireAuth, jsonResponse } from "../../_helpers.js";
 
 const MAX_IMAGE_BYTES = 400 * 1024;
 
