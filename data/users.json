@@ -301,13 +301,15 @@
   {
     "id": "user-d09c35f2-579a-4fac-bdb4-18fb5369ff53",
     "name": "Anastasia filipova",
-    "email": "Filippova.ap83@gmail.com",
-    "password": "pbkdf2$100000$EoexBlJQFYabmeIjPlh2IQ$Pkxm_PsswheWMJWgkOvYFSFZw_mfGl4Y3sGJpRmNymQ",
-    "level": "",
-    "zone": "",
+    "email": "filippova.ap83@gmail.com",
+    "password": "pbkdf2$100000$bm7OmjsplqD_tgR7OmW5EA$x789sAw_4xwoTI47OMaKOMxLTZqN0HyeILXqG0gYX_o",
+    "level": null,
+    "zone": null,
     "role": "user",
     "created": "2026-11-04T16:28:24.394Z",
-    "membershipActive": false
+    "membershipActive": false,
+    "nationality": null,
+    "phone": null
   },
   {
     "id": "user-f3607eec-25f4-4775-a46e-bcdc45be58f0",
