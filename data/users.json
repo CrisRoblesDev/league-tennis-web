@@ -236,13 +236,15 @@
   {
     "id": "user-11549a34-ef61-47de-ba87-bb63924deeb1",
     "name": "Diego weisvein",
-    "email": "Diegoweisvein@gmail.com",
-    "password": "pbkdf2$100000$xFqT-lRZA2__PD7McZANBg$dHO2AROx8F7bV8b2tNhuwUAgfls_YxhJEJmACD5do3k",
-    "level": "",
-    "zone": "",
+    "email": "diegoweisvein@gmail.com",
+    "password": "pbkdf2$100000$QRhQoeOmG6ZxM5aIzNUIJw$oXwjf_lEkOhfWd03VvZDl1F4BZuD7WkGDdXHbTXIqJ4",
+    "level": null,
+    "zone": null,
     "role": "user",
     "created": "2026-11-04T16:28:24.294Z",
-    "membershipActive": false
+    "membershipActive": false,
+    "nationality": null,
+    "phone": null
   },
   {
     "id": "user-c214871c-3e87-483c-864c-d7042443fbbc",
