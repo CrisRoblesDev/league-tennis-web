@@ -183,14 +183,15 @@
     "id": "user-0243ad0c-dc30-48de-8c76-366be2d7192a",
     "name": "Roberto Estrugo",
     "email": "roberto.estrugo@temp.aventuratennisleague.com",
-    "password": "pbkdf2$100000$temp$placeholder",
+    "password": "pbkdf2$100000$nZ2Lee6otCa3kfDdsp1qrg$iPGger9wfG3keNd1J2AdeOhuWdRY3K3aa7KkdJNvEzI",
     "phone": null,
     "level": "4.0",
     "zone": "Aventura / Sunny Isles",
     "role": "user",
     "created": "2026-11-03T02:50:34.510Z",
     "membershipActive": false,
-    "temporary": true
+    "temporary": true,
+    "nationality": null
   },
   {
     "id": "user-2f60c373-73b3-43d9-a3ff-fa923487c313",
