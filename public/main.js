@@ -278,7 +278,8 @@ function renderProducts() {
       '<p class="muted">No hay productos de ropa y accesorios disponibles en este momento.</p>';
   }
   if (librosContainer) {
-    librosContainer.innerHTML = libros.map(renderProductCard).join("") ||
+    const featuredLibros = libros.slice(0, 3);
+    librosContainer.innerHTML = featuredLibros.map(renderProductCard).join("") ||
       '<p class="muted">No hay libros disponibles en este momento.</p>';
   }
 }

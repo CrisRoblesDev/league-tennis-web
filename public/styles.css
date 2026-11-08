@@ -524,8 +524,8 @@ form select[multiple] { min-height: 120px; }
 .membership-copy .benefits-list li { color: #e4e9ed; border-color: rgba(255,255,255,.13); }
 .membership-copy .benefits-list li::before { color: var(--green); }
 .membership-plan { padding: 28px; border-radius: 15px; background: #fff; color: var(--navy); box-shadow: 0 20px 50px rgba(0,0,0,.18); }
-.membership-image { margin: -28px -28px 18px; border-radius: 15px 15px 0 0; overflow: hidden; }
-.membership-image img { width: 100%; max-height: 220px; object-fit: cover; display: block; }
+.membership-image { margin: -28px -28px 18px; border-radius: 15px 15px 0 0; overflow: hidden; background: #f2f5f8; text-align: center; }
+.membership-image img { width: 100%; max-height: 260px; object-fit: contain; display: block; }
 .membership-plan .tag { margin-bottom: 12px; }
 .membership-plan .price-period { color: #6d7885; }
 .footer a { color: #dbe4eb; text-decoration: none; }
