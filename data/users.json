@@ -196,15 +196,16 @@
   {
     "id": "user-2f60c373-73b3-43d9-a3ff-fa923487c313",
     "name": "Diogo Vianna",
-    "email": "Dvianna29@gmail.com",
-    "password": "pbkdf2$100000$temp$placeholder",
+    "email": "dvianna29@gmail.com",
+    "password": "pbkdf2$100000$x8p5xuTsWd7ps903se_vXg$2FpQtb8FUYD7nF-7R7DY3jPiOONbesdC30a5UWB9FbM",
     "phone": null,
     "level": "4.0",
     "zone": "Aventura / Sunny Isles",
     "role": "user",
     "created": "2026-11-03T02:50:34.510Z",
     "membershipActive": false,
-    "temporary": true
+    "temporary": true,
+    "nationality": null
   },
   {
     "id": "user-be1b251f-f2bc-4fc3-9b08-dcb16eb5788a",
