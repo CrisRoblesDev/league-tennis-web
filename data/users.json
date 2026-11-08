@@ -223,13 +223,15 @@
   {
     "id": "user-292dc535-3d97-4ca0-ad8a-356cc668c40b",
     "name": "Joao figiwara",
-    "email": "JoaofugiwarA@me.com",
-    "password": "pbkdf2$100000$dO2_xt8WR1-wjVngqD38HA$TmgCHChfLNHjv1fkn5nkrASSDsthaDVBd8DQs0rLhCc",
-    "level": "",
-    "zone": "",
+    "email": "joaofugiwara@me.com",
+    "password": "pbkdf2$100000$W2AuvRkapekyw_gKp1FbNQ$Rk-QoeirZORcOG8v7vPdnfV49zWuCHljzRjbNEe1NpQ",
+    "level": null,
+    "zone": null,
     "role": "user",
     "created": "2026-11-04T16:28:24.271Z",
-    "membershipActive": false
+    "membershipActive": false,
+    "nationality": null,
+    "phone": null
   },
   {
     "id": "user-11549a34-ef61-47de-ba87-bb63924deeb1",
