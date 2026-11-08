@@ -71,14 +71,15 @@
     "id": "user-a0105a54-6253-46b6-a266-43b17d35dde5",
     "name": "Diego Grove",
     "email": "diego.grove@temp.aventuratennisleague.com",
-    "password": "pbkdf2$100000$temp$placeholder",
+    "password": "pbkdf2$100000$TJqFz2kqth1wXWhSMdjItA$UUwvIv1VWWp4hqf-t8tFSGroRhTw6J-dJNDpfYY9_Uc",
     "phone": null,
     "level": "4.0",
     "zone": "Aventura / Sunny Isles",
     "role": "user",
     "created": "2026-11-03T02:50:34.510Z",
     "membershipActive": false,
-    "temporary": true
+    "temporary": true,
+    "nationality": null
   },
   {
     "id": "user-9b9b2373-bf4b-47fc-9857-8afd9f3efef8",
