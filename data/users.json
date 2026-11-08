@@ -276,12 +276,14 @@
     "id": "user-a3002558-7133-4cf2-a246-aec97fc783e0",
     "name": "Rodrigo perez",
     "email": "rdjsscc@icloud.com",
-    "password": "pbkdf2$100000$ycVfwCkcGoau0nbS4APsyg$-f57DTiRSo9eGrN_NqS02YnxbaxJ0h9EsdVNeTYMmas",
-    "level": "",
-    "zone": "",
+    "password": "pbkdf2$100000$2x1VbUu-4ZP8butAXi5xwQ$-CHRXEH9y51g-Qy2bxZMjTcglVQalLnHuHlAaMf063k",
+    "level": null,
+    "zone": null,
     "role": "user",
     "created": "2026-11-04T16:28:24.362Z",
-    "membershipActive": false
+    "membershipActive": false,
+    "nationality": null,
+    "phone": null
   },
   {
     "id": "user-29bb2990-ee1e-46a0-a498-f4ae67549d3d",
