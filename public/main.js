@@ -1134,15 +1134,17 @@ async function createPlayer(e) {
   }
 }
 
+function isMonthlyTournament(item) {
+  return Boolean(item && String(item.id || "").startsWith("monthly-"));
+}
+
 // ============ PUBLIC TOURNAMENTS ============
 async function loadTournaments() {
   try {
     const data = await api("/api/tournament");
-    tournaments = data.tournaments || [];
+    tournaments = (data.tournaments || []).filter(item => !isMonthlyTournament(item));
     updateRankingScopeOptions();
-    const featured = tournaments.find(item => item.month === new Date().toISOString().slice(0, 7)) ||
-      tournaments.find(item => ["registration", "scheduled", "in_progress"].includes(item.status)) ||
-      tournaments[0];
+    const featured = tournaments.find(item => ["registration", "scheduled", "in_progress"].includes(item.status));
     if (featured) {
       const title = document.getElementById("heroTournamentTitle");
       const date = document.getElementById("heroTournamentDate");
@@ -1150,6 +1152,13 @@ async function loadTournaments() {
       if (title) title.textContent = featured.title || `Campeonato · ${featured.month}`;
       if (date) date.textContent = featured.startDate ? formatLocalDate(new Date(`${featured.startDate}T00:00:00`)) : featured.month;
       if (summary) summary.textContent = featured.description || `${(featured.entries || []).length} inscritos · ${featured.format || "Formato por anunciar"}`;
+    } else {
+      const title = document.getElementById("heroTournamentTitle");
+      const date = document.getElementById("heroTournamentDate");
+      const summary = document.getElementById("heroTournamentSummary");
+      if (title) title.textContent = "Sin campeonatos disponibles";
+      if (date) date.textContent = "Próximamente";
+      if (summary) summary.textContent = "Consulta los campeonatos disponibles en la liga.";
     }
   } catch (error) {
     showToast(`No se pudieron cargar los torneos: ${error.message}`);

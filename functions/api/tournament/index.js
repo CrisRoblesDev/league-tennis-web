@@ -1,5 +1,9 @@
 import { gRead, gWrite, rankPlayers, requireAuth, jsonResponse } from "../../_helpers.js";
 
+function isMonthlyTournament(item) {
+  return Boolean(item && String(item.id || "").startsWith("monthly-"));
+}
+
 export async function onRequestGet(context) {
   const { env } = context;
   const [players, results, tournaments] = await Promise.all([
@@ -11,6 +15,7 @@ export async function onRequestGet(context) {
   const month = new Date().toISOString().slice(0, 7);
   const playerById = new Map(players.map(player => [player.id, player]));
   const publicTournaments = tournaments
+    .filter(item => !isMonthlyTournament(item))
     .map(item => ({
       ...item,
       entries: (item.entries || []).map(entry => ({
@@ -30,7 +35,7 @@ export async function onRequestGet(context) {
   return jsonResponse({
     players: rankedPlayers.slice(0, 16),
     total: rankedPlayers.length,
-    tournament: publicTournaments.find(item => item.month === month) || null,
+    tournament: publicTournaments.find(item => ["registration", "scheduled", "in_progress"].includes(item.status)) || null,
     tournaments: publicTournaments
   });
 }
@@ -105,24 +110,9 @@ export async function onRequestPost(context) {
   const month = new Date().toISOString().slice(0, 7);
   let tournament = requestedId
     ? tournaments.find(item => item.id === requestedId)
-    : tournaments.find(item => item.month === month);
+    : tournaments.find(item => item.month === month && !isMonthlyTournament(item));
   if (!tournament) {
-    tournament = {
-      id: `monthly-${month}`,
-      title: `Campeonato mensual · ${month}`,
-      month,
-      description: "Inscripción abierta para jugadores de League Tennis Aventura.",
-      levels: ["2.5", "3.0", "3.5", "4.0", "4.5", "5.0"],
-      startDate: "",
-      endDate: "",
-      venue: "",
-      format: "Eliminación directa · Best of 3",
-      status: "registration",
-      entries: [],
-      matches: [],
-      created: new Date().toISOString()
-    };
-    tournaments.push(tournament);
+    return jsonResponse({ error: "No hay torneo disponible para este mes" }, 404);
   }
   if (tournament.status !== "registration") {
     return jsonResponse({ error: "Las inscripciones para este torneo ya están cerradas" }, 409);
