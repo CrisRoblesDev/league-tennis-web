@@ -852,6 +852,48 @@ async function respondToResult(resultId, action) {
   }
 }
 
+const SCORE_SET_NORMAL = ["6-0","6-1","6-2","6-3","6-4","7-5","7-6","5-7","4-6","3-6","2-6","1-6","0-6"];
+const SCORE_MATCH_TIEBREAK = ["10-0","10-1","10-2","10-3","10-4","10-5","10-6","10-7","10-8","10-9","11-9","12-10","9-10","8-10","7-10","6-10","5-10","4-10","3-10","2-10","1-10","0-10"];
+
+function scoreOptionsForSet(index, totalSets) {
+  const isDeciding = index === totalSets - 1 && totalSets === 3;
+  return (isDeciding ? [...SCORE_SET_NORMAL, ...SCORE_MATCH_TIEBREAK] : SCORE_SET_NORMAL)
+    .map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+}
+
+function renderResultSetsGrid() {
+  const grid = document.getElementById("resultSetsGrid");
+  const hidden = document.getElementById("resultScoreHidden");
+  const setsWinner = Number(document.getElementById("resultSetsWinner").value || 0);
+  const setsLoser = Number(document.getElementById("resultSetsLoser").value || 0);
+  const totalSets = Math.max(setsWinner, setsLoser);
+  if (!grid || !hidden) return;
+  grid.innerHTML = "";
+  for (let i = 0; i < totalSets; i++) {
+    const cell = document.createElement("div");
+    cell.style.cssText = "display:flex; flex-direction:column; gap:4px;";
+    cell.innerHTML = `
+      <label style="font-size:11px; font-weight:800; color:var(--muted);">Set ${i + 1}</label>
+      <select name="setScore${i}" style="padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:#fff; font-size:14px;">${scoreOptionsForSet(i, totalSets)}</select>
+    `;
+    grid.appendChild(cell);
+  }
+  buildResultScoreString();
+}
+
+function buildResultScoreString() {
+  const setsWinner = Number(document.getElementById("resultSetsWinner").value || 0);
+  const setsLoser = Number(document.getElementById("resultSetsLoser").value || 0);
+  const totalSets = Math.max(setsWinner, setsLoser);
+  const parts = [];
+  for (let i = 0; i < totalSets; i++) {
+    const sel = document.querySelector(`select[name="setScore${i}"]`);
+    if (sel) parts.push(sel.value);
+  }
+  const hidden = document.getElementById("resultScoreHidden");
+  if (hidden) hidden.value = parts.join(", ");
+}
+
 async function openResultModal(presetWinnerId, presetLoserId) {
   if (!currentUser) {
     openModal("loginModal");
@@ -861,7 +903,7 @@ async function openResultModal(presetWinnerId, presetLoserId) {
   const player = players.find(item => item.userId === currentUser.id);
   const isMember = currentUser.role === "member" || currentUser.membershipActive === true;
   if (!player && !isMember) {
-    openModal("createPlayerModal");
+    openPlayerModal();
     showToast("Crea tu perfil de jugador primero.");
     return;
   }
@@ -873,6 +915,17 @@ async function openResultModal(presetWinnerId, presetLoserId) {
     select.innerHTML = `<option value="">Seleccionar</option>${options}`;
   });
   document.getElementById("resultForm").date.value = new Date().toISOString().slice(0, 10);
+
+  // Inicializar controles de sets visuales
+  const setsWinner = document.getElementById("resultSetsWinner");
+  const setsLoser = document.getElementById("resultSetsLoser");
+  if (setsWinner && setsLoser) {
+    setsWinner.value = "2";
+    setsLoser.value = "0";
+    setsWinner.onchange = renderResultSetsGrid;
+    setsLoser.onchange = renderResultSetsGrid;
+  }
+  renderResultSetsGrid();
 
   // Cargar torneos para el select opcional
   const tournamentSelect = document.getElementById("resultTournamentSelect");
@@ -944,6 +997,12 @@ async function openResultModal(presetWinnerId, presetLoserId) {
 async function submitResult(event) {
   event.preventDefault();
   const form = event.target;
+  const scoreInput = document.getElementById("resultScoreHidden");
+  const score = scoreInput ? scoreInput.value : form.score.value;
+  if (!score) {
+    showNotice("resultNotice", "Ingresa el marcador completo (mínimo 2 sets).", true);
+    return;
+  }
   try {
     await api("/api/results", {
       method: "POST",
@@ -953,7 +1012,7 @@ async function submitResult(event) {
         category: form.elements.namedItem("category").value,
         tournamentId: form.elements.namedItem("tournamentId").value || null,
         matchId: form.elements.namedItem("matchId").value || null,
-        score: form.score.value,
+        score,
         playedAt: form.date.value
       })
     });
@@ -1079,7 +1138,7 @@ async function submitChallenge(event) {
     return;
   }
   if (!players.some(player => player.userId === currentUser.id)) {
-    openModal("createPlayerModal");
+    openPlayerModal();
     showToast("Crea tu perfil de jugador primero.");
     return;
   }
@@ -1191,26 +1250,149 @@ function filterPlayers() {
   window.__ranking3dUpdate?.(filtered);
 }
 
-// ============ CREATE PLAYER PROFILE ============
+// ============ CREATE / EDIT PLAYER PROFILE ============
+
+function openPlayerModal(playerId = null) {
+  const form = document.getElementById("playerForm");
+  if (!form) return;
+  form.reset();
+  const preview = document.getElementById("playerPhotoPreview");
+  if (preview) { preview.style.display = "none"; preview.src = ""; }
+  const idInput = form.elements.namedItem("playerId");
+  if (idInput) idInput.value = playerId || "";
+
+  const title = document.querySelector("#createPlayerModal .modal-head h2");
+  if (title) title.textContent = playerId ? "Editar tu perfil de jugador" : "Mi perfil de jugador";
+
+  const submitBtn = form.querySelector('button[type="submit"]');
+  if (submitBtn) submitBtn.textContent = playerId ? "Guardar cambios de perfil" : "Guardar perfil de jugador";
+
+  const notice = document.getElementById("playerNotice");
+  if (notice) {
+    notice.textContent = playerId
+      ? "Edita tus datos. La foto solo se reemplaza si eliges una nueva."
+      : "Completa tu perfil de jugador para participar en la liga.";
+    notice.className = "notice-bar";
+  }
+
+  if (playerId) {
+    const player = players.find(p => p.id === playerId);
+    if (player) {
+      form.elements.namedItem("name").value = player.name || "";
+      form.level.value = player.level || "";
+      form.elements.namedItem("category").value = player.category || "singles";
+      form.elements.namedItem("gender").value = player.gender || "hombres";
+      form.zone.value = player.zone || "";
+      form.elements.namedItem("country").value = player.country || "";
+      form.elements.namedItem("bio").value = player.bio || "";
+    } else {
+      showToast("No se encontró el perfil de jugador.");
+      closeModal("createPlayerModal");
+    }
+  } else {
+    const own = players.find(p => p.userId === currentUser.id);
+    if (own) {
+      form.elements.namedItem("playerId").value = own.id;
+      form.elements.namedItem("name").value = own.name || "";
+      form.level.value = own.level || "";
+      form.elements.namedItem("category").value = own.category || "singles";
+      form.elements.namedItem("gender").value = own.gender || "hombres";
+      form.zone.value = own.zone || "";
+      form.elements.namedItem("country").value = own.country || "";
+      form.elements.namedItem("bio").value = own.bio || "";
+      if (title) title.textContent = "Editar tu perfil de jugador";
+      if (submitBtn) submitBtn.textContent = "Guardar cambios de perfil";
+    }
+  }
+  openModal("createPlayerModal");
+}
+
+async function loadCountries() {
+  const select = document.getElementById("playerCountrySelect");
+  if (!select) return;
+  const options = COUNTRIES.map(function(c) {
+    return '<option value="' + escapeHtml(c.name) + '">' + escapeHtml(c.flag) + " " + escapeHtml(c.name) + "</option>";
+  }).join("");
+  select.innerHTML = '<option value="">Selecciona un país</option>' + options;
+}
+
 async function createPlayer(e) {
   e.preventDefault();
   if (!currentUser) { openModal("loginModal"); return; }
   const form = e.target;
+  const playerId = form.elements.namedItem("playerId")?.value;
+  if (playerId) return editPlayer(e);
+
+  const name = form.elements.namedItem("name").value.trim();
+  const level = form.level.value;
+  const zone = form.zone.value;
+  const category = form.elements.namedItem("category").value;
+  const gender = form.elements.namedItem("gender").value;
+  const country = form.elements.namedItem("country")?.value.trim() || "";
+  const bio = form.elements.namedItem("bio")?.value.trim() || "";
+
+  if (!name || !level || !zone || !category || !gender) {
+    showToast("Completa todos los campos obligatorios.");
+    return;
+  }
+
   try {
+    let photoUrl = null;
+    const fileInput = form.elements.namedItem("photoFile");
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+      photoUrl = await uploadPlayerPhotoFile(form);
+    }
+
     await api("/api/players", {
       method: "POST",
-      body: JSON.stringify({
-        name: form.elements.namedItem("name").value,
-        level: form.level.value,
-        zone: form.zone.value,
-        category: form.elements.namedItem("category").value,
-        gender: form.elements.namedItem("gender").value
-      })
+      body: JSON.stringify({ name, level, zone, category, gender, country, bio, photoUrl })
     });
     closeModal("createPlayerModal");
     await loadPlayers();
-    showToast("Perfil de jugador creado!");
+    showToast("Perfil de jugador guardado.");
     form.reset();
+    const preview = document.getElementById("playerPhotoPreview");
+    if (preview) { preview.style.display = "none"; preview.src = ""; }
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function editPlayer(e) {
+  e.preventDefault();
+  if (!currentUser) { openModal("loginModal"); return; }
+  const form = e.target;
+  const playerId = form.elements.namedItem("playerId").value;
+  if (!playerId) return;
+
+  try {
+    let photoUrl = null;
+    const fileInput = form.elements.namedItem("photoFile");
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+      photoUrl = await uploadPlayerPhotoFile(form);
+    }
+
+    const body = {
+      name: form.elements.namedItem("name").value.trim(),
+      level: form.level.value,
+      zone: form.zone.value,
+      category: form.elements.namedItem("category").value,
+      gender: form.elements.namedItem("gender").value,
+      country: form.elements.namedItem("country")?.value.trim() || "",
+      bio: form.elements.namedItem("bio")?.value.trim() || ""
+    };
+    if (photoUrl) body.photoUrl = photoUrl;
+
+    await api(`/api/players/${encodeURIComponent(playerId)}`, {
+      method: "PATCH",
+      body: JSON.stringify(body)
+    });
+    closeModal("createPlayerModal");
+    await loadPlayers();
+    showToast("Perfil de jugador actualizado.");
+    form.reset();
+    const preview = document.getElementById("playerPhotoPreview");
+    if (preview) { preview.style.display = "none"; preview.src = ""; }
   } catch (error) {
     showToast(error.message);
   }
@@ -1615,6 +1797,31 @@ function previewProfilePhotoFile(input) {
     preview.style.display = "block";
   };
   reader.readAsDataURL(file);
+}
+
+function previewPlayerPhotoFile(input) {
+  const preview = document.getElementById("playerPhotoPreview");
+  const file = input.files && input.files[0];
+  if (!preview) return;
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    preview.src = reader.result;
+    preview.style.display = "block";
+  };
+  reader.readAsDataURL(file);
+}
+
+async function uploadPlayerPhotoFile(form) {
+  const fileInput = form.elements.namedItem("photoFile");
+  const file = fileInput?.files?.[0];
+  if (!file) return null;
+  const compressed = await compressProfileImage(file);
+  const uploaded = await api("/api/profile/photo", {
+    method: "POST",
+    body: JSON.stringify({ image: compressed, country: "" })
+  });
+  return uploaded.photo;
 }
 
 async function compressProductImage(file) {
@@ -2351,6 +2558,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (!isAdminPage && !isStorePage) handlePaymentReturn();
   await checkAuth();
+  await loadCountries();
   if (isAdminPage) {
     if (!currentUser) {
       window.location.replace("/?admin=login");

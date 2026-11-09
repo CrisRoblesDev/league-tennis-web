@@ -1,11 +1,11 @@
 (() => {
   const translations = {
     en: {
-      "CAMPEONATOS": "TOURNAMENTS", "CLASIFICACIÓN": "RANKINGS", "DESAFÍOS": "CHALLENGES",
+      "CAMPEONATOS": "TOURNAMENTS", "CLASIFICACIÓN": "MAIN DRAW", "DESAFÍOS": "CHALLENGES",
       "TIENDA": "SHOP", "MEMBRESÍA": "MEMBERSHIP", "Iniciar sesión": "Sign in",
       "Registrarse": "Create account", "Miami, Florida · Liga de tenis": "Miami, Florida · Tennis league",
       "Tu próximo partido": "Your next match", "empieza aquí.": "starts here.",
-      "Compite en Miami. Encuentra torneos por nivel, sigue tu posición en la clasificación y juega con una comunidad que ama el tenis.": "Compete in Miami. Find tournaments by level, track your ranking, and play with a community that loves tennis.",
+      "Compite en Miami. Encuentra torneos por nivel, sigue tu posición en el Main Draw y juega con una comunidad que ama el tenis.": "Compete in Miami. Find tournaments by level, track your position in the Main Draw, and play with a community that loves tennis.",
       "Únete a la liga": "Join the league", "Explorar campeonatos": "Explore tournaments",
       "Compite": "Compete", "Sube en el ranking": "Climb the rankings", "Encuentra tu comunidad": "Find your community",
       "PRÓXIMO EN LA LIGA": "UP NEXT IN THE LEAGUE",
@@ -15,7 +15,7 @@
       "Productos y membresía": "Products and membership", "JUEGA POR ALGO": "PLAY FOR SOMETHING",
       "Campeonatos": "Tournaments", "Consulta torneos, jugadores inscritos, rondas y marcadores publicados.": "Browse tournaments, registered players, rounds, and published scores.",
       "¿Sin torneo? Encuentra un desafío": "No tournament? Find a challenge", "SUBE EN LA ESCALERILLA": "CLIMB THE LADDER",
-      "Clasificación": "Rankings", "Cada partido confirmado cuenta. Encuentra tu posición y el próximo objetivo.": "Every confirmed match counts. Find your position and your next goal.",
+      "Main Draw": "Main Draw", "Cada partido confirmado cuenta. Encuentra tu posición y el próximo objetivo.": "Every confirmed match counts. Find your position and your next goal.",
       "+ Registrar resultado": "+ Submit a result", "Todos los niveles": "All levels", "Todas las zonas": "All areas",
       "Buscar jugador...": "Search players...", "Pos.": "Rank", "Jugador": "Player", "Nivel": "Level",
       "Zona": "Area", "Partidos": "Matches", "Puntos": "Points", "UN RIVAL TE ESPERA": "YOUR NEXT OPPONENT AWAITS",

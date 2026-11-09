@@ -42,6 +42,7 @@ export async function onRequestPost(context) {
   }
   const category = MATCH_CATEGORIES.includes(b.category) ? b.category : "singles";
   const gender = MODALITIES.includes(b.gender) ? b.gender : "hombres";
+  const photoUrl = typeof b.photoUrl === "string" && b.photoUrl.trim() ? b.photoUrl.trim() : null;
   players.push({
     id: `player-${crypto.randomUUID()}`,
     userId,
@@ -50,6 +51,9 @@ export async function onRequestPost(context) {
     zone: b.zone || user.zone || "Aventura / Sunny Isles",
     category,
     gender,
+    country: typeof b.country === "string" ? b.country.trim() : null,
+    bio: typeof b.bio === "string" ? b.bio.trim().slice(0, 300) : null,
+    photo: photoUrl,
     matches: 0,
     points: 0,
     created: new Date().toISOString()

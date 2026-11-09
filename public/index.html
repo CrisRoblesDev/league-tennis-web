@@ -24,7 +24,7 @@
   </div>
   <nav class="nav" id="nav" aria-label="Secciones">
     <a href="#torneo"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4ZM7 6H4a3 3 0 0 0 3 3M17 6h3a3 3 0 0 1-3 3"/></svg><span>CAMPEONATOS</span></a>
-    <a href="#ranking"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3 21h18M7 17V9M12 17V5M17 17v-6"/></svg><span>CLASIFICACIÓN</span></a>
+    <a href="#ranking"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3 21h18M7 17V9M12 17V5M17 17v-6"/></svg><span>Main Draw</span></a>
     <a href="#desafios"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg><span>DESAFÍOS</span></a>
     <a href="/tienda#ropa"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M8 3 4 6l2 3 2-1v13h8V8l2 1 2-3-4-3a4 4 0 0 1-8 0Z"/></svg><span>ROPA</span></a>
     <a href="/tienda#libros"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15ZM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg><span>LIBROS</span></a>
@@ -53,7 +53,7 @@
   <div class="hero-content">
     <span class="eyebrow">Miami, Florida · Liga de tenis</span>
     <h1>Tu próximo partido<br>empieza aquí.</h1>
-    <p>Compite en Miami. Encuentra torneos por nivel, sigue tu posición en la clasificación y juega con una comunidad que ama el tenis.</p>
+    <p>Compite en Miami. Encuentra torneos por nivel, sigue tu posición en el Main Draw y juega con una comunidad que ama el tenis.</p>
     <div class="hero-cta">
       <button class="btn btn-primary" onclick="openModal('registerModal')">Únete a la liga</button>
       <button class="btn btn-secondary" onclick="scrollToSection('#torneo')">Explorar campeonatos</button>
@@ -72,7 +72,7 @@
 <main>
   <section class="quick-links" aria-label="Explorar la liga">
     <a href="#torneo"><span class="quick-icon">01</span><span><b>Campeonatos</b><small>Calendario y cuadros</small></span><span class="quick-arrow">↗</span></a>
-    <a href="#ranking"><span class="quick-icon">02</span><span><b>Clasificación</b><small>Jugadores y puntos</small></span><span class="quick-arrow">↗</span></a>
+    <a href="#ranking"><span class="quick-icon">02</span><span><b>Main Draw</b><small>Jugadores y puntos</small></span><span class="quick-arrow">↗</span></a>
     <a href="/tienda"><span class="quick-icon">03</span><span><b>Tienda oficial</b><small>Ropa, accesorios y libros</small></span><span class="quick-arrow">↗</span></a>
   </section>
 
@@ -92,7 +92,7 @@
     <div class="section-head">
       <div>
         <span class="section-kicker">SUBE EN LA ESCALERILLA</span>
-        <h2>Clasificación</h2>
+        <h2>Main Draw</h2>
         <p class="section-sub">Cada partido confirmado cuenta. Encuentra tu posición y el próximo objetivo.</p>
       </div>
       <div class="ranking-head-actions">
@@ -360,7 +360,7 @@
 
 <footer class="footer">
   <div class="footer-brand"><img src="/league-tennis-logo.png" alt=""><span><b>LEAGUE TENNIS AVENTURA</b><br>Miami, Florida · Tu liga, tu juego.</span></div>
-  <div><a href="#torneo">Campeonatos</a> · <a href="#ranking">Clasificación</a> · <a href="#tienda">Tienda</a></div>
+  <div><a href="#torneo">Campeonatos</a> · <a href="#ranking">Main Draw</a> · <a href="#tienda">Tienda</a></div>
 </footer>
 
 <!-- LOGIN MODAL -->
@@ -419,15 +419,31 @@
 
 <!-- CREATE PLAYER MODAL -->
 <div class="modal" id="createPlayerModal">
-  <div class="modal-box">
-    <div class="modal-head"><h2>Crear perfil de jugador</h2><button class="close" onclick="closeModal('createPlayerModal')">×</button></div>
-    <form id="playerForm">
-      <label class="full">Nombre<input name="name" required placeholder="Nombre para mostrar"></label>
-      <label>Nivel<select name="level" required><option value="">Seleccionar</option><option>2.5</option><option>3.0</option><option>3.5</option><option>4.0</option><option>4.5</option><option>5.0</option></select></label>
+  <div class="modal-box" style="max-width:700px; width:92vw;">
+    <div class="modal-head"><h2>Mi perfil de jugador</h2><button class="close" onclick="closeModal('createPlayerModal')">×</button></div>
+    <div id="playerNotice" class="notice-bar" style="margin-bottom:12px;"></div>
+    <form id="playerForm" class="admin-form" style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+      <input type="hidden" name="playerId">
+      <label class="full">Nombre para mostrar<input name="name" required placeholder="Ej. Juan Pérez"></label>
+      <label>Nivel<select name="level" required><option value="">Seleccionar nivel</option><option>2.5</option><option>3.0</option><option>3.5</option><option>4.0</option><option>4.5</option><option>5.0</option></select></label>
       <label>Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label>
       <label>Modalidad<select name="gender" required><option value="hombres">Hombres</option><option value="mujeres">Mujeres</option></select></label>
-      <label>Zona<select name="zone" required><option value="">Seleccionar</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
-      <button class="btn btn-primary full" type="submit">Crear perfil</button>
+      <label>Zona<select name="zone" required><option value="">Seleccionar zona</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
+      <label>País / Bandera<select name="country" id="playerCountrySelect"><option value="">Selecciona un país</option></select></label>
+      <div class="full" style="grid-column: 1 / -1;">
+        <label style="display:block; font-weight:800; margin-bottom:6px;">Foto de perfil</label>
+        <input name="photoFile" type="file" accept="image/png,image/jpeg,image/webp" onchange="previewPlayerPhotoFile(this)">
+        <img id="playerPhotoPreview" alt="Vista previa" style="display:none; width:90px; height:90px; object-fit:cover; border-radius:50%; border:2px solid var(--line); margin:8px 0;">
+        <p class="muted" style="font-size:12px;">PNG, JPG o WebP. Máximo 400 KB.</p>
+      </div>
+      <div class="full" style="grid-column: 1 / -1;">
+        <label style="display:block; font-weight:800; margin-bottom:6px;">Información sobre ti (bio)</label>
+        <textarea name="bio" rows="3" maxlength="300" placeholder="Cuéntanos algo sobre tu juego, experiencia o lo que quieras compartir."></textarea>
+      </div>
+      <div class="full admin-form-actions" style="grid-column: 1 / -1; display:flex; gap:10px; justify-content:flex-start;">
+        <button class="btn btn-primary" type="submit">Guardar perfil de jugador</button>
+        <button class="btn btn-secondary" type="button" onclick="closeModal('createPlayerModal')">Cancelar</button>
+      </div>
     </form>
   </div>
 </div>
@@ -442,10 +458,26 @@
       <label>Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label>
       <label>Torneo<select id="resultTournamentSelect" name="tournamentId"><option value="">Seleccionar torneo (opcional)</option></select></label>
       <label>Partido<select id="resultMatchSelect" name="matchId"><option value="">Seleccionar partido (opcional)</option></select></label>
-      <label class="full">Marcador desde el punto de vista del ganador
-        <input name="score" required placeholder="6-4, 4-6, 10-7" aria-describedby="scoreHelp">
-        <small id="scoreHelp" class="muted">Mejor de 3 sets; separa cada set con coma. Ejemplo: 6-4, 4-6, 10-7.</small>
-      </label>
+
+      <div style="background:#f0f3f5;border-radius:8px;padding:12px;margin:10px 0;">
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px; font-weight:800;">
+          <span style="flex:1;">Sets del ganador</span>
+          <span style="flex:1;">Sets del rival</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:end;">
+          <select name="setsWinner" id="resultSetsWinner" style="flex:1; min-width:110px;">
+            <option value="0">0</option><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option>
+          </select>
+          <select name="setsLoser" id="resultSetsLoser" style="flex:1; min-width:110px;">
+            <option value="0" selected>0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="resultSetsGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:8px; margin:10px 0;"></div>
+      <input type="hidden" name="score" id="resultScoreHidden">
+      <small id="scoreHelp" class="muted">Selecciona los sets y el marcador de cada uno. El texto se arma solo.</small>
+
       <label>Fecha<input name="date" type="date" required></label>
       <button class="btn btn-primary full">Guardar resultado</button>
     </form>
