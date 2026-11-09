@@ -199,5 +199,15 @@
     "image": "/api/uploads/1794191604961-9299.jpg",
     "category": "ropa",
     "interval": "month"
+  },
+  {
+    "id": "prod-a583e3e9-f249-4b59-82b6-ba42f4d34326",
+    "name": "Over grip 30",
+    "price": 3000,
+    "type": "digital",
+    "description": "30 over grip",
+    "active": true,
+    "image": "/api/uploads/1794191903682-9303.jpg",
+    "category": "ropa"
   }
 ]
