@@ -188,5 +188,15 @@
     "image": "/api/uploads/1794188871291-9293.jpg",
     "category": "ropa",
     "interval": "month"
+  },
+  {
+    "id": "prod-db8b866c-05d0-43f4-b527-e0e2b35de104",
+    "name": "Net Videos Cell Phone Holder",
+    "price": 2000,
+    "type": "digital",
+    "description": "Net cell phone holder records the best videos from the best angle",
+    "active": true,
+    "image": "/api/uploads/1794191604961-9299.jpg",
+    "category": ""
   }
 ]
