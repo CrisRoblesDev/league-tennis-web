@@ -177,5 +177,15 @@
     "description": "Libro digital de tenis",
     "link": "/api/books/el-juego-interior-del-tenis.pdf",
     "url": "/api/books/el-juego-interior-del-tenis.pdf"
+  },
+  {
+    "id": "prod-cbde6c4e-a5ca-4752-9bd0-19569b2a1707",
+    "name": "Silicone grip",
+    "price": 1000,
+    "type": "digital",
+    "description": "Anti-moisture silicone grip",
+    "active": false,
+    "image": "/api/uploads/1794188630096-9293.jpg",
+    "category": "ropa"
   }
 ]
