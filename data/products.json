@@ -187,7 +187,9 @@
     "active": true,
     "image": "/api/uploads/1794188871291-9293.jpg",
     "category": "ropa",
-    "interval": "month"
+    "interval": "month",
+    "link": "https://buy.stripe.com/14AfZj8iL9JVbBc9chbMQ05",
+    "url": "https://buy.stripe.com/14AfZj8iL9JVbBc9chbMQ05"
   },
   {
     "id": "prod-db8b866c-05d0-43f4-b527-e0e2b35de104",
