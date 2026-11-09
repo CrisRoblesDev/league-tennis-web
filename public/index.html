@@ -417,32 +417,52 @@
   </div>
 </div>
 
-<!-- CREATE PLAYER MODAL -->
+<!-- CREATE PLAYER MODAL - Enhanced -->
 <div class="modal" id="createPlayerModal">
-  <div class="modal-box" style="max-width:700px; width:92vw;">
-    <div class="modal-head"><h2>Mi perfil de jugador</h2><button class="close" onclick="closeModal('createPlayerModal')">×</button></div>
+  <div class="modal-box" style="max-width:760px; width:92vw;">
+    <div class="modal-head"><h2 id="playerModalTitle">Mi perfil de jugador</h2><button class="close" onclick="closeModal('createPlayerModal')">×</button></div>
     <div id="playerNotice" class="notice-bar" style="margin-bottom:12px;"></div>
-    <form id="playerForm" class="admin-form" style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+    <form id="playerForm" class="admin-form" style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
       <input type="hidden" name="playerId">
-      <label class="full">Nombre para mostrar<input name="name" required placeholder="Ej. Juan Pérez"></label>
-      <label>Nivel<select name="level" required><option value="">Seleccionar nivel</option><option>2.5</option><option>3.0</option><option>3.5</option><option>4.0</option><option>4.5</option><option>5.0</option></select></label>
-      <label>Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label>
-      <label>Modalidad<select name="gender" required><option value="hombres">Hombres</option><option value="mujeres">Mujeres</option></select></label>
-      <label>Zona<select name="zone" required><option value="">Seleccionar zona</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
-      <label>País / Bandera<select name="country" id="playerCountrySelect"><option value="">Selecciona un país</option></select></label>
-      <div class="full" style="grid-column: 1 / -1;">
-        <label style="display:block; font-weight:800; margin-bottom:6px;">Foto de perfil</label>
-        <input name="photoFile" type="file" accept="image/png,image/jpeg,image/webp" onchange="previewPlayerPhotoFile(this)">
-        <img id="playerPhotoPreview" alt="Vista previa" style="display:none; width:90px; height:90px; object-fit:cover; border-radius:50%; border:2px solid var(--line); margin:8px 0;">
-        <p class="muted" style="font-size:12px;">PNG, JPG o WebP. Máximo 400 KB.</p>
+
+      <!-- Core info grid -->
+      <div style="grid-column: 1 / -1; display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+        <label><span>Nombre para mostrar</span><input name="name" required placeholder="Ej. Juan Pérez" autocomplete="name"></label>
+
+        <label><span>Nivel de juego</span><select name="level" required><option value="">Seleccionar nivel</option><option>2.5</option><option>3.0</option><option>3.5</option><option>4.0</option><option>4.5</option><option>5.0</option></select></label>
+
+        <label><span>Categoría</span><select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label>
+
+        <label><span>Modalidad</span><select name="gender" required><option value="hombres">Hombres</option><option value="mujeres">Mujeres</option></select></label>
+
+        <label><span>Zona de Miami</span><select name="zone" required><option value="">Seleccionar zona</option><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label>
+
+        <!-- Country Flag Selector - Visual grid -->
+        <label class="full" style="grid-column: 1 / -1;"><span>País / Bandera</span><div id="countryFlagSelector" class="country-flag-grid" role="listbox" aria-label="Seleccionar país"><!-- Populated by JS --></div><input type="hidden" name="country" id="playerCountryInput"><p class="muted" style="font-size:12px; margin-top:6px;">Click en una bandera para seleccionar</p></label>
       </div>
+
+      <!-- Photo Upload with Drag & Drop -->
       <div class="full" style="grid-column: 1 / -1;">
-        <label style="display:block; font-weight:800; margin-bottom:6px;">Información sobre ti (bio)</label>
-        <textarea name="bio" rows="3" maxlength="300" placeholder="Cuéntanos algo sobre tu juego, experiencia o lo que quieras compartir."></textarea>
+        <label style="display:block; font-weight:700; margin-bottom:8px;">Foto de perfil</label>
+        <div class="photo-upload-zone" id="playerPhotoDropZone" style="border:2px dashed var(--line); border-radius:12px; padding:24px; text-align:center; cursor:pointer; transition:border-color 0.2s, background 0.2s; background:#fafafa; position:relative;">
+          <input name="photoFile" type="file" accept="image/png,image/jpeg,image/webp" id="playerPhotoFileInput" style="display:none;" onchange="previewPlayerPhotoFile(this)">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--muted); margin-bottom:8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          <p style="margin:0 0 4px; font-weight:600;">Arrastra tu foto aquí o haz click</p>
+          <p class="muted" style="font-size:12px; margin:0;">PNG, JPG o WebP · Máx 400 KB · Cuadrada recomendada</p>
+          <img id="playerPhotoPreview" alt="Vista previa" style="display:none; width:100px; height:100px; object-fit:cover; border-radius:50%; border:3px solid var(--accent); margin:12px auto 0; box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+        </div>
       </div>
-      <div class="full admin-form-actions" style="grid-column: 1 / -1; display:flex; gap:10px; justify-content:flex-start;">
-        <button class="btn btn-primary" type="submit">Guardar perfil de jugador</button>
-        <button class="btn btn-secondary" type="button" onclick="closeModal('createPlayerModal')">Cancelar</button>
+
+      <!-- Bio with character counter -->
+      <div class="full" style="grid-column: 1 / -1;">
+        <label style="display:block; font-weight:700; margin-bottom:6px;">Información sobre ti (bio)<span id="bioCharCount" class="muted" style="float:right; font-weight:400; font-size:13px;">0/300</span></label>
+        <textarea name="bio" rows="4" maxlength="300" placeholder="Cuéntanos sobre tu juego, experiencia, estilo favorito..." oninput="updateBioCharCount(this)"></textarea>
+      </div>
+
+      <!-- Actions with save indicator -->
+      <div class="full admin-form-actions" style="grid-column: 1 / -1; display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap;">
+        <div id="playerSaveIndicator" class="save-indicator saved" style="font-size:12px; padding:6px 12px; border-radius:20px; background:#e9f3d8; color:#3a5a1b; font-weight:600;">✓ Guardado</div>
+        <div style="display:flex; gap:10px;"><button class="btn btn-secondary" type="button" onclick="closeModal('createPlayerModal')">Cancelar</button><button class="btn btn-primary" type="submit" id="playerSubmitBtn">Guardar perfil de jugador</button></div>
       </div>
     </form>
   </div>
