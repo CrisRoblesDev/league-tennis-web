@@ -209,5 +209,15 @@
     "active": true,
     "image": "/api/uploads/1794191903682-9303.jpg",
     "category": "ropa"
+  },
+  {
+    "id": "prod-14cf5e6c-b82d-454b-9d77-a367ee3f31af",
+    "name": "Tennis friend",
+    "price": 2000,
+    "type": "digital",
+    "description": "Tennis plushie",
+    "active": true,
+    "image": "/api/uploads/1794191991614-9302.jpg",
+    "category": "ropa"
   }
 ]
