@@ -14,7 +14,7 @@ export async function onRequestGet(context) {
   const user = users.find(u => u.id === userId);
   if (!user) return jsonResponse({ user: null });
   const needsPhone = !user.phone;
-  return jsonResponse({ user: { id: user.id, name: user.name, email: user.email, role: user.role, level: user.level, zone: user.zone, nationality: user.nationality || "", phone: user.phone || "", membershipActive: user.membershipActive, needsPhone, requiresPhone: needsPhone, phoneRequired: needsPhone, mustRegisterPhone: needsPhone } });
+  return jsonResponse({ user: { id: user.id, name: user.name, email: user.email, role: user.role, level: user.level, zone: user.zone, nationality: user.nationality || "", phone: user.phone || "", photo: user.photo || "", membershipActive: user.membershipActive, needsPhone, requiresPhone: needsPhone, phoneRequired: needsPhone, mustRegisterPhone: needsPhone } });
 }
 
 export async function onRequestPost(context) {

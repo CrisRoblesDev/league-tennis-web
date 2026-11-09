@@ -5,12 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>League Tennis Aventura | Liga de tenis en Miami</title>
 <link rel="icon" type="image/png" href="/league-tennis-favicon.png">
-<link rel="stylesheet" href="styles.css?v=18">
+<link rel="stylesheet" href="styles.css?v=19">
 <link rel="stylesheet" href="tournament.css?v=6">
 <script src="i18n.js?v=13" defer></script>
-<script src="tournament.js?v=23" defer></script>
-<script src="main.js?v=20" defer></script>
-<script src="bracket-engine.js?v=3" defer></script>
+<script src="score-editor.js?v=1" defer></script>
+<script src="tournament.js?v=24" defer></script>
+<script src="main.js?v=21" defer></script>
+<script src="bracket-engine.js?v=4" defer></script>
 </head>
 <body>
 
@@ -468,37 +469,44 @@
   </div>
 </div>
 
-<!-- RESULT MODAL -->
+<!-- RESULT MODAL — flujo canónico: torneo → partido → jugadores automáticos → marcador -->
 <div class="modal" id="resultModal">
   <div class="modal-box">
     <div class="modal-head"><h2>Registrar resultado</h2><button class="close" onclick="closeModal('resultModal')">×</button></div>
     <form id="resultForm">
-      <label>Jugador ganador<select name="winnerId" required><option value="">Seleccionar</option></select></label>
-      <label>Rival<select name="loserId" required><option value="">Seleccionar</option></select></label>
-      <label>Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label>
-      <label>Torneo<select id="resultTournamentSelect" name="tournamentId"><option value="">Seleccionar torneo (opcional)</option></select></label>
-      <label>Partido<select id="resultMatchSelect" name="matchId"><option value="">Seleccionar partido (opcional)</option></select></label>
-
-      <div style="background:#f0f3f5;border-radius:8px;padding:12px;margin:10px 0;">
-        <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px; font-weight:800;">
-          <span style="flex:1;">Sets del ganador</span>
-          <span style="flex:1;">Sets del rival</span>
-        </div>
-        <div style="display:flex; gap:10px; align-items:end;">
-          <select name="setsWinner" id="resultSetsWinner" style="flex:1; min-width:110px;">
-            <option value="0">0</option><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option>
-          </select>
-          <select name="setsLoser" id="resultSetsLoser" style="flex:1; min-width:110px;">
-            <option value="0" selected>0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option>
-          </select>
-        </div>
+      <div class="full result-step">
+        <div class="result-step-head"><span class="result-step-num">1</span><span class="result-step-title">Elige el torneo</span></div>
+        <label style="display:flex; flex-direction:column; gap:6px;">Torneo
+          <select id="resultTournamentSelect" name="tournamentId"><option value="">Seleccionar torneo (opcional)</option></select>
+        </label>
+        <p class="muted" style="margin-top:6px;">Puedes reportar un partido libre o de un torneo de la liga.</p>
       </div>
-
-      <div id="resultSetsGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:8px; margin:10px 0;"></div>
-      <input type="hidden" name="score" id="resultScoreHidden">
-      <small id="scoreHelp" class="muted">Selecciona los sets y el marcador de cada uno. El texto se arma solo.</small>
-
-      <label>Fecha<input name="date" type="date" required></label>
+      <div class="full result-step">
+        <div class="result-step-head"><span class="result-step-num">2</span><span class="result-step-title">Elige el partido</span></div>
+        <label style="display:flex; flex-direction:column; gap:6px;">Partido
+          <select id="resultMatchSelect" name="matchId"><option value="">Seleccionar partido (opcional)</option></select>
+        </label>
+        <div id="resultPlayersBox" class="result-players" style="margin-top:10px;" aria-live="polite">
+          <div class="result-player"><b id="resultPlayerAName">—</b><small>Elige un partido del torneo…</small></div>
+          <span class="result-vs">vs</span>
+          <div class="result-player"><b id="resultPlayerBName">—</b><small>Los 2 jugadores se colocan solos</small></div>
+        </div>
+        <div id="resultManualPlayers" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+          <label style="display:flex; flex-direction:column; gap:6px;">Jugador A<select name="winnerA"><option value="">Seleccionar</option></select></label>
+          <label style="display:flex; flex-direction:column; gap:6px;">Jugador B<select name="loserB" aria-label="Jugador B (rival)"><option value="">Seleccionar</option></select></label>
+        </div>
+        <input type="hidden" name="winnerId" id="resultWinnerHidden">
+        <input type="hidden" name="loserId" id="resultLoserHidden">
+      </div>
+      <div class="full result-step">
+        <div class="result-step-head"><span class="result-step-num">3</span><span class="result-step-title">Marcador</span></div>
+        <div class="score-editor-root" id="resultScoreEditor"></div>
+        <input type="hidden" name="score" id="resultScoreHidden">
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <label style="display:flex; flex-direction:column; gap:6px;">Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label>
+        <label style="display:flex; flex-direction:column; gap:6px;">Fecha<input name="date" type="date" required></label>
+      </div>
       <button class="btn btn-primary full">Guardar resultado</button>
     </form>
     <div id="resultNotice" class="muted"></div>
@@ -536,64 +544,93 @@
   </div>
 </div>
 
-<!-- PROFILE EDIT MODAL -->
+<!-- PROFILE EDIT MODAL — rediseñado: encabezado + pestañas + guardado con indicador -->
 <div class="modal" id="profileEditModal">
-  <div class="modal-box" style="max-width:700px; width:92vw; max-height:90vh; overflow:auto; display:flex; flex-direction:column;">
+  <div class="modal-box">
     <div class="modal-head"><h2>Mi perfil</h2><button class="close" onclick="closeModal('profileEditModal')">×</button></div>
-    <div class="profile-tabs" style="display:flex; gap:0; border-bottom:1px solid var(--line); margin-bottom:16px;">
-      <button class="tab-btn active" onclick="showProfileTab('datos', this)" data-tab="datos">Datos personales</button>
-      <button class="tab-btn" onclick="showProfileTab('foto', this)" data-tab="foto">Foto de perfil</button>
-      <button class="tab-btn" onclick="showProfileTab('partidos', this)" data-tab="partidos">Mis partidos</button>
-      <button class="tab-btn" onclick="showProfileTab('reportar', this)" data-tab="reportar">Reportar resultado</button>
-      <button class="tab-btn" onclick="showProfileTab('pendientes', this)" data-tab="pendientes">Resultados pendientes</button>
+    <div class="profile-head" id="profileHead">
+      <div class="profile-head-avatar" id="profileHeadAvatar">
+        <img id="profileAvatarImg" alt="" hidden>
+        <span class="profile-head-initials" id="profileHeadInitials">—</span>
+      </div>
+      <div class="profile-head-info">
+        <b id="profileHeadName">Mi cuenta</b>
+        <span id="profileHeadEmail"></span>
+        <div class="profile-head-chips" id="profileHeadChips"></div>
+      </div>
+    </div>
+    <div class="profile-tabs" role="tablist" aria-label="Secciones de Mi perfil">
+      <button class="tab-btn is-active" onclick="showProfileTab('datos', this)" data-tab="datos" role="tab">Datos personales</button>
+      <button class="tab-btn" onclick="showProfileTab('foto', this)" data-tab="foto" role="tab">Foto de perfil</button>
+      <button class="tab-btn" onclick="showProfileTab('partidos', this)" data-tab="partidos" role="tab">Mis partidos</button>
+      <button class="tab-btn" onclick="showProfileTab('reportar', this)" data-tab="reportar" role="tab">Reportar resultado</button>
+      <button class="tab-btn" onclick="showProfileTab('pendientes', this)" data-tab="pendientes" role="tab">Resultados pendientes</button>
     </div>
 
     <!-- Datos personales -->
-    <div id="profileTab-datos" class="tab-panel active" style="padding:16px 0;">
-      <form id="profileEditForm" class="admin-form">
-        <label>Nombre<input name="name" maxlength="100" required></label>
-        <label>Email<input name="email" type="email" required></label>
-        <label>Teléfono<input name="phone" type="tel" placeholder="Ej. +1 305 555 0123"></label>
+    <div id="profileTab-datos" class="profile-tab-panel" role="tabpanel">
+      <form id="profileEditForm" class="profile-form admin-form">
+        <label>Nombre<input name="name" maxlength="100" required autocomplete="name"></label>
+        <label>Email<input name="email" type="email" required autocomplete="email"></label>
+        <label>Teléfono<input name="phone" type="tel" placeholder="Ej. +1 305 555 0123" autocomplete="tel"></label>
         <label>País / Bandera<select name="country" id="profileCountrySelect"><option value="">Selecciona un país</option></select></label>
-        <label class="full"><span><input name="password" type="password" minlength="8" maxlength="128" placeholder="Dejar vacío para no cambiar la contraseña"></span></label>
-        <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar cambios</button><button class="btn btn-secondary" type="button" onclick="closeModal('profileEditModal')">Cancelar</button></div>
+        <label class="full">Nueva contraseña (opcional)<input name="password" type="password" minlength="8" maxlength="128" placeholder="Dejar vacío para no cambiar la contraseña" autocomplete="new-password"></label>
+        <div class="profile-form-actions full">
+          <span class="saved-indicator" id="profileSavedIndicator">Sin cambios</span>
+          <span style="display:flex; gap:8px;"><button class="btn btn-secondary" type="button" onclick="closeModal('profileEditModal')">Cancelar</button><button class="btn btn-primary" type="submit">Guardar cambios</button></span>
+        </div>
       </form>
     </div>
 
     <!-- Foto de perfil -->
-    <div id="profileTab-foto" class="tab-panel" style="padding:16px 0; display:none;">
-      <label class="full">Foto de perfil (PNG, JPG o WebP, máximo 400 KB)
-        <input name="photoFile" type="file" accept="image/png,image/jpeg,image/webp" onchange="previewProfilePhotoFile(this)">
-      </label>
-      <img id="profilePhotoPreview" alt="Vista previa" style="display:none; width:120px; height:120px; object-fit:cover; border-radius:50%; border:2px solid var(--line); margin:8px 0;">
-      <p class="muted">La foto se guardará al pulsar "Guardar cambios" en la pestaña Datos personales.</p>
+    <div id="profileTab-foto" class="profile-tab-panel" role="tabpanel" hidden>
+      <div class="profile-photo-row">
+        <img id="profilePhotoPreview" class="profile-photo-preview" alt="Vista previa de tu foto" hidden>
+        <span class="profile-photo-empty" id="profilePhotoEmpty">⚽</span>
+        <div class="profile-dropzone">
+          <label class="full" style="display:flex; flex-direction:column; gap:6px; font-weight:800; font-size:12px;">Foto de perfil (PNG, JPG o WebP, máximo 400 KB)
+            <input name="photoFile" id="profilePhotoFileInput" type="file" accept="image/png,image/jpeg,image/webp" onchange="previewProfilePhotoFile(this)">
+          </label>
+          <p class="muted" style="margin-top:8px;">Elige la foto y pulsa <b>Guardar cambios</b> en la pestaña Datos personales: se subirá junto con tus datos.</p>
+        </div>
+      </div>
     </div>
 
     <!-- Mis partidos -->
-    <div id="profileTab-partidos" class="tab-panel" style="padding:16px 0; display:none;">
-      <div id="profileMatchesList" style="min-height:200px;"></div>
+    <div id="profileTab-partidos" class="profile-tab-panel" role="tabpanel" hidden>
+      <div id="profileMatchesList" class="profile-cards"></div>
     </div>
 
-    <!-- Reportar resultado -->
-    <div id="profileTab-reportar" class="tab-panel" style="padding:16px 0; display:none;">
-      <form id="profileResultForm" class="admin-form">
-        <label>Jugador ganador<select name="winnerId" required><option value="">Seleccionar</option></select></label>
-        <label>Rival<select name="loserId" required><option value="">Seleccionar</option></select></label>
+    <!-- Reportar resultado — mismo flujo canónico que la página principal -->
+    <div id="profileTab-reportar" class="profile-tab-panel" role="tabpanel" hidden>
+      <form id="profileResultForm" class="profile-form admin-form">
+        <label class="full">Torneo<select id="profileTournamentSelect" name="tournamentId"><option value="">Seleccionar torneo (opcional)</option></select></label>
+        <label class="full">Elige el partido<select id="profileMatchSelect" name="matchId"><option value="">Seleccionar partido (opcional)</option></select></label>
+        <div class="result-players full" id="profilePlayersBox" aria-live="polite">
+          <div class="result-player"><b id="profilePlayerAName">—</b><small>Elige un partido del torneo…</small></div>
+          <span class="result-vs">vs</span>
+          <div class="result-player"><b id="profilePlayerBName">—</b><small>Los 2 jugadores se colocan solos</small></div>
+        </div>
+        <div class="full" id="profileManualPlayers" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <label style="display:flex; flex-direction:column; gap:6px;">Jugador A<select name="winnerA"><option value="">Seleccionar</option></select></label>
+          <label style="display:flex; flex-direction:column; gap:6px;">Jugador B<select name="loserB" aria-label="Jugador B (rival)"><option value="">Seleccionar</option></select></label>
+        </div>
+        <input type="hidden" name="winnerId" id="profileWinnerHidden">
+        <input type="hidden" name="loserId" id="profileLoserHidden">
+        <div class="full" id="profileScoreEditor"></div>
+        <input type="hidden" name="score" id="profileScoreHidden">
         <label>Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label>
-        <label>Torneo<select name="tournamentId"><option value="">Seleccionar torneo (opcional)</option></select></label>
-        <label>Partido<select name="matchId"><option value="">Seleccionar partido (opcional)</option></select></label>
-        <label class="full">Marcador desde el punto de vista del ganador
-          <input name="score" required placeholder="6-4, 4-6, 10-7">
-        </label>
         <label>Fecha<input name="date" type="date" required></label>
-        <div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Enviar resultado</button><button class="btn btn-secondary" type="button" onclick="document.getElementById('profileResultForm').reset()">Limpiar</button></div>
+        <div class="profile-form-actions full">
+          <span class="saved-indicator" id="profileResultNotice" role="status"></span>
+          <span style="display:flex; gap:8px;"><button class="btn btn-secondary" type="button" id="profileResultResetBtn">Limpiar</button><button class="btn btn-primary" type="submit">Enviar resultado</button></span>
+        </div>
       </form>
-      <div id="profileResultNotice" class="muted" style="margin-top:8px;"></div>
     </div>
 
     <!-- Resultados pendientes -->
-    <div id="profileTab-pendientes" class="tab-panel" style="padding:16px 0; display:none;">
-      <div id="profilePendingList" style="min-height:200px;"></div>
+    <div id="profileTab-pendientes" class="profile-tab-panel" role="tabpanel" hidden>
+      <div id="profilePendingList" class="profile-cards"></div>
     </div>
   </div>
 </div>

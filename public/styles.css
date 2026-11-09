@@ -1787,3 +1787,72 @@ html, body { overflow-x: hidden; }
   .stat-number { font-size: 20px; }
   .admin-quick-actions { grid-template-columns: 1fr; }
 }
+
+/* ===== RESULTADO: flujo torneo → partido → marcador (compartido) ===== */
+#resultForm .full.result-step { display: flex; flex-direction: column; gap: 6px; }
+.result-step { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 12px; }
+.result-step + .result-step { margin-top: 10px; }
+.result-step-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.result-step-num { display: grid; place-items: center; flex: 0 0 24px; height: 24px; border-radius: 8px; background: var(--green); color: var(--navy); font-size: 12px; font-weight: 900; }
+.result-step-title { font-size: 13px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; color: var(--navy); }
+.result-players { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: stretch; }
+.result-player { border: 1px solid var(--line); border-radius: 10px; background: #fafafa; padding: 10px 12px; text-align: center; }
+.result-player b { display: block; font-size: 14px; overflow-wrap: anywhere; }
+.result-player small { color: var(--muted); font-size: 12px; }
+.result-player.is-winner { border-color: var(--green); background: #f2f7e9; }
+.result-vs { align-self: center; font-size: 11px; font-weight: 900; color: var(--muted); text-transform: uppercase; }
+.score-editor { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 12px; }
+.score-editor-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.score-editor-names { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 14px; }
+.score-editor-names .se-vs { color: var(--muted); font-size: 11px; text-transform: uppercase; }
+.score-editor-count { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; background: #f5f7f8; }
+.score-editor-count button { border: 0; background: transparent; border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 12px; font-weight: 800; color: var(--navy); cursor: pointer; }
+.score-editor-count button.is-active { background: var(--navy); color: #fff; }
+.score-editor-hint { margin-top: 6px; font-size: 12px; color: var(--muted); }
+.score-editor-rows { display: grid; gap: 8px; margin-top: 10px; }
+.se-set { display: grid; grid-template-columns: 56px 64px 16px 64px 1fr; align-items: center; gap: 6px; }
+.se-set-label { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.se-games { width: 64px; text-align: center; border: 1px solid #d8dee4; border-radius: 8px; padding: 8px; font: inherit; font-size: 15px; font-weight: 800; color: var(--navy); background: #fff; }
+.se-games.is-setwinner { border-color: var(--green); background: #f2f7e9; }
+.se-dash { color: var(--muted); font-weight: 900; }
+.se-winner { font-size: 12px; font-weight: 700; color: #3a5a1b; }
+.score-editor-preview { margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: #eef3f6; color: var(--navy); font-size: 13px; }
+.score-editor-error { min-height: 1.2em; margin-top: 6px; font-size: 12px; font-weight: 700; color: #8e3028; }
+.score-editor-error:empty { display: none; }
+
+/* ===== MI PERFIL (rediseñado) ===== */
+#profileEditModal .modal-box { max-width: 720px; }
+.profile-head { display: flex; align-items: center; gap: 14px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; margin-bottom: 14px; }
+.profile-head-avatar { position: relative; flex: 0 0 auto; }
+.profile-head-avatar img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid var(--green); display: block; }
+.profile-head-initials { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; background: var(--navy); color: var(--green); font-size: 22px; font-weight: 900; }
+.profile-head-info { min-width: 0; }
+.profile-head-info b { display: block; font-size: 16px; overflow-wrap: anywhere; }
+.profile-head-info span { display: block; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.profile-head-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.profile-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 6px; border-bottom: 1px solid var(--line); scrollbar-width: thin; }
+.profile-tabs .tab-btn { flex: 0 0 auto; border: 1px solid var(--line); background: #fff; color: var(--navy); border-radius: 999px; padding: 8px 14px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.profile-tabs .tab-btn.is-active { background: var(--navy); border-color: var(--navy); color: #fff; }
+.profile-tab-panel { padding: 10px 0 4px; }
+.profile-tab-panel[hidden] { display: none; }
+.profile-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.profile-form .full { grid-column: 1 / -1; }
+.profile-form-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.saved-indicator { font-size: 12px; font-weight: 800; color: #3a5a1b; }
+.saved-indicator.is-dirty { color: #8e3028; }
+.profile-photo-row { display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
+.profile-photo-preview { width: 110px; height: 110px; object-fit: cover; border-radius: 50%; border: 2px solid var(--green); }
+.profile-photo-empty { width: 110px; height: 110px; border-radius: 50%; display: grid; place-items: center; background: #eef1e8; color: var(--muted); font-size: 30px; font-weight: 900; }
+.profile-cards { display: grid; gap: 10px; }
+.profile-card { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 12px; }
+.profile-card-title { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+.profile-card-actions { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+.profile-dropzone { flex: 1 1 220px; min-width: 200px; }
+.profile-tab-panel .empty-note { padding: 18px; text-align: center; color: var(--muted); font-size: 13px; border: 1px dashed var(--line); border-radius: 10px; background: #fff; }
+@media (max-width: 640px) {
+  .profile-form { grid-template-columns: 1fr; }
+  .se-set { grid-template-columns: 48px 56px 14px 56px 1fr; }
+  .se-games { width: 56px; }
+  .result-players { grid-template-columns: 1fr; }
+  .result-vs { text-align: center; }
+}

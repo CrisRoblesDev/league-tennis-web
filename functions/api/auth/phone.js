@@ -1,9 +1,34 @@
-import { gRead, gWrite, requireAuth, jsonResponse } from "../../_helpers.js";
+import { gRead, gWrite, requireAuth, jsonResponse, hashPw } from "../../_helpers.js";
 
 function validatePhone(phone) {
   const value = typeof phone === "string" ? phone.trim() : "";
   if (!value || value.length < 7 || value.replace(/\D/g, "").length < 7) return null;
   return value;
+}
+
+function validateEmail(value) {
+  const email = typeof value === "string" ? value.trim().toLowerCase() : "";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return null;
+  return email;
+}
+
+function publicUser(user, needsPhone) {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    level: user.level,
+    zone: user.zone,
+    nationality: user.nationality || "",
+    phone: user.phone || "",
+    photo: user.photo || "",
+    membershipActive: user.membershipActive,
+    needsPhone,
+    requiresPhone: needsPhone,
+    phoneRequired: needsPhone,
+    mustRegisterPhone: needsPhone
+  };
 }
 
 async function handle(request, env) {
@@ -22,21 +47,7 @@ async function handle(request, env) {
       requiresPhone: needsPhone,
       phoneRequired: needsPhone,
       mustRegisterPhone: needsPhone,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        level: user.level,
-        zone: user.zone,
-        nationality: user.nationality || "",
-        phone: user.phone || "",
-        membershipActive: user.membershipActive,
-        needsPhone,
-        requiresPhone: needsPhone,
-        phoneRequired: needsPhone,
-        mustRegisterPhone: needsPhone
-      }
+      user: publicUser(user, needsPhone)
     });
   }
 
@@ -69,6 +80,22 @@ async function handle(request, env) {
     }
     target.name = nameValue;
   }
+  if (body && body.email !== undefined) {
+    const email = validateEmail(body.email);
+    if (!email) return jsonResponse({ error: "Email inválido." }, 400);
+    const taken = users.some(item => item.id !== target.id && typeof item.email === "string" && item.email.toLowerCase() === email);
+    if (taken) return jsonResponse({ error: "Email ya registrado" }, 409);
+    target.email = email;
+  }
+  if (body && typeof body.password === "string" && body.password.length > 0) {
+    if (body.password.length < 8 || body.password.length > 128) {
+      return jsonResponse({ error: "La contraseña debe tener entre 8 y 128 caracteres." }, 400);
+    }
+    target.password = await hashPw(body.password);
+  }
+  if (body && typeof body.photo === "string" && body.photo.startsWith("/api/uploads/")) {
+    target.photo = body.photo;
+  }
   await gWrite(env, "users", users);
 
   const needsPhone = false;
@@ -79,21 +106,7 @@ async function handle(request, env) {
     requiresPhone: needsPhone,
     phoneRequired: needsPhone,
     mustRegisterPhone: needsPhone,
-    user: {
-      id: target.id,
-      name: target.name,
-      email: target.email,
-      role: target.role,
-      level: target.level,
-      zone: target.zone,
-      nationality: target.nationality || "",
-      phone: target.phone || "",
-      membershipActive: target.membershipActive,
-      needsPhone,
-      requiresPhone: needsPhone,
-      phoneRequired: needsPhone,
-      mustRegisterPhone: needsPhone
-    }
+    user: publicUser(target, false)
   });
 }
 

@@ -31,6 +31,7 @@ const COUNTRIES = [
 ];
 
 let currentUser = null;
+let pendingProfilePhotoFile = null;
 let players = [];
 let products = [];
 let matchResults = [];
@@ -852,46 +853,151 @@ async function respondToResult(resultId, action) {
   }
 }
 
-const SCORE_SET_NORMAL = ["6-0","6-1","6-2","6-3","6-4","7-5","7-6","5-7","4-6","3-6","2-6","1-6","0-6"];
-const SCORE_MATCH_TIEBREAK = ["10-0","10-1","10-2","10-3","10-4","10-5","10-6","10-7","10-8","10-9","11-9","12-10","9-10","8-10","7-10","6-10","5-10","4-10","3-10","2-10","1-10","0-10"];
+// ============ RESULTADOS: flujo canónico (torneo → partido → marcador) ============
+// Un solo flujo idéntico en página principal, main draw, admin y perfil, con el
+// editor compartido window.TennisScore (score-editor.js). La cascada carga los
+// torneos, al elegir uno despliega "Elige el partido" y el partido coloca solo
+// sus 2 jugadores (read-only confirmados); el marcador se completa set por set
+// con los juegos de ambos jugadores y el ganador se detecta por sets ganados.
+let principalResultEditor = null;
+let profileResultEditor = null;
+let adminResultEditor = null;
+let principalResultPlayers = null;
+let profileResultPlayers = null;
+let adminResultPlayers = null;
+let adminResultCascade = null;
 
-function scoreOptionsForSet(index, totalSets) {
-  const isDeciding = index === totalSets - 1 && totalSets === 3;
-  return (isDeciding ? [...SCORE_SET_NORMAL, ...SCORE_MATCH_TIEBREAK] : SCORE_SET_NORMAL)
-    .map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+function resultPlayerMaps() {
+  return {
+    byId: new Map(players.map(p => [p.id, p])),
+    byUserId: new Map(players.map(p => [p.userId, p]))
+  };
+}
+
+function tournamentLabel(tournament) {
+  return tournament.name || tournament.title || tournament.month || "Torneo";
+}
+
+// Deja lista una cascada torneo → partido → jugadores automáticos.
+// config: { tournamentSelect, matchSelect, nameA, nameB, manualWrap, manualA, manualB,
+//           hiddenWinner, hiddenLoser, onPlayers({playerAId, playerBId, playerAName, playerBName, match, tournament}) }
+// Devuelve { setTournaments(list), applyMatch(matchId) }.
+function setupResultCascade(config) {
+  const tournamentSelect = config.tournamentSelect;
+  const matchSelect = config.matchSelect;
+  let tournamentsData = [];
+  if (!tournamentSelect || !matchSelect) return { setTournaments() {}, applyMatch() {} };
+
+  function normalizedMatches(tournament) {
+    return (tournament.matches || []).map(match => {
+      const resolved = window.TennisScore.resolvePlayers(match, resultPlayerMaps());
+      return { match, resolved };
+    }).filter(item => item.resolved.playerAId && item.resolved.playerBId);
+  }
+
+  function playerOptions() {
+    return players.map(player => {
+      const categoryLabel = CATEGORY_LABELS[player.category || "singles"] || "Singles";
+      return `<option value="${escapeHtml(player.id)}">${escapeHtml(player.name)} · ${escapeHtml(player.level)} · ${escapeHtml(categoryLabel)}</option>`;
+    }).join("");
+  }
+
+  function applyPlayers(payload) {
+    if (config.nameA) config.nameA.textContent = payload ? payload.playerAName : "—";
+    if (config.nameB) config.nameB.textContent = payload ? payload.playerBName : "—";
+    if (config.hiddenWinner) config.hiddenWinner.value = payload ? payload.playerAId : "";
+    if (config.hiddenLoser) config.hiddenLoser.value = payload ? payload.playerBId : "";
+    const manualActive = !payload && !tournamentSelect.value && !matchSelect.value;
+    if (config.manualWrap) config.manualWrap.style.display = manualActive ? "grid" : "none";
+    if (manualActive && config.manualA && config.manualB && (!config.manualA.options.length || config.manualA.options.length <= 1)) {
+      const options = playerOptions();
+      config.manualA.innerHTML = `<option value="">Seleccionar</option>${options}`;
+      config.manualB.innerHTML = `<option value="">Seleccionar</option>${options}`;
+    }
+    if (payload && config.onPlayers) config.onPlayers(payload);
+  }
+
+  function applyMatch(matchId, tournamentId) {
+    if (!matchId) { applyPlayers(null); return; }
+    const tournament = tournamentsData.find(item => item.id === (tournamentId || tournamentSelect.value));
+    const item = tournament ? normalizedMatches(tournament).find(entry => String(entry.match.id) === String(matchId)) : null;
+    if (!item) { applyPlayers(null); return; }
+    const resolved = item.resolved;
+    applyPlayers({ playerAId: resolved.playerAId, playerBId: resolved.playerBId, playerAName: resolved.playerAName, playerBName: resolved.playerBName, match: item.match, tournament });
+  }
+
+  function fillMatchSelect(tournamentId) {
+    const tournament = tournamentsData.find(item => item.id === tournamentId);
+    const list = tournament ? normalizedMatches(tournament) : [];
+    matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>' +
+      list.map(({ match, resolved }) =>
+        `<option value="${escapeHtml(match.id)}">${escapeHtml(match.round || "Partido")} · ${escapeHtml(resolved.playerAName)} vs ${escapeHtml(resolved.playerBName)}</option>`).join("");
+    matchSelect.disabled = !tournamentId;
+  }
+
+  matchSelect.disabled = true;
+  tournamentSelect.onchange = function() {
+    fillMatchSelect(this.value);
+    if (!this.value) applyPlayers(null);
+  };
+  matchSelect.onchange = function() { applyMatch(this.value); };
+  // Estado inicial: sin torneo/partido → jugadores manuales visibles y cargados.
+  applyPlayers(null);
+
+  return {
+    setTournaments(list) {
+      tournamentsData = Array.isArray(list) ? list : [];
+      tournamentSelect.innerHTML = '<option value="">Seleccionar torneo (opcional)</option>' +
+        tournamentsData.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(tournamentLabel(t))}</option>`).join("");
+    },
+    getTournaments() { return tournamentsData; },
+    applyMatch,
+    selectTournament(tournamentId) {
+      tournamentSelect.value = tournamentId || "";
+      fillMatchSelect(tournamentSelect.value);
+      if (!tournamentSelect.value) applyPlayers(null);
+    }
+  };
+}
+
+function mountResultEditor(form, editorHostId, initial) {
+  const el = document.getElementById(editorHostId);
+  if (!el || !window.TennisScore) return null;
+  return window.TennisScore.createEditor(el, {
+    playerAName: initial && initial.a ? initial.a : "Jugador A",
+    playerBName: initial && initial.b ? initial.b : "Jugador B",
+    initialSets: initial && initial.sets ? initial.sets : [],
+    onChange(api) {
+      const hidden = form && form.querySelector ? form.querySelector('input[name="score"]') : null;
+      if (hidden) hidden.value = api.score();
+    }
+  });
 }
 
 function renderResultSetsGrid() {
-  const grid = document.getElementById("resultSetsGrid");
-  const hidden = document.getElementById("resultScoreHidden");
-  const setsWinner = Number(document.getElementById("resultSetsWinner").value || 0);
-  const setsLoser = Number(document.getElementById("resultSetsLoser").value || 0);
-  const totalSets = Math.max(setsWinner, setsLoser);
-  if (!grid || !hidden) return;
-  grid.innerHTML = "";
-  for (let i = 0; i < totalSets; i++) {
-    const cell = document.createElement("div");
-    cell.style.cssText = "display:flex; flex-direction:column; gap:4px;";
-    cell.innerHTML = `
-      <label style="font-size:11px; font-weight:800; color:var(--muted);">Set ${i + 1}</label>
-      <select name="setScore${i}" style="padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:#fff; font-size:14px;">${scoreOptionsForSet(i, totalSets)}</select>
-    `;
-    grid.appendChild(cell);
-  }
   buildResultScoreString();
+  if (principalResultEditor) {
+    const host = document.getElementById("resultScoreEditor");
+    if (host && !host.querySelector(".score-editor")) mountResultEditor(document.getElementById("resultForm"), "resultScoreEditor");
+  }
 }
 
+// Compat: sincroniza el hidden principal cuando el editor cambia.
 function buildResultScoreString() {
-  const setsWinner = Number(document.getElementById("resultSetsWinner").value || 0);
-  const setsLoser = Number(document.getElementById("resultSetsLoser").value || 0);
-  const totalSets = Math.max(setsWinner, setsLoser);
-  const parts = [];
-  for (let i = 0; i < totalSets; i++) {
-    const sel = document.querySelector(`select[name="setScore${i}"]`);
-    if (sel) parts.push(sel.value);
-  }
   const hidden = document.getElementById("resultScoreHidden");
-  if (hidden) hidden.value = parts.join(", ");
+  if (hidden && principalResultEditor) hidden.value = principalResultEditor.score();
+}
+
+async function loadResultTournaments() {
+  // Fuente primaria: /api/tournaments (reference). Fallback: globales.
+  try {
+    const data = await api("/api/tournaments");
+    const list = (data && data.tournaments) || [];
+    if (list.length) return list;
+  } catch { /* fallback abajo */ }
+  const fallback = (adminTournaments || []).filter(item => !isMonthlyTournament(item));
+  if (fallback.length) return fallback;
+  return (tournaments || []).filter(item => !isMonthlyTournament(item));
 }
 
 async function openResultModal(presetWinnerId, presetLoserId) {
@@ -907,110 +1013,72 @@ async function openResultModal(presetWinnerId, presetLoserId) {
     showToast("Crea tu perfil de jugador primero.");
     return;
   }
-  const options = players.map(item => {
-    const categoryLabel = CATEGORY_LABELS[item.category || "singles"] || "Singles";
-    return `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)} · ${escapeHtml(item.level)} · ${escapeHtml(categoryLabel)}</option>`;
-  }).join("");
-  document.querySelectorAll("#resultForm select[name='winnerId'], #resultForm select[name='loserId']").forEach(select => {
-    select.innerHTML = `<option value="">Seleccionar</option>${options}`;
-  });
-  document.getElementById("resultForm").date.value = new Date().toISOString().slice(0, 10);
-
-  // Inicializar controles de sets visuales
-  const setsWinner = document.getElementById("resultSetsWinner");
-  const setsLoser = document.getElementById("resultSetsLoser");
-  if (setsWinner && setsLoser) {
-    setsWinner.value = "2";
-    setsLoser.value = "0";
-    setsWinner.onchange = renderResultSetsGrid;
-    setsLoser.onchange = renderResultSetsGrid;
-  }
-  renderResultSetsGrid();
-
-  // Cargar torneos para el select opcional (usar /api/tournaments que lee tournaments-reference.json con datos reales)
+  const form = document.getElementById("resultForm");
   const tournamentSelect = document.getElementById("resultTournamentSelect");
   const matchSelect = document.getElementById("resultMatchSelect");
-  if (tournamentSelect && matchSelect) {
-    let tournamentsData = [];
-    // Matches use user IDs (a, b fields), so map players by userId
-    let playersByUserId = new Map(players.map(p => [p.userId, p]));
+  if (!form || !tournamentSelect || !matchSelect) return;
+  form.reset();
+  form.date.value = new Date().toISOString().slice(0, 10);
+  principalResultPlayers = null;
 
-    async function loadTournamentsForModal() {
-      try {
-        // Usar /api/tournaments (plural) que lee tournaments-reference.json con partidos reales
-        const data = await api("/api/tournaments");
-        tournamentsData = (data && data.tournaments) || [];
-
-        // Enriquecer con nombres de jugadores y datos del round
-        tournamentsData.forEach(t => {
-          if (Array.isArray(t.matches)) {
-            t.matches.forEach(m => {
-              const playerA = playersByUserId.get(m.a);
-              const playerB = playersByUserId.get(m.b);
-              const stage = (t.stages || []).find(s => s.id === m.stageId);
-              m.playerAName = playerA?.name || "Jugador A";
-              m.playerBName = playerB?.name || "Jugador B";
-              m.round = stage?.name || m.round || `Partido ${m.cardNo || ''}`;
-              m.status = (m.sa !== null && m.sb !== null) ? "completed" : "scheduled";
-            });
-          }
-        });
-      } catch (e) {
-        // Fallback: usar adminTournaments o tournaments globales
-        tournamentsData = (adminTournaments || []).filter(item => !isMonthlyTournament(item));
-        if (!tournamentsData.length) {
-          tournamentsData = (tournaments || []).filter(item => !isMonthlyTournament(item));
-        }
-        // Also enrich fallback data
-        tournamentsData.forEach(t => {
-          if (Array.isArray(t.matches)) {
-            t.matches.forEach(m => {
-              const playerA = playersByUserId.get(m.a);
-              const playerB = playersByUserId.get(m.b);
-              const stage = (t.stages || []).find(s => s.id === m.stageId);
-              m.playerAName = playerA?.name || "Jugador A";
-              m.playerBName = playerB?.name || "Jugador B";
-              m.round = stage?.name || m.round || `Partido ${m.cardNo || ''}`;
-              m.status = (m.sa !== null && m.sb !== null) ? "completed" : "scheduled";
-            });
-          }
-        });
-      }
-      fillTournamentSelect(tournamentsData);
+  const cascade = setupResultCascade({
+    tournamentSelect,
+    matchSelect,
+    nameA: document.getElementById("resultPlayerAName"),
+    nameB: document.getElementById("resultPlayerBName"),
+    manualWrap: document.getElementById("resultManualPlayers"),
+    manualA: form.elements.namedItem("winnerA"),
+    manualB: form.elements.namedItem("loserB"),
+    hiddenWinner: document.getElementById("resultWinnerHidden"),
+    hiddenLoser: document.getElementById("resultLoserHidden"),
+    onPlayers(payload) {
+      principalResultPlayers = payload;
+      if (principalResultEditor) principalResultEditor.setNames(payload.playerAName, payload.playerBName);
     }
-
-    function fillTournamentSelect(list) {
-      tournamentSelect.innerHTML = '<option value="">Seleccionar torneo (opcional)</option>' +
-        (list || []).map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name || t.title || t.month || "Torneo")}</option>`).join("");
+  });
+  principalResultEditor = mountResultEditor(form, "resultScoreEditor");
+  // Manual fallback: si el usuario elige A/B sin partido, sincroniza hiddens.
+  const manualA = form.elements.namedItem("winnerA");
+  const manualB = form.elements.namedItem("loserB");
+  const hiddenWinner = document.getElementById("resultWinnerHidden");
+  const hiddenLoser = document.getElementById("resultLoserHidden");
+  const syncManual = () => {
+    principalResultPlayers = null;
+    if (hiddenWinner) hiddenWinner.value = manualA ? manualA.value : "";
+    if (hiddenLoser) hiddenLoser.value = manualB ? manualB.value : "";
+    const nameAEl = document.getElementById("resultPlayerAName");
+    const nameBEl = document.getElementById("resultPlayerBName");
+    if (manualA && manualA.value && nameAEl) nameAEl.textContent = manualA.options[manualA.selectedIndex]?.textContent || "—";
+    if (manualB && manualB.value && nameBEl) nameBEl.textContent = manualB.options[manualB.selectedIndex]?.textContent || "—";
+    if (principalResultEditor && manualA && manualB && manualA.value && manualB.value) {
+      principalResultEditor.setNames(nameAEl?.textContent || "Jugador A", nameBEl?.textContent || "Jugador B");
     }
+  };
+  if (manualA) manualA.onchange = syncManual;
+  if (manualB) manualB.onchange = syncManual;
 
-    function fillMatchSelect(tid, list) {
-      const t = (list || []).find(item => item.id === tid);
-      const matches = (t && t.matches || []).filter(m => m.status === "scheduled" || m.status === "completed");
-      matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>' +
-        matches.map(m => `<option value="${escapeHtml(m.id)}">${escapeHtml(m.round || "Partido")} · ${escapeHtml(m.playerAName || "Jugador A")} vs ${escapeHtml(m.playerBName || "Jugador B")}</option>`).join("");
-    }
-
-    await loadTournamentsForModal();
-    matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>';
-
-    tournamentSelect.onchange = function() {
-      const tid = this.value;
-      if (!tid) { matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>'; return; }
-      fillMatchSelect(tid, tournamentsData);
-    };
-  }
+  const tournamentsData = await loadResultTournaments();
+  cascade.setTournaments(tournamentsData);
 
   showNotice("resultNotice", "", false);
 
-  // Preseleccionar jugadores si se pasaron (útil desde el admin de desafíos)
+  // Preselección desde desafíos admin: jugadores ya elegidos.
   if (presetWinnerId || presetLoserId) {
     try {
-      const winnerSelect = document.querySelector("#resultForm select[name='winnerId']");
-      const loserSelect = document.querySelector("#resultForm select[name='loserId']");
-      if (winnerSelect && presetWinnerId) winnerSelect.value = presetWinnerId;
-      if (loserSelect && presetLoserId) loserSelect.value = presetLoserId;
-    } catch { /* no bloquear si los selects aún no están listos */ }
+      const playerA = players.find(item => item.id === presetWinnerId);
+      const playerB = players.find(item => item.id === presetLoserId);
+      if (manualA && manualB) {
+        if (presetWinnerId) manualA.value = presetWinnerId;
+        if (presetLoserId) manualB.value = presetLoserId;
+        syncManual();
+      }
+      if (hiddenWinner && playerA) hiddenWinner.value = playerA.id;
+      if (hiddenLoser && playerB) hiddenLoser.value = playerB.id;
+      if (principalResultEditor && playerA && playerB) {
+        principalResultPlayers = { playerAId: playerA.id, playerBId: playerB.id, playerAName: playerA.name, playerBName: playerB.name };
+        principalResultEditor.setNames(playerA.name, playerB.name);
+      }
+    } catch { /* no bloquear */ }
   }
 
   openModal("resultModal");
@@ -1019,18 +1087,38 @@ async function openResultModal(presetWinnerId, presetLoserId) {
 async function submitResult(event) {
   event.preventDefault();
   const form = event.target;
-  const scoreInput = document.getElementById("resultScoreHidden");
-  const score = scoreInput ? scoreInput.value : form.score.value;
-  if (!score) {
+  // Jugadores: del partido elegido (automáticos) o del fallback manual.
+  let playerAId = document.getElementById("resultWinnerHidden")?.value || "";
+  let playerBId = document.getElementById("resultLoserHidden")?.value || "";
+  if (!principalResultPlayers) {
+    const manualA = form.elements.namedItem("winnerA");
+    const manualB = form.elements.namedItem("loserB");
+    if (manualA && manualB && manualA.value && manualB.value) { playerAId = manualA.value; playerBId = manualB.value; }
+  }
+  if (principalResultPlayers) { playerAId = principalResultPlayers.playerAId; playerBId = principalResultPlayers.playerBId; }
+  if (!playerAId || !playerBId || playerAId === playerBId) {
+    showNotice("resultNotice", "Elige el partido (sus 2 jugadores se colocan solos) o selecciona Jugador A y Jugador B.", true);
+    return;
+  }
+  if (!principalResultEditor) {
     showNotice("resultNotice", "Ingresa el marcador completo (mínimo 2 sets).", true);
     return;
   }
+  const check = principalResultEditor.validate();
+  if (!check.ok) {
+    showNotice("resultNotice", check.error, true);
+    return;
+  }
+  // Orienta el marcador a la perspectiva del ganador (servidor: winnerIndex 0).
+  const winnerId = check.winnerIndex === 0 ? playerAId : playerBId;
+  const loserId = check.winnerIndex === 0 ? playerBId : playerAId;
+  const score = principalResultEditor.score();
   try {
     await api("/api/results", {
       method: "POST",
       body: JSON.stringify({
-        winnerId: form.winnerId.value,
-        loserId: form.loserId.value,
+        winnerId,
+        loserId,
         category: form.elements.namedItem("category").value,
         tournamentId: form.elements.namedItem("tournamentId").value || null,
         matchId: form.elements.namedItem("matchId").value || null,
@@ -1464,10 +1552,46 @@ function initPlayerPhotoDropZone() {
   }, false);
 }
 
-// Photo preview for profile edit modal
+// Foto de perfil: valida, previsualiza (tab Foto + encabezado) y deja el
+// archivo pendiente de subir al guardar Datos personales.
+function setProfileSavedIndicator(text, dirty) {
+  const el = document.getElementById("profileSavedIndicator");
+  if (!el) return;
+  el.textContent = text;
+  el.classList.toggle("is-dirty", Boolean(dirty));
+}
+
+function syncProfileHead() {
+  if (!currentUser) return;
+  const nameEl = document.getElementById("profileHeadName");
+  const emailEl = document.getElementById("profileHeadEmail");
+  const chipsEl = document.getElementById("profileHeadChips");
+  const img = document.getElementById("profileAvatarImg");
+  const initials = document.getElementById("profileHeadInitials");
+  if (nameEl) nameEl.textContent = currentUser.name || "Mi cuenta";
+  if (emailEl) emailEl.textContent = currentUser.email || "";
+  if (chipsEl) {
+    const roleLabel = currentUser.role === "admin" ? "Administrador" : (currentUser.role === "member" || currentUser.membershipActive ? "Miembro" : "Usuario");
+    chipsEl.innerHTML = `<span class="tag">${escapeHtml(roleLabel)}</span>` +
+      (currentUser.nationality ? `<span class="tag" style="background:#eef3f6;color:var(--navy);">${escapeHtml(currentUser.nationality)}</span>` : "");
+  }
+  if (img) {
+    img.hidden = !currentUser.photo;
+    if (currentUser.photo) img.src = currentUser.photo;
+  }
+  if (initials) {
+    initials.hidden = Boolean(currentUser.photo);
+    initials.textContent = (currentUser.name || "?").trim().charAt(0).toUpperCase();
+  }
+  const preview = document.getElementById("profilePhotoPreview");
+  const empty = document.getElementById("profilePhotoEmpty");
+  if (preview) preview.hidden = !currentUser.photo;
+  if (empty) empty.hidden = Boolean(currentUser.photo);
+}
+
 function previewProfilePhotoFile(input) {
   const preview = document.getElementById("profilePhotoPreview");
-  if (!preview || !input.files || !input.files[0]) return;
+  if (!input.files || !input.files[0]) return;
 
   const file = input.files[0];
   if (!file.type.match(/^image\/(png|jpeg|webp)$/)) {
@@ -1480,11 +1604,18 @@ function previewProfilePhotoFile(input) {
     input.value = "";
     return;
   }
-
+  pendingProfilePhotoFile = file;
+  setProfileSavedIndicator("Cambios sin guardar", true);
   const reader = new FileReader();
   reader.onload = function(e) {
-    preview.src = e.target.result;
-    preview.style.display = "block";
+    if (preview) preview.hidden = false;
+    if (preview) preview.src = e.target.result;
+    const headImg = document.getElementById("profileAvatarImg");
+    const empty = document.getElementById("profilePhotoEmpty");
+    const initials = document.getElementById("profileHeadInitials");
+    if (headImg) { headImg.hidden = false; headImg.src = e.target.result; }
+    if (empty) empty.hidden = true;
+    if (initials) initials.hidden = true;
   };
   reader.readAsDataURL(file);
 }
@@ -1992,7 +2123,7 @@ html += '<button type="button" data-module-btn="members" onclick="setAdminModule
 
   html += '<section class="admin-section admin-module" data-module="results" hidden><h3>Resultados de partidos</h3><p class="admin-section-help">Confirma, rechaza o elimina un reporte. Los resultados confirmados impactan el ranking.</p><div class="grid grid-2 admin-records">' + (pendingResults.length ? pendingResults.map(function(r) {
     return '<article class="card admin-record"><span class="tag ' + (r.status === "disputed" ? "tag-red" : "") + '">' + (r.status === "disputed" ? "En disputa" : "Pendiente") + '</span><h4>' + escapeHtml(r.winnerName) + ' vs ' + escapeHtml(r.loserName) + '</h4><p class="muted">' + escapeHtml(r.score) + '</p><div class="admin-form-actions"><button class="btn btn-primary" onclick="moderateResult(\'' + escapeHtml(r.id) + '\',\'confirm\')">Confirmar</button><button class="btn btn-secondary" onclick="moderateResult(\'' + escapeHtml(r.id) + '\',\'reject\')">Rechazar</button><button class="btn btn-dark" onclick="editAdminResult(\'' + escapeHtml(r.id) + '\')">Editar</button><button class="btn btn-danger" onclick="deleteAdminResult(\'' + escapeHtml(r.id) + '\')">Eliminar</button></div></article>';
-  }).join("") : '<p class="muted">No hay resultados pendientes.</p>') + '</div><details class="admin-history"><summary>Historial de resultados (' + results.length + ')</summary><div class="table-wrap"><table><thead><tr><th>Partido</th><th>Marcador</th><th>Estado</th><th>Fecha</th><th></th></tr></thead><tbody>' + results.map(function(r) { return '<tr><td>' + escapeHtml(r.winnerName) + ' vs ' + escapeHtml(r.loserName) + '</td><td>' + escapeHtml(r.score) + '</td><td>' + r.status + '</td><td>' + (r.playedAt ? formatLocalDate(r.playedAt) : '-') + '</td><td><button class="btn btn-sm btn-dark" onclick="editAdminResult(\'' + escapeHtml(r.id) + '\')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminResult(\'' + escapeHtml(r.id) + '\')">Eliminar</button></td></tr>'; }).join("") + '</tbody></table></div></details>' + '<form id="adminResultForm" class="admin-form admin-result-form" hidden><input type="hidden" name="resultId"><h4 class="full admin-form-title">Editar resultado reportado</h4><p class="full muted">Al guardar, volverá a estado pendiente para que el rival confirme el cambio.</p><label>Ganador<select name="winnerId" required>' + allPlayers.map(function(player) { return '<option value="' + escapeHtml(player.id) + '">' + escapeHtml(player.name) + '</option>'; }).join("") + '</select></label><label>Rival<select name="loserId" required>' + allPlayers.map(function(player) { return '<option value="' + escapeHtml(player.id) + '">' + escapeHtml(player.name) + '</option>'; }).join("") + '</select></label><label>Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label><label>Torneo<select name="tournamentId"><option value="">Seleccionar torneo (opcional)</option>' + (allTournaments || []).map(function(t) { return '<option value="' + escapeHtml(t.id) + '">' + escapeHtml(t.title || t.month || "Torneo") + '</option>'; }).join("") + '</select></label><label>Partido<select name="matchId"><option value="">Seleccionar partido (opcional)</option></select></label><label>Marcador desde el ganador<input name="score" required placeholder="6-4, 4-6, 10-7"></label><label>Fecha<input name="playedAt" type="date" required></label><div class="admin-form-actions full"><button class="btn btn-primary">Guardar y solicitar confirmación</button><button type="button" class="btn btn-secondary" onclick="cancelAdminResultEdit()">Cancelar</button></div></form></section>';
+  }).join("") : '<p class="muted">No hay resultados pendientes.</p>') + '</div><details class="admin-history"><summary>Historial de resultados (' + results.length + ')</summary><div class="table-wrap"><table><thead><tr><th>Partido</th><th>Marcador</th><th>Estado</th><th>Fecha</th><th></th></tr></thead><tbody>' + results.map(function(r) { return '<tr><td>' + escapeHtml(r.winnerName) + ' vs ' + escapeHtml(r.loserName) + '</td><td>' + escapeHtml(r.score) + '</td><td>' + r.status + '</td><td>' + (r.playedAt ? formatLocalDate(r.playedAt) : '-') + '</td><td><button class="btn btn-sm btn-dark" onclick="editAdminResult(\'' + escapeHtml(r.id) + '\')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminResult(\'' + escapeHtml(r.id) + '\')">Eliminar</button></td></tr>'; }).join("") + '</tbody></table></div></details>' + '<form id="adminResultForm" class="admin-form admin-result-form" hidden><input type="hidden" name="resultId"><h4 class="full admin-form-title">Editar resultado reportado</h4><p class="full muted">Al guardar, volverá a estado pendiente para que el rival confirme el cambio. Elige el torneo, luego el partido: los 2 jugadores se colocan solos.</p><label>Torneo<select name="tournamentId"><option value="">Seleccionar torneo (opcional)</option>' + (allTournaments || []).map(function(t) { return '<option value="' + escapeHtml(t.id) + '">' + escapeHtml(t.title || t.month || "Torneo") + '</option>'; }).join("") + '</select></label><label>Elige el partido<select name="matchId"><option value="">Seleccionar partido (opcional)</option></select></label><div class="result-players full"><div class="result-player"><b id="adminPlayerAName">—</b><small>Elige un partido del torneo…</small></div><span class="result-vs">vs</span><div class="result-player"><b id="adminPlayerBName">—</b><small>Los 2 jugadores se colocan solos</small></div></div><div class="full" id="adminManualPlayers" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"><label style="display:flex; flex-direction:column; gap:6px;">Jugador A<select name="winnerA"><option value="">Seleccionar</option>' + allPlayers.map(function(player) { return '<option value="' + escapeHtml(player.id) + '">' + escapeHtml(player.name) + '</option>'; }).join("") + '</select></label><label style="display:flex; flex-direction:column; gap:6px;">Jugador B<select name="loserB"><option value="">Seleccionar</option>' + allPlayers.map(function(player) { return '<option value="' + escapeHtml(player.id) + '">' + escapeHtml(player.name) + '</option>'; }).join("") + '</select></label></div><input type="hidden" name="winnerId" id="adminWinnerHidden"><input type="hidden" name="loserId" id="adminLoserHidden"><input type="hidden" name="score" id="adminScoreHidden"><div class="full" id="adminScoreEditor"></div><label>Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label><label>Fecha<input name="playedAt" type="date" required></label><div class="admin-form-actions full"><button class="btn btn-primary">Guardar y solicitar confirmación</button><button type="button" class="btn btn-secondary" onclick="cancelAdminResultEdit()">Cancelar</button></div></form></section>';
 
   html += '<section class="admin-section admin-module" data-module="players" hidden><h3>Jugadores de la liga</h3><p class="admin-section-help">Administra el nombre, nivel y zona que aparecen en la clasificación. Los perfiles con historial deportivo no se pueden borrar.</p><form id="adminPlayerForm" class="admin-form" hidden><input type="hidden" name="playerId"><label class="full">Cuenta vinculada<select name="accountId" required><option value="">Selecciona una cuenta sin perfil</option>' + playersWithoutProfile.map(function(user) { return '<option value="' + escapeHtml(user.id) + '">' + escapeHtml(user.name) + ' · ' + escapeHtml(user.email) + '</option>'; }).join("") + '</select></label><label>Nombre público<input name="name" maxlength="100" required></label><label>Nivel<select name="level" required>' + levels.map(function(level) { return '<option value="' + level + '">' + level + '</option>'; }).join("") + '</select></label><label>Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label><label>Modalidad<select name="gender" required><option value="hombres">Hombres</option><option value="mujeres">Mujeres</option></select></label><label class="full">Zona<select name="zone" required><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label><div class="admin-form-actions full"><button class="btn btn-primary">Guardar perfil</button><button type="button" class="btn btn-secondary" onclick="resetAdminPlayerForm()">Cancelar</button></div></form><button class="btn btn-primary" style="margin-bottom:16px" type="button" onclick="openAdminDynamicEditModal(\'adminPlayerForm\', \'Nuevo jugador\')">Nuevo jugador</button><div class="table-wrap"><table><thead><tr><th>Jugador</th><th>Email</th><th>Nivel</th><th>Categoría</th><th>Modalidad</th><th>Zona</th><th>Partidos</th><th>Puntos</th><th>Acciones</th></tr></thead><tbody>' + players.map(function(player) { return '<tr><td>' + escapeHtml(player.name) + '</td><td>' + escapeHtml(player.email || '-') + '</td><td>' + escapeHtml(player.level) + '</td><td>' + escapeHtml(CATEGORY_LABELS[player.category || "singles"] || "Singles") + '</td><td>' + escapeHtml(GENDER_LABELS[player.gender || "hombres"] || "Hombres") + '</td><td>' + escapeHtml(player.zone) + '</td><td>' + Number(player.matches) + '</td><td>' + Number(player.points) + '</td><td><button class="btn btn-sm btn-dark" onclick="editAdminPlayer(\'' + escapeHtml(player.id) + '\')">Editar</button><button class="btn btn-sm btn-danger" onclick="deleteAdminPlayer(\'' + escapeHtml(player.id) + '\')">Eliminar</button></td></tr>'; }).join("") + '</tbody></table></div></section>';
 
@@ -2019,16 +2150,40 @@ html += '<button type="button" data-module-btn="members" onclick="setAdminModule
   document.getElementById("adminUserForm")?.addEventListener("submit", saveAdminUser);
   document.getElementById("adminPlayerForm")?.addEventListener("submit", saveAdminPlayer);
   document.getElementById("adminResultForm")?.addEventListener("submit", saveAdminResult);
-  const adminResultTournamentInput = document.getElementById("adminResultForm")?.elements.namedItem("tournamentId");
-  const adminResultMatchInput = document.getElementById("adminResultForm")?.elements.namedItem("matchId");
-  if (adminResultTournamentInput && adminResultMatchInput) {
-    adminResultTournamentInput.addEventListener("change", function() {
-      const tid = this.value;
-      const t = (allTournaments || []).find(item => item.id === tid);
-      const matches = (t && t.matches || []).filter(m => m.status === "scheduled" || m.status === "completed");
-      adminResultMatchInput.innerHTML = '<option value="">Seleccionar partido (opcional)</option>' +
-        matches.map(m => `<option value="${escapeHtml(m.id)}">${escapeHtml(m.round || "Partido")} · ${escapeHtml(m.playerAName || "Jugador A")} vs ${escapeHtml(m.playerBName || "Jugador B")}</option>`).join("");
+  const adminResultFormEl = document.getElementById("adminResultForm");
+  if (adminResultFormEl) {
+    adminResultPlayers = null;
+    adminResultCascade = setupResultCascade({
+      tournamentSelect: adminResultFormEl.elements.namedItem("tournamentId"),
+      matchSelect: adminResultFormEl.elements.namedItem("matchId"),
+      nameA: document.getElementById("adminPlayerAName"),
+      nameB: document.getElementById("adminPlayerBName"),
+      manualWrap: document.getElementById("adminManualPlayers"),
+      manualA: adminResultFormEl.elements.namedItem("winnerA"),
+      manualB: adminResultFormEl.elements.namedItem("loserB"),
+      hiddenWinner: document.getElementById("adminWinnerHidden"),
+      hiddenLoser: document.getElementById("adminLoserHidden"),
+      onPlayers(payload) {
+        adminResultPlayers = payload;
+        if (adminResultEditor) adminResultEditor.setNames(payload.playerAName, payload.playerBName);
+      }
     });
+    adminResultCascade.setTournaments(allTournaments || []);
+    adminResultEditor = mountResultEditor(adminResultFormEl, "adminScoreEditor");
+    const syncAdminManual = () => {
+      adminResultPlayers = null;
+      const hiddenWinner = document.getElementById("adminWinnerHidden");
+      const hiddenLoser = document.getElementById("adminLoserHidden");
+      const manualA = adminResultFormEl.elements.namedItem("winnerA");
+      const manualB = adminResultFormEl.elements.namedItem("loserB");
+      if (hiddenWinner) hiddenWinner.value = manualA ? manualA.value : "";
+      if (hiddenLoser) hiddenLoser.value = manualB ? manualB.value : "";
+      if (adminResultEditor && manualA && manualB && manualA.value && manualB.value) {
+        adminResultEditor.setNames(manualA.options[manualA.selectedIndex]?.textContent || "Jugador A", manualB.options[manualB.selectedIndex]?.textContent || "Jugador B");
+      }
+    };
+    adminResultFormEl.elements.namedItem("winnerA")?.addEventListener("change", syncAdminManual);
+    adminResultFormEl.elements.namedItem("loserB")?.addEventListener("change", syncAdminManual);
   }
 document.getElementById("adminOrderForm")?.addEventListener("submit", saveAdminOrder);
   document.getElementById("adminSettingsForm")?.addEventListener("submit", saveAdminSettings);
@@ -2078,30 +2233,10 @@ function previewProductImageFile(input) {
   reader.readAsDataURL(file);
 }
 
-function previewProfilePhotoFile(input) {
-  const preview = document.getElementById("profilePhotoPreview");
-  const file = input.files && input.files[0];
-  if (!preview) return;
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    preview.src = reader.result;
-    preview.style.display = "block";
-  };
-  reader.readAsDataURL(file);
-}
-
-function previewPlayerPhotoFile(input) {
-  const preview = document.getElementById("playerPhotoPreview");
-  const file = input.files && input.files[0];
-  if (!preview) return;
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    preview.src = reader.result;
-    preview.style.display = "block";
-  };
-  reader.readAsDataURL(file);
+function previewProfilePhotoFileLegacy(input) {
+  // Implementación histórica (duplicada). La activa es la de arriba con
+  // validación + estado pendiente; se conserva por compatibilidad.
+  return previewProfilePhotoFile(input);
 }
 
 async function uploadPlayerPhotoFile(form) {
@@ -2172,16 +2307,23 @@ async function compressProfileImage(file) {
   return canvas.toDataURL("image/jpeg", 0.82);
 }
 
-async function uploadProfileImage(form) {
-  const fileInput = form.elements.namedItem("photoFile");
-  const file = fileInput?.files?.[0];
+async function uploadProfileImageFile(file, countryValue) {
   if (!file) return null;
   const compressed = await compressProfileImage(file);
   const uploaded = await api("/api/profile/photo", {
     method: "POST",
-    body: JSON.stringify({ image: compressed, country: form.elements.namedItem("country")?.value.trim() })
+    body: JSON.stringify({ image: compressed, country: (countryValue || "").trim() })
   });
   return uploaded.photo;
+}
+
+async function uploadProfileImage(form) {
+  // El input de foto vive en la pestaña Foto (no dentro de profileEditForm):
+  // se lee del estado pendiente o del input por id, nunca del form.
+  const input = document.getElementById("profilePhotoFileInput");
+  const file = pendingProfilePhotoFile || (input && input.files && input.files[0]) || (form && form.elements.namedItem("photoFile") && form.elements.namedItem("photoFile").files && form.elements.namedItem("photoFile").files[0]);
+  const countryEl = form && form.elements.namedItem ? form.elements.namedItem("country") : document.getElementById("profileCountrySelect");
+  return uploadProfileImageFile(file, countryEl ? countryEl.value : "");
 }
 
 function resetProductForm() {
@@ -2286,21 +2428,46 @@ function editAdminResult(resultId) {
   if (!result || !form) return;
   openAdminDynamicEditModal("adminResultForm", "Editar resultado");
   form.elements.namedItem("resultId").value = result.id;
-  form.elements.namedItem("winnerId").value = result.winnerId;
-  form.elements.namedItem("loserId").value = result.loserId;
+  const hiddenWinner = document.getElementById("adminWinnerHidden");
+  const hiddenLoser = document.getElementById("adminLoserHidden");
+  if (hiddenWinner) hiddenWinner.value = result.winnerId;
+  if (hiddenLoser) hiddenLoser.value = result.loserId;
   form.elements.namedItem("category").value = result.category || "singles";
-  form.elements.namedItem("tournamentId").value = result.tournamentId || "";
-  form.elements.namedItem("matchId").value = result.matchId || "";
-  form.elements.namedItem("score").value = result.score;
   form.elements.namedItem("playedAt").value = (result.playedAt || result.created || "").slice(0, 10);
-  // Rellenar partidos del torneo seleccionado si aplica
-  const tournamentInput = form.elements.namedItem("tournamentId");
-  const matchInput = form.elements.namedItem("matchId");
-  if (tournamentInput && matchInput && tournamentInput.value) {
-    const t = (allTournaments || []).find(item => item.id === tournamentInput.value);
-    const matches = (t && t.matches || []).filter(m => m.status === "scheduled" || m.status === "completed");
-    matchInput.innerHTML = '<option value="">Seleccionar partido (opcional)</option>' +
-      matches.map(m => `<option value="${escapeHtml(m.id)}" ${m.id === result.matchId ? "selected" : ""}>${escapeHtml(m.round || "Partido")} · ${escapeHtml(m.playerAName || "Jugador A")} vs ${escapeHtml(m.playerBName || "Jugador B")}</option>`).join("");
+  // Mismo flujo que el resto: torneo → partido → 2 jugadores automáticos.
+  if (adminResultCascade) {
+    adminResultCascade.selectTournament(result.tournamentId || "");
+    const matchSelect = form.elements.namedItem("matchId");
+    if (result.matchId) {
+      if (matchSelect) matchSelect.value = result.matchId;
+      adminResultCascade.applyMatch(result.matchId, result.tournamentId || "");
+    }
+  } else {
+    form.elements.namedItem("tournamentId").value = result.tournamentId || "";
+    form.elements.namedItem("matchId").value = result.matchId || "";
+  }
+  // Jugadores del reporte: A = ganador registrado, B = rival (perspectiva neutral).
+  const winnerName = result.winnerName || "Jugador A";
+  const loserName = result.loserName || "Jugador B";
+  adminResultPlayers = {
+    playerAId: result.winnerId,
+    playerBId: result.loserId,
+    playerAName: winnerName,
+    playerBName: loserName
+  };
+  const nameAEl = document.getElementById("adminPlayerAName");
+  const nameBEl = document.getElementById("adminPlayerBName");
+  if (nameAEl) nameAEl.textContent = winnerName;
+  if (nameBEl) nameBEl.textContent = loserName;
+  // Manual fallback sincronizado por si no hay partido.
+  const manualA = form.elements.namedItem("winnerA");
+  const manualB = form.elements.namedItem("loserB");
+  if (manualA && result.winnerId) manualA.value = result.winnerId;
+  if (manualB && result.loserId) manualB.value = result.loserId;
+  // El marcador guardado está en perspectiva del ganador: mapea directo a A-B.
+  if (adminResultEditor) {
+    adminResultEditor.setNames(winnerName, loserName);
+    adminResultEditor.setSets(window.TennisScore ? window.TennisScore.parseScoreString(result.score) : []);
   }
   form.scrollIntoView({ behavior: "smooth", block: "center" });
 }
@@ -2315,22 +2482,38 @@ function cancelAdminResultEdit() {
 async function saveAdminResult(event) {
   event.preventDefault();
   const form = event.target;
-  if (form.elements.namedItem("winnerId").value === form.elements.namedItem("loserId").value) {
-    showToast("El ganador y el rival deben ser distintos.");
+  let playerAId = document.getElementById("adminWinnerHidden")?.value || "";
+  let playerBId = document.getElementById("adminLoserHidden")?.value || "";
+  if (!adminResultPlayers) {
+    const manualA = form.elements.namedItem("winnerA");
+    const manualB = form.elements.namedItem("loserB");
+    if (manualA && manualB && manualA.value && manualB.value) { playerAId = manualA.value; playerBId = manualB.value; }
+  }
+  if (adminResultPlayers) { playerAId = adminResultPlayers.playerAId; playerBId = adminResultPlayers.playerBId; }
+  if (!playerAId || !playerBId || playerAId === playerBId) {
+    showToast("Elige el partido (sus 2 jugadores se colocan solos) o selecciona Jugador A y Jugador B.");
     return;
   }
+  const check = adminResultEditor ? adminResultEditor.validate() : { ok: false, error: "Ingresa el marcador completo (mínimo 2 sets)." };
+  if (!check.ok) {
+    showToast(check.error);
+    return;
+  }
+  const winnerId = check.winnerIndex === 0 ? playerAId : playerBId;
+  const loserId = check.winnerIndex === 0 ? playerBId : playerAId;
+  const score = adminResultEditor.score();
   try {
     await api("/api/admin/results", {
       method: "PATCH",
       body: JSON.stringify({
         action: "edit",
         resultId: form.elements.namedItem("resultId").value,
-        winnerId: form.elements.namedItem("winnerId").value,
-        loserId: form.elements.namedItem("loserId").value,
+        winnerId,
+        loserId,
         category: form.elements.namedItem("category").value,
         tournamentId: form.elements.namedItem("tournamentId").value || null,
         matchId: form.elements.namedItem("matchId").value || null,
-        score: form.elements.namedItem("score").value,
+        score,
         playedAt: form.elements.namedItem("playedAt").value
       })
     });
@@ -2437,10 +2620,15 @@ function openProfileEditModal() {
   }
   form.elements.namedItem("country").value = currentUser.nationality || "";
   form.elements.namedItem("password").value = "";
-  const preview = document.getElementById("profilePhotoPreview");
-  if (preview) {
-    preview.style.display = currentUser.photo ? "block" : "none";
-    if (currentUser.photo) preview.src = currentUser.photo;
+  pendingProfilePhotoFile = null;
+  const photoInput = document.getElementById("profilePhotoFileInput");
+  if (photoInput) photoInput.value = "";
+  syncProfileHead();
+  setProfileSavedIndicator("Sin cambios", false);
+  if (!form.dataset.dirtyBound) {
+    form.dataset.dirtyBound = "1";
+    form.addEventListener("input", () => setProfileSavedIndicator("Cambios sin guardar", true));
+    form.addEventListener("change", () => setProfileSavedIndicator("Cambios sin guardar", true));
   }
   showProfileTab("datos");
   openModal("profileEditModal");
@@ -2462,7 +2650,12 @@ async function saveProfileEdit(event) {
     return;
   }
 
+  if (password && (password.length < 8 || password.length > 128)) {
+    showToast("La contraseña debe tener entre 8 y 128 caracteres.");
+    return;
+  }
   try {
+    setProfileSavedIndicator("Guardando…", false);
     const photo = await uploadProfileImage(form);
     const body = { phone: phone || null, nationality: nationality || null, name };
     if (password) body.password = password;
@@ -2479,28 +2672,25 @@ async function saveProfileEdit(event) {
       if (photo) currentUser.photo = photo;
       updateAuthUI();
     }
+    pendingProfilePhotoFile = null;
+    syncProfileHead();
+    setProfileSavedIndicator("Sin cambios", false);
     closeModal("profileEditModal");
     showToast("Perfil actualizado.");
   } catch (error) {
+    setProfileSavedIndicator("Cambios sin guardar", true);
     showToast(`No se pudo actualizar: ${error.message}`);
   }
 }
 
 // ============ PERFIL: PESTAÑAS ============
 function showProfileTab(tabName, btn) {
-  document.querySelectorAll("#profileEditModal .tab-panel").forEach(p => {
-    p.style.display = "none";
-    p.classList.remove("active");
+  document.querySelectorAll("#profileEditModal .profile-tab-panel").forEach(p => {
+    p.hidden = p.id !== "profileTab-" + tabName;
   });
   document.querySelectorAll("#profileEditModal .tab-btn").forEach(b => {
-    b.classList.remove("active");
+    b.classList.toggle("is-active", btn ? b === btn : b.dataset.tab === tabName);
   });
-  const panel = document.getElementById("profileTab-" + tabName);
-  if (panel) {
-    panel.style.display = "";
-    panel.classList.add("active");
-  }
-  if (btn) btn.classList.add("active");
 
   if (tabName === "partidos") loadProfileMatches();
   else if (tabName === "pendientes") loadProfilePendingResults();
@@ -2512,10 +2702,10 @@ async function loadProfileMatches() {
   if (!container || !currentUser) return;
   const player = players.find(p => p && p.userId === currentUser.id);
   if (!player) {
-    container.innerHTML = '<p class="muted">Crea tu perfil de jugador para ver tus partidos asignados.</p>';
+    container.innerHTML = '<p class="empty-note">Crea tu perfil de jugador para ver tus partidos asignados.</p>';
     return;
   }
-  container.innerHTML = '<p class="muted">Cargando partidos...</p>';
+  container.innerHTML = '<p class="empty-note">Cargando partidos…</p>';
   try {
     const data = await api("/api/tournament");
     const list = (data.tournaments || []).flatMap(t => {
@@ -2524,34 +2714,33 @@ async function loadProfileMatches() {
       return matches.map(m => ({ ...m, tournament: t.title || t.month || "Torneo" }));
     });
     if (!list.length) {
-      container.innerHTML = '<p class="muted">No tienes partidos asignados en ningún torneo.</p>';
+      container.innerHTML = '<p class="empty-note">No tienes partidos asignados en ningún torneo.</p>';
       return;
     }
     container.innerHTML = list.map(m => `
-      <div style="border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin:8px 0; background:#fff;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <div style="font-weight:700;">${escapeHtml(m.tournament)}</div>
-            <div class="muted" style="font-size:12px;">Ronda: ${escapeHtml(m.round || "-")} · Estado: ${escapeHtml(m.status || "-")}</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-weight:700;">${escapeHtml(m.playerAName || "Jugador A")}</div>
-            <div style="font-size:16px; font-weight:700;">vs</div>
-            <div style="font-weight:700;">${escapeHtml(m.playerBName || "Jugador B")}</div>
-          </div>
+      <div class="profile-card">
+        <div class="profile-card-title">
+          <b>${escapeHtml(m.tournament)}</b>
+          <span class="tag">${escapeHtml(m.status || "-")}</span>
         </div>
-        ${m.score ? `<div class="muted" style="margin-top:6px;">Resultado: ${escapeHtml(m.score)}</div>` : ""}
+        <p class="muted" style="margin-top:4px;">Ronda: ${escapeHtml(m.round || "-")}</p>
+        <div class="result-players" style="margin-top:8px;">
+          <div class="result-player ${m.winnerId && m.winnerId === m.playerAId ? "is-winner" : ""}"><b>${escapeHtml(m.playerAName || "Jugador A")}</b></div>
+          <span class="result-vs">vs</span>
+          <div class="result-player ${m.winnerId && m.winnerId === m.playerBId ? "is-winner" : ""}"><b>${escapeHtml(m.playerBName || "Jugador B")}</b></div>
+        </div>
+        ${m.score ? `<p class="muted" style="margin-top:8px;">Resultado: <b>${escapeHtml(m.score)}</b></p>` : ""}
       </div>
     `).join("");
   } catch (error) {
-    container.innerHTML = `<p class="muted" style="color:#8e3028;">No se pudieron cargar los partidos: ${escapeHtml(error.message)}</p>`;
+    container.innerHTML = `<p class="empty-note">No se pudieron cargar los partidos: ${escapeHtml(error.message)}</p>`;
   }
 }
 
 async function loadProfilePendingResults() {
   const container = document.getElementById("profilePendingList");
   if (!container || !currentUser) return;
-  container.innerHTML = '<p class="muted">Cargando resultados pendientes...</p>';
+  container.innerHTML = '<p class="empty-note">Cargando resultados pendientes…</p>';
   try {
     const results = await api("/api/results");
     const pending = results.filter(r =>
@@ -2559,31 +2748,29 @@ async function loadProfilePendingResults() {
       (r.winnerUserId === currentUser.id || r.loserUserId === currentUser.id) &&
       r.reportedBy !== currentUser.id);
     if (!pending.length) {
-      container.innerHTML = '<p class="muted">No tienes resultados pendientes de confirmar.</p>';
+      container.innerHTML = '<p class="empty-note">No tienes resultados pendientes de confirmar. 👍</p>';
       return;
     }
     container.innerHTML = pending.map(r => {
       const isWinner = r.winnerUserId === currentUser.id;
       const rival = isWinner ? (r.loserName || "Jugador") : (r.winnerName || "Jugador");
       return `
-        <div style="border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin:8px 0; background:#fff;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <div>
-              <div style="font-weight:700;">${escapeHtml(r.categoryLabel || r.category || "Partido")}</div>
-              <div class="muted" style="font-size:12px;">Marcador reportado: ${escapeHtml(r.score || "-")}</div>
-            </div>
-            <div class="muted" style="font-size:12px;">${formatLocalDate(r.created)}</div>
+        <div class="profile-card">
+          <div class="profile-card-title">
+            <b>${escapeHtml(r.categoryLabel || r.category || "Partido")}</b>
+            <span class="muted">${formatLocalDate(r.created)}</span>
           </div>
-          <div style="text-align:center; font-weight:700; margin-bottom:8px;">Tú vs ${escapeHtml(rival)}</div>
-          <div style="display:flex; gap:8px; justify-content:center;">
-            <button class="btn btn-sm" style="background:#2e7d32;color:#fff;border:none;" onclick="respondProfilePending('${escapeHtml(r.id)}', 'confirm')">Confirmar</button>
-            <button class="btn btn-sm" style="background:#c62828;color:#fff;border:none;" onclick="respondProfilePending('${escapeHtml(r.id)}', 'dispute')">Disputar</button>
+          <p class="muted">Marcador reportado: <b>${escapeHtml(r.score || "-")}</b></p>
+          <p style="text-align:center; font-weight:800; margin:8px 0 2px;">Tú vs ${escapeHtml(rival)}</p>
+          <div class="profile-card-actions">
+            <button class="btn btn-sm btn-primary" onclick="respondProfilePending('${escapeHtml(r.id)}', 'confirm')">Confirmar ✓</button>
+            <button class="btn btn-sm btn-secondary" onclick="respondProfilePending('${escapeHtml(r.id)}', 'dispute')">Disputar</button>
           </div>
         </div>
       `;
     }).join("");
   } catch (error) {
-    container.innerHTML = `<p class="muted" style="color:#8e3028;">No se pudieron cargar: ${escapeHtml(error.message)}</p>`;
+    container.innerHTML = `<p class="empty-note">No se pudieron cargar: ${escapeHtml(error.message)}</p>`;
   }
 }
 
@@ -2611,39 +2798,49 @@ async function initProfileResultForm() {
     return;
   }
   document.getElementById("profileResultNotice").textContent = "";
-  const options = players.map(item => {
-    const categoryLabel = CATEGORY_LABELS[item.category || "singles"] || "Singles";
-    return `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)} · ${escapeHtml(item.level)} · ${escapeHtml(categoryLabel)}</option>`;
-  }).join("");
-  form.querySelectorAll("select[name='winnerId'], select[name='loserId']").forEach(select => {
-    select.innerHTML = `<option value="">Seleccionar</option>${options}`;
-  });
-  form.elements.namedItem("date").value = new Date().toISOString().slice(0, 10);
+  if (!form.elements.namedItem("date").value) form.elements.namedItem("date").value = new Date().toISOString().slice(0, 10);
   const tournamentSelect = form.elements.namedItem("tournamentId");
   const matchSelect = form.elements.namedItem("matchId");
-  let tournaments = [];
-  try {
-    const data = await api("/api/tournament");
-    tournaments = (data && data.tournaments) || [];
-    tournamentSelect.innerHTML = '<option value="">Seleccionar torneo (opcional)</option>' +
-      tournaments.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.title || t.month || "Torneo")}</option>`).join("");
-  } catch {
-    tournamentSelect.innerHTML = '<option value="">Seleccionar torneo (opcional)</option>';
-  }
-  matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>';
-  tournamentSelect.onchange = async function() {
-    matchSelect.innerHTML = '<option value="">Cargando partidos...</option>';
-    const tid = this.value;
-    if (!tid) { matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>'; return; }
-    try {
-      const t = tournaments.find(item => item.id === tid);
-      const matches = (t && t.matches || []).filter(m => m.status === "scheduled" || m.status === "completed");
-      matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>' +
-        matches.map(m => `<option value="${escapeHtml(m.id)}">${escapeHtml(m.round || "Partido")} · ${escapeHtml(m.playerAName || "Jugador A")} vs ${escapeHtml(m.playerBName || "Jugador B")}</option>`).join("");
-    } catch {
-      matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>';
+  profileResultPlayers = null;
+  const cascade = setupResultCascade({
+    tournamentSelect,
+    matchSelect,
+    nameA: document.getElementById("profilePlayerAName"),
+    nameB: document.getElementById("profilePlayerBName"),
+    manualWrap: document.getElementById("profileManualPlayers"),
+    manualA: form.elements.namedItem("winnerA"),
+    manualB: form.elements.namedItem("loserB"),
+    hiddenWinner: document.getElementById("profileWinnerHidden"),
+    hiddenLoser: document.getElementById("profileLoserHidden"),
+    onPlayers(payload) {
+      profileResultPlayers = payload;
+      if (profileResultEditor) profileResultEditor.setNames(payload.playerAName, payload.playerBName);
+    }
+  });
+  profileResultEditor = mountResultEditor(form, "profileScoreEditor");
+  const manualA = form.elements.namedItem("winnerA");
+  const manualB = form.elements.namedItem("loserB");
+  const hiddenWinner = document.getElementById("profileWinnerHidden");
+  const hiddenLoser = document.getElementById("profileLoserHidden");
+  const syncManual = () => {
+    profileResultPlayers = null;
+    if (hiddenWinner) hiddenWinner.value = manualA ? manualA.value : "";
+    if (hiddenLoser) hiddenLoser.value = manualB ? manualB.value : "";
+    if (profileResultEditor && manualA && manualB && manualA.value && manualB.value) {
+      const aName = manualA.options[manualA.selectedIndex]?.textContent || "Jugador A";
+      const bName = manualB.options[manualB.selectedIndex]?.textContent || "Jugador B";
+      const aEl = document.getElementById("profilePlayerAName");
+      const bEl = document.getElementById("profilePlayerBName");
+      if (aEl) aEl.textContent = aName;
+      if (bEl) bEl.textContent = bName;
+      profileResultEditor.setNames(aName, bName);
     }
   };
+  if (manualA) manualA.onchange = syncManual;
+  if (manualB) manualB.onchange = syncManual;
+  // Torneos: misma fuente y cascada que la página principal.
+  const tournamentsData = await loadResultTournaments();
+  cascade.setTournaments(tournamentsData);
 }
 
 document.querySelectorAll(".modal").forEach(m => {
@@ -2811,28 +3008,52 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("profileResultForm")?.addEventListener("submit", async function(event) {
     event.preventDefault();
     const form = event.target;
+    const notice = document.getElementById("profileResultNotice");
+    let playerAId = document.getElementById("profileWinnerHidden")?.value || "";
+    let playerBId = document.getElementById("profileLoserHidden")?.value || "";
+    if (!profileResultPlayers) {
+      const manualA = form.elements.namedItem("winnerA");
+      const manualB = form.elements.namedItem("loserB");
+      if (manualA && manualB && manualA.value && manualB.value) { playerAId = manualA.value; playerBId = manualB.value; }
+    }
+    if (profileResultPlayers) { playerAId = profileResultPlayers.playerAId; playerBId = profileResultPlayers.playerBId; }
+    if (!playerAId || !playerBId || playerAId === playerBId) {
+      if (notice) notice.textContent = "Elige el partido (sus 2 jugadores se colocan solos) o selecciona Jugador A y Jugador B.";
+      return;
+    }
+    const check = profileResultEditor ? profileResultEditor.validate() : { ok: false, error: "Ingresa el marcador completo (mínimo 2 sets)." };
+    if (!check.ok) {
+      if (notice) notice.textContent = check.error;
+      return;
+    }
+    const winnerId = check.winnerIndex === 0 ? playerAId : playerBId;
+    const loserId = check.winnerIndex === 0 ? playerBId : playerAId;
     try {
       await api("/api/results", {
         method: "POST",
         body: JSON.stringify({
-          winnerId: form.winnerId.value,
-          loserId: form.loserId.value,
+          winnerId,
+          loserId,
           category: form.elements.namedItem("category").value,
           tournamentId: form.elements.namedItem("tournamentId").value || null,
           matchId: form.elements.namedItem("matchId").value || null,
-          score: form.score.value,
+          score: profileResultEditor.score(),
           playedAt: form.elements.namedItem("date").value
         })
       });
       form.reset();
+      if (notice) notice.textContent = "Resultado enviado ✓";
       showToast("Resultado enviado; el rival debe confirmarlo para actualizar el ranking.");
       showProfileTab("datos");
     } catch (error) {
-      document.getElementById("profileResultNotice").textContent = error.message;
-      document.getElementById("profileResultNotice").style.background = "#f8e8e5";
-      document.getElementById("profileResultNotice").style.color = "#8e3028";
-      document.getElementById("profileResultNotice").classList.add("show");
+      if (notice) notice.textContent = error.message;
     }
+  });
+  document.getElementById("profileResultResetBtn")?.addEventListener("click", () => {
+    const form = document.getElementById("profileResultForm");
+    if (form) form.reset();
+    const notice = document.getElementById("profileResultNotice");
+    if (notice) notice.textContent = "";
   });
 
   syncHeaderLayout();

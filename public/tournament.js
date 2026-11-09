@@ -619,7 +619,18 @@
       const showGroupSelector = stage && stage.kind === "groups" && tournament.groups.length;
       const groupContainerHtml = showGroupSelector ? `<div><label class="label" for="modal-group">Grupo <span class="text-red-500">*</span></label><select id="modal-group" name="group" class="field" required><option value="">Seleccionar grupo</option>${tournament.groups.map(group => `<option value="${esc(group.id)}" ${existingGroupId === group.id ? "selected" : ""}>${esc(group.name)}</option>`).join("")}</select></div>` : "";
 
-      modal(match ? "Editar partido" : "Asignar partido", `<p class="muted text-sm mb-4">${esc(stage?.name || "Etapa")} ${slot !== null ? `· partido ${slot + 1}` : ""}</p><div class="space-y-3"><div class="grid grid-cols-2 gap-3">${stageSelect}<div id="modal-group-container">${groupContainerHtml}</div></div><div class="grid grid-cols-2 gap-3">${select("a", a, "Jugador A")}${select("b", b, "Jugador B")}</div><div class="grid grid-cols-2 gap-3">${field("Fecha y hora", "date", match?.date || "", "datetime-local")}<div></div></div><div class="grid grid-cols-2 gap-3">${field("Sets jugador A", "sa", match?.sa ?? "", "number", 'min="0" max="5"')}${field("Sets jugador B", "sb", match?.sb ?? "", "number", 'min="0" max="5"')}</div></div><p class="muted text-xs mt-3" id="match-modal-hint">${showGroupSelector && !existingGroupId ? "Selecciona un grupo para ver sus jugadores" : ""}</p>`, form => {
+      let matchScoreEditor = null;
+      const existingSetsNote = (match && match.sa !== null && match.sb !== null)
+        ? `<p class="muted text-xs">Hay un resultado guardado (${esc(match.sa)}-${esc(match.sb)} sets). Completa el editor solo si quieres corregirlo.</p>` : "";
+      modal(match ? "Editar partido" : "Asignar partido", `<p class="muted text-sm mb-4">${esc(stage?.name || "Etapa")} ${slot !== null ? `· partido ${slot + 1}` : ""}</p><div class="space-y-3"><div class="grid grid-cols-2 gap-3">${stageSelect}<div id="modal-group-container">${groupContainerHtml}</div></div><div class="grid grid-cols-2 gap-3">${select("a", a, "Jugador A")}${select("b", b, "Jugador B")}</div><div class="grid grid-cols-2 gap-3">${field("Fecha y hora", "date", match?.date || "", "datetime-local")}<div></div></div><div id="modal-score-editor" class="score-editor-root"></div>${existingSetsNote}</div><p class="muted text-xs mt-3" id="match-modal-hint">${showGroupSelector && !existingGroupId ? "Selecciona un grupo para ver sus jugadores" : ""}</p>`, form => {
+        // Resultado: el editor de sets deriva los conteos sa/sb. Si queda vacío
+        // se conserva el conteo guardado (o null si nunca se cargó resultado).
+        if (matchScoreEditor && !matchScoreEditor.isEmpty()) {
+          const check = matchScoreEditor.validate();
+          if (!check.ok) { notify(check.error); return false; }
+          form.set("sa", String(check.setsWon[0]));
+          form.set("sb", String(check.setsWon[1]));
+        }
         const newStageId = form.get("stage");
         const newStage = tournament.stages.find(s => s.id === newStageId);
         const newIsBracket = newStage?.kind === "bracket";
@@ -701,6 +712,22 @@
               updatePlayerDropdowns(e.target.value);
             }
           });
+        }
+        // Editor de resultado idéntico al resto de la app (sets con juegos).
+        if (window.TennisScore) {
+          const host = document.getElementById("modal-score-editor");
+          matchScoreEditor = window.TennisScore.createEditor(host, {
+            playerAName: playerA?.value ? name(playerA.value) : "Jugador A",
+            playerBName: playerB?.value ? name(playerB.value) : "Jugador B"
+          });
+          const syncEditorNames = () => {
+            const nextA = playerA?.value ? name(playerA.value) : "Jugador A";
+            const nextB = playerB?.value ? name(playerB.value) : "Jugador B";
+            matchScoreEditor?.setNames(nextA, nextB);
+          };
+          playerA?.addEventListener("change", syncEditorNames);
+          playerB?.addEventListener("change", syncEditorNames);
+          if (!matchScoreEditor) window.TennisScore.createEditor(host, {});
         }
         // Initial update if preGroupId
         if (existingGroupId) updatePlayerDropdowns(existingGroupId);

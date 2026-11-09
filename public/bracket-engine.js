@@ -259,15 +259,22 @@ const BracketEngine = {
     const match = (this.tournament.matches || []).find(item => item.id === matchId);
     const host = this.el.querySelector(`[data-score-for="${CSS.escape(matchId)}"]`);
     if (!match || !host) return;
+    const nameA = this.playerName(match.playerAId);
+    const nameB = this.playerName(match.playerBId);
     host.innerHTML = `<div class="be-inline-editor">
-      <label>Marcador<input name="score" placeholder="6-4, 4-6, 7-6*" value="${escapeHtml(match.score === "BYE" ? "" : (match.score || ""))}"></label>
+      <div id="beScoreEditor"></div>
       <label>Fecha<input name="date" type="date" value="${escapeHtml(match.date || "")}"></label>
       <label>Cancha<input name="court" maxlength="120" value="${escapeHtml(match.court || "")}"></label>
       <div class="be-inline-buttons"><button class="btn btn-sm btn-primary" data-save-result>Guardar resultado</button><button class="btn btn-sm btn-secondary" data-save-schedule>Guardar fecha</button></div>
     </div>`;
+    this._inlineEditor = window.TennisScore ? window.TennisScore.createEditor(document.getElementById("beScoreEditor"), {
+      playerAName: nameA,
+      playerBName: nameB,
+      initialSets: match.score && match.score !== "BYE" ? window.TennisScore.parseScoreString(match.score) : []
+    }) : null;
     host.querySelector("[data-save-result]").addEventListener("click", () => this.saveInlineResult(matchId, host));
     host.querySelector("[data-save-schedule]").addEventListener("click", () => this.saveInlineSchedule(matchId, host));
-    host.querySelector('input[name="score"]').focus();
+    host.querySelector('input[type="number"]')?.focus();
   },
 
   parseScore(value) {
@@ -279,6 +286,22 @@ const BracketEngine = {
   },
 
   async saveInlineResult(matchId, host) {
+    const editor = this._inlineEditor;
+    if (editor) {
+      const payload = editor.matchPayload();
+      if (!payload.ok) { showToast(payload.error); return; }
+      const date = host.querySelector('input[name="date"]').value;
+      const court = host.querySelector('input[name="court"]').value;
+      try {
+        await api(`/api/admin/tournaments/${encodeURIComponent(this.tournament.id)}`, {
+          method: "PUT",
+          body: JSON.stringify({ matchResult: { matchId, sets: payload.sets, status: "completed", date, court, superTiebreak: payload.superTiebreak } })
+        });
+        await this.reload();
+        showToast("Resultado guardado y ganador avanzado.");
+      } catch (error) { showToast(`No se pudo guardar el resultado: ${error.message}`); }
+      return;
+    }
     const sets = this.parseScore(host.querySelector('input[name="score"]').value);
     if (!sets) { showToast("Formato inválido. Ejemplo: 6-4, 4-6, 7-6*"); return; }
     const date = host.querySelector('input[name="date"]').value;
