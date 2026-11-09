@@ -184,7 +184,7 @@
     "price": 1000,
     "type": "digital",
     "description": "Anti-moisture silicone grip",
-    "active": false,
+    "active": true,
     "image": "/api/uploads/1794188630096-9293.jpg",
     "category": "ropa"
   },
