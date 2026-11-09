@@ -195,7 +195,8 @@
     "type": "digital",
     "description": "Anti-moisture silicone grip",
     "active": true,
-    "image": "/api/uploads/1794188633337-9293.jpg",
-    "category": "ropa"
+    "image": "/api/uploads/1794188871291-9293.jpg",
+    "category": "ropa",
+    "interval": "month"
   }
 ]
