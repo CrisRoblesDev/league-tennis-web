@@ -187,5 +187,15 @@
     "active": false,
     "image": "/api/uploads/1794188630096-9293.jpg",
     "category": "ropa"
+  },
+  {
+    "id": "prod-97327c02-9ad8-4dcd-b80d-1451984e93cd",
+    "name": "Silicone grip",
+    "price": 1000,
+    "type": "digital",
+    "description": "Anti-moisture silicone grip",
+    "active": true,
+    "image": "/api/uploads/1794188633337-9293.jpg",
+    "category": "ropa"
   }
 ]
