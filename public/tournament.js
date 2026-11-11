@@ -130,7 +130,7 @@
           ? `<div class="flex flex-wrap items-center gap-2"><span class="pill">${tournaments.length} torneos</span>${btn("+ Crear torneo", "wizard-start", "", "light")}</div>`
           : ""
       }</div><div class="grid md:grid-cols-2 gap-5">${
-        tournaments.map((tournament, index) => `<article class="card overflow-hidden"><div class="h-2 ${index % 2 ? "bg-[#a3c979]" : "bg-[#d9f274]"}"></div><div class="p-6"><div class="flex justify-between gap-2 mb-5"><span class="eyebrow text-[#69845b]">TORNEO ${String(index + 1).padStart(2, "0")} · 2026</span>${pill(tournament.status)}</div><h3 class="display text-2xl font-bold mb-2">${esc(tournament.name)}</h3><p class="muted text-sm">${esc(tournament.description)}</p><div class="grid grid-cols-2 gap-3 my-5 py-4 border-y border-[#dce5d8] text-sm"><div><span class="muted block text-xs">Formato</span><strong>${esc((FORMATS[tournament.mode] || FORMATS.knockout).label)}</strong></div><div><span class="muted block text-xs">Inicio</span><strong>${date(tournament.date)}</strong></div><div><span class="muted block text-xs">Jugadores</span><strong>${tournament.participants.length} / ${tournament.capacity}</strong></div><div><span class="muted block text-xs">Sede</span><strong>${esc(tournament.venue || "Por definir")}</strong></div></div><div class="flex flex-wrap gap-2">${btn(admin ? "Gestionar" : "Ver torneo", "open", tournament.id, "")}${btn("Main Draw", "open-draw", tournament.id)}</div></div></article>`).join("")
+        tournaments.map((tournament, index) => `<article class="card overflow-hidden"><div class="p-6"><div class="flex justify-between gap-2 mb-5"><span class="eyebrow text-[#69845b]">TORNEO ${String(index + 1).padStart(2, "0")} · 2026</span>${pill(tournament.status)}</div><h3 class="display text-2xl font-bold mb-2">${esc(tournament.name)}</h3><p class="muted text-sm">${esc(tournament.description)}</p><div class="grid grid-cols-2 gap-3 my-5 py-4 border-y border-[#dce5d8] text-sm"><div><span class="muted block text-xs">Formato</span><strong>${esc((FORMATS[tournament.mode] || FORMATS.knockout).label)}</strong></div><div><span class="muted block text-xs">Inicio</span><strong>${date(tournament.date)}</strong></div><div><span class="muted block text-xs">Jugadores</span><strong>${tournament.participants.length} / ${tournament.capacity}</strong></div><div><span class="muted block text-xs">Sede</span><strong>${esc(tournament.venue || "Por definir")}</strong></div></div><div class="flex flex-wrap gap-2">${btn(admin ? "Gestionar" : "Ver torneo", "open", tournament.id, "")}${btn("Main Draw", "open-draw", tournament.id)}</div></div></article>`).join("")
       }</div>${ranking}</div>`;
     }
 
@@ -389,30 +389,23 @@
           }</div></div>`
         : "";
 
-      // Bracket stages: only show REAL matches, not empty slots. Add "+" buttons for empty slots.
+      // Bracket stages: only show REAL matches, no empty slots between them.
       const columns = allRounds.map((round, roundIndex) => {
         const stageId = round.stage.id;
         const realMatches = tournament.matches.filter(m => m.stageId === stageId && m.slot !== null);
-        const maxSlot = realMatches.length > 0 ? Math.max(...realMatches.map(m => m.slot)) : -1;
-        const slotsToShow = Math.max(round.count, maxSlot + 1);
+        const last = roundIndex === allRounds.length - 1;
 
         return `<div class="round" ${admin ? `draggable="true" data-drag="stage" data-drop="stage" data-id="${esc(stageId)}"` : ""}><div class="round-title">${
           admin
             ? `<button type="button" data-action="edit-stage" data-id="${esc(stageId)}" class="text-left hover:underline">${esc(round.stage.name)} ✎</button> ${btn("↑", "move-stage-up", stageId)} ${btn("↓", "move-stage-down", stageId)} ${btn("✕", "delete-stage", stageId, "danger").replace("<button", "<button draggable=\"false\"")}`
             : esc(round.stage.name)
         }</div><div class="round-body">${
-          Array.from({ length: slotsToShow }, (_, slot) => {
-            const match = bracketMatch(tournament, stageId, slot);
+          realMatches.map(match => {
             const win = winner(match);
-            const last = roundIndex === allRounds.length - 1;
-            if (match) {
-              const [a, b] = [match.a, match.b];
-              return `<div class="match-node ${last ? "last" : ""} ${win ? "win" : ""}" data-slot="${slot}" data-card-no="${esc(match.cardNo || "")}" data-match-id="${esc(match.id)}" ${admin ? `data-action="draw-match" draggable="true" data-drag="match" data-drop="match" data-id="${esc(match.id)}" role="button" tabindex="0" aria-label="Editar partido ${slot + 1} de ${esc(round.stage.name)}"` : ""}><div class="flex justify-between gap-2 text-[10px] muted mb-1"><span>PARTIDO ${slot + 1}${admin ? ` · #${esc(match.cardNo || match.id)}` : ""}</span><span>${match.date ? new Date(match.date).toLocaleDateString("es-CL") : "Por programar"}</span></div>${
-                [a, b].map(id => `<div class="slot ${win === id && id ? "winner" : ""}" ${admin && roundIndex === 0 && id ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${id ? esc(name(id)) : "— Por definir"}</div>`).join("")
-              }${admin ? '<span class="muted text-[10px]">Clic para editar · arrastra para mover</span>' : ""}${admin ? `<button type="button" class="button light small" style="margin-top:6px;" data-action="unir-linea" data-match-id="${esc(match.id)}" draggable="false" title="unir linea">Unir linea</button>` : ""}${admin ? `<button type="button" class="button light small" style="margin-top:6px;margin-left:4px;" data-action="desunir-linea" data-match-id="${esc(match.id)}" draggable="false" title="desunir linea">Desunir linea</button>` : ""}</div>`;
-            }
-            // Empty slot (sin botón de creación; el admin usa el botón superior "+ Partido")
-            return `<div class="match-node empty-slot ${last ? "last" : ""}" data-slot="${slot}" style="border-style:dashed;border-color:#c9dd9d;background:#f8fdf3;min-height:86px;"></div>`;
+            const [a, b] = [match.a, match.b];
+            return `<div class="match-node ${last ? "last" : ""} ${win ? "win" : ""}" data-slot="${match.slot}" data-card-no="${esc(match.cardNo || "")}" data-match-id="${esc(match.id)}" ${admin ? `data-action="draw-match" draggable="true" data-drag="match" data-drop="match" data-id="${esc(match.id)}" role="button" tabindex="0" aria-label="Editar partido ${match.slot + 1} de ${esc(round.stage.name)}"` : ""}><div class="flex justify-between gap-2 text-[10px] muted mb-1"><span>PARTIDO ${match.slot + 1}${admin ? ` · #${esc(match.cardNo || match.id)}` : ""}</span><span>${match.date ? new Date(match.date).toLocaleDateString("es-CL") : "Por programar"}</span></div>${
+              [a, b].map(id => `<div class="slot ${win === id && id ? "winner" : ""}" ${admin && roundIndex === 0 && id ? `draggable="true" data-drag="player" data-drop="player" data-id="${esc(id)}"` : ""}>${id ? esc(name(id)) : "— Por definir"}</div>`).join("")
+            }${admin ? '<span class="muted text-[10px]">Clic para editar · arrastra para mover</span>' : ""}${admin ? `<button type="button" class="button light small" style="margin-top:6px;" data-action="unir-linea" data-match-id="${esc(match.id)}" draggable="false" title="unir linea">Unir linea</button>` : ""}${admin ? `<button type="button" class="button light small" style="margin-top:6px;margin-left:4px;" data-action="desunir-linea" data-match-id="${esc(match.id)}" draggable="false" title="desunir linea">Desunir linea</button>` : ""}</div>`;
           }).join("")
         }</div></div>`;
       }).join("");

@@ -1044,6 +1044,10 @@ async function openResultModal(presetWinnerId, presetLoserId) {
   const tournamentSelect = document.getElementById("resultTournamentSelect");
   const matchSelect = document.getElementById("resultMatchSelect");
   if (!form || !tournamentSelect || !matchSelect) return;
+  // Asegurar que players esté cargado para resolver nombres reales (igual que main draw)
+  if (!players || players.length === 0) {
+    players = await api("/api/players");
+  }
   form.reset();
   form.date.value = new Date().toISOString().slice(0, 10);
   principalResultPlayers = null;
@@ -2907,6 +2911,10 @@ async function initProfileResultForm() {
   }
   document.getElementById("profileResultNotice").textContent = "";
   if (!form.elements.namedItem("date").value) form.elements.namedItem("date").value = new Date().toISOString().slice(0, 10);
+  // Asegurar que players esté cargado para resolver nombres reales (igual que main draw)
+  if (!players || players.length === 0) {
+    players = await api("/api/players");
+  }
   const tournamentSelect = form.elements.namedItem("tournamentId");
   const matchSelect = form.elements.namedItem("matchId");
   profileResultPlayers = null;
