@@ -122,3 +122,33 @@ export async function onRequestPatch(context) {
   }
   return jsonResponse({ ok: true, status: result.status });
 }
+
+export async function onRequestDelete({ request, env }) {
+  const userId = await requireAuth(request, env);
+  if (!userId) return jsonResponse({ error: "No autenticado" }, 401);
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: "Solicitud JSON inválida" }, 400);
+  }
+  if (!body || typeof body.resultId !== "string") {
+    return jsonResponse({ error: "Resultado inválido" }, 400);
+  }
+
+  const [results] = await Promise.all([
+    gRead(env, "challenges"),
+    gRead(env, "players")
+  ]);
+  const result = results.find(item => item.id === body.resultId);
+  if (!result) return jsonResponse({ error: "Resultado no encontrado" }, 404);
+  if (result.reportedBy !== userId || result.status !== "pending") {
+    return jsonResponse({ error: "Solo puedes eliminar tus propios resultados pendientes" }, 403);
+  }
+
+  const index = results.findIndex(item => item.id === body.resultId);
+  results.splice(index, 1);
+  await gWrite(env, "challenges", results);
+  return jsonResponse({ ok: true });
+}

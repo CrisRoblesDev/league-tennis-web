@@ -1838,6 +1838,7 @@ html, body { overflow-x: hidden; }
 .profile-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .profile-form .full { grid-column: 1 / -1; }
 .profile-form-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+select.match-scroll, select[size="6"] { overflow-y: auto; max-height: 220px; }
 .saved-indicator { font-size: 12px; font-weight: 800; color: #3a5a1b; }
 .saved-indicator.is-dirty { color: #8e3028; }
 .profile-photo-row { display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; }

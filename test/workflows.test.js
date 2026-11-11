@@ -550,7 +550,7 @@ test("registration, login, Stripe checkout, and payment reconciliation use the c
       env
     });
     assert.equal(editResultResponse.status, 200);
-    assert.equal(JSON.parse(github.files.get("results.json"))[0].status, "pending");
+    assert.equal(JSON.parse(github.files.get("results.json"))[0].status, "confirmed");
     const resultDeleteResponse = await deleteAdminResult({
       request: adminRequest("https://league.example/api/admin/results", "DELETE", {
         resultId: "result-test"

@@ -43,13 +43,16 @@ export async function onRequestPatch({ request, env }) {
       }
       result.playedAt = body.playedAt;
     }
-    result.status = "pending";
+    result.status = "confirmed";
     result.reportedBy = userId;
-    result.respondedBy = null;
-    result.respondedAt = null;
+    result.respondedBy = userId;
+    result.respondedAt = new Date().toISOString();
     result.moderatedBy = userId;
     result.moderatedAt = new Date().toISOString();
     await gWrite(env, "challenges", results);
+    if (result.status === "confirmed") {
+      await awardRankingPoint(env, result);
+    }
     return jsonResponse({ ok: true, status: result.status });
   }
   if (!["pending", "disputed"].includes(result.status)) {
