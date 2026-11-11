@@ -401,28 +401,28 @@ function isCompleteSet(first, second) {
 export function validateMatchScore(score) {
   if (typeof score !== "string") return null;
   const sets = score.split(",").map(value => value.trim());
-  if (sets.length < 2 || sets.length > 3) return null;
+  const n = sets.length;
+  if (n < 2 || n > 5) return null;
+  const majority = Math.floor(n / 2) + 1;
 
   const setWinners = [];
-  for (let index = 0; index < sets.length; index++) {
+  for (let index = 0; index < n; index++) {
     const match = sets[index].match(/^(\d{1,2})-(\d{1,2})$/);
     if (!match) return null;
     const first = Number(match[1]);
     const second = Number(match[2]);
     if (first === second) return null;
 
-    const firstTwoEachWon = index === 2 && setWinners[0] !== setWinners[1];
-    const isMatchTieBreak = firstTwoEachWon &&
-      Math.max(first, second) >= 10 &&
-      Math.abs(first - second) >= 2;
-    if (!isCompleteSet(first, second) && !isMatchTieBreak) return null;
+    const isLast = index === n - 1;
+    const isSuperTb = Math.max(first, second) >= 10 && Math.abs(first - second) >= 2;
+    if (!isCompleteSet(first, second) && !isSuperTb) return null;
 
     setWinners.push(first > second ? 0 : 1);
-    const wins = [setWinners.filter(winner => winner === 0).length, setWinners.filter(winner => winner === 1).length];
-    if (Math.max(...wins) === 2 && index !== sets.length - 1) return null;
+    const wins = [setWinners.filter(w => w === 0).length, setWinners.filter(w => w === 1).length];
+    if (Math.max(...wins) === majority && index !== n - 1) return null;
   }
 
-  const totals = [setWinners.filter(winner => winner === 0).length, setWinners.filter(winner => winner === 1).length];
-  if (Math.max(...totals) !== 2) return null;
-  return { setWinners, winnerIndex: totals[0] === 2 ? 0 : 1 };
+  const totals = [setWinners.filter(w => w === 0).length, setWinners.filter(w => w === 1).length];
+  if (Math.max(...totals) !== majority) return null;
+  return { setWinners, winnerIndex: totals[0] >= majority ? 0 : 1 };
 }

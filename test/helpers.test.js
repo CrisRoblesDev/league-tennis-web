@@ -69,3 +69,26 @@ test("match scores must be complete and the selected winner must win two sets", 
   assert.equal(validateMatchScore("6-4, 4-6, 10-9"), null);
   assert.equal(validateMatchScore("8-6, 3-6, 10-7"), null);
 });
+
+test("match scores accept 2 to 5 sets with majority winner", () => {
+  // 4 sets, winner 3-1
+  assert.deepEqual(validateMatchScore("6-4, 4-6, 6-4, 6-4"), {
+    setWinners: [0, 1, 0, 0],
+    winnerIndex: 0
+  });
+  // 5 sets, winner 3-2
+  assert.deepEqual(validateMatchScore("6-4, 4-6, 6-4, 4-6, 7-5"), {
+    setWinners: [0, 1, 0, 1, 0],
+    winnerIndex: 0
+  });
+  // 4 sets, winner B wins 3-1
+  assert.equal(validateMatchScore("4-6, 6-4, 4-6, 4-6")?.winnerIndex, 1);
+  // Too few sets
+  assert.equal(validateMatchScore("6-4"), null);
+  // Too many sets
+  assert.equal(validateMatchScore("6-4, 4-6, 6-4, 4-6, 6-4, 6-4"), null);
+  // No extra sets after match decided (4-set match already decided 3-0 in set 3)
+  assert.equal(validateMatchScore("6-4, 6-4, 6-4, 6-2"), null);
+  // Tie not allowed
+  assert.equal(validateMatchScore("6-4, 6-4, 6-6"), null);
+});

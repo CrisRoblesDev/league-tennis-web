@@ -891,8 +891,16 @@ function setupResultCascade(config) {
   function normalizedMatches(tournament) {
     return (tournament.matches || []).map(match => {
       const resolved = window.TennisScore.resolvePlayers(match, resultPlayerMaps());
-      return { match, resolved };
-    }).filter(item => item.resolved.playerAId && item.resolved.playerBId);
+      // Nunca filtramos: mostramos todos los partidos aunque no se resuelvan los nombres.
+      return { match, resolved: {
+        playerAId: resolved.playerAId || match.playerAId || match.a || null,
+        playerBId: resolved.playerBId || match.playerBId || match.b || null,
+        playerAName: resolved.playerAName || match.playerAName || "Jugador A",
+        playerBName: resolved.playerBName || match.playerBName || "Jugador B",
+        match,
+        tournament
+      } };
+    });
   }
 
   function playerOptions() {
@@ -2124,9 +2132,9 @@ html += '<button type="button" data-module-btn="members" onclick="setAdminModule
   // Sección de pedidos / compras
   html += '<section class="admin-section admin-module" data-module="orders" hidden><h3>Compras recientes</h3><div class="admin-order-tools"><p class="admin-section-help">Consulta las compras y pagos realizados en la tienda.</p><button class="btn btn-secondary btn-sm" type="button" onclick="syncAdminOrders()">Sincronizar pagos con Stripe</button></div>' + (orderSyncMessage ? '<p class="admin-order-sync-message" role="status">' + escapeHtml(orderSyncMessage) + '</p>' : "") + '<div class="table-wrap" style="margin-bottom:20px"><table><thead><tr><th>ID</th><th>Usuario</th><th>Producto</th><th>Monto</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>' + orders.map(function(o) { return '<tr><td title="' + escapeHtml(o.id) + '">' + escapeHtml(o.id.slice(0, 8)) + '</td><td>' + escapeHtml(o.userName) + '</td><td>' + escapeHtml(o.productName) + '</td><td>$' + (o.amount / 100).toFixed(2) + '</td><td><span class="tag">' + escapeHtml(orderStatusLabel(o.status)) + '</span></td><td>' + (o.created ? formatLocalDate(o.created) : '-') + '</td><td><button class="btn btn-sm btn-dark" onclick="editAdminOrder(\'' + escapeHtml(o.id) + '\')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminOrder(\'' + escapeHtml(o.id) + '\')">Eliminar</button></td></tr>'; }).join("") + '</tbody></table></div><form id="adminOrderForm" class="admin-form" hidden><input type="hidden" name="orderId"><label>Estado<select name="status"><option value="pending">Pendiente</option><option value="paid">Pagado</option><option value="cancelled">Cancelado</option><option value="refunded">Reembolsado</option></select></label><label>Producto<input name="productName" maxlength="120"></label><label>Monto (USD)<input name="amount" type="number" min="0" step="0.01"></label><div class="admin-form-actions full"><button class="btn btn-primary" type="submit">Guardar cambios</button><button type="button" class="btn btn-secondary" onclick="resetAdminOrderForm()">Cancelar</button></div></form></section>';
 
-  html += '<section class="admin-section admin-module" data-module="results" hidden><h3>Resultados de partidos</h3><p class="admin-section-help">Confirma, rechaza o elimina un reporte. Los resultados confirmados impactan el ranking.</p><div class="grid grid-2 admin-records">' + (pendingResults.length ? pendingResults.map(function(r) {
+  html += '<section class="admin-section admin-module" data-module="results" hidden><h3>Resultados de partidos</h3><p class="admin-section-help">Confirma, rechaza o elimina un reporte. Los resultados confirmados impactan el ranking.</p><button class="btn btn-primary" type="button" style="margin-bottom:10px" onclick="openAdminResultForm()">Registrar resultado nuevo</button><div class="grid grid-2 admin-records">' + (pendingResults.length ? pendingResults.map(function(r) {
     return '<article class="card admin-record"><span class="tag ' + (r.status === "disputed" ? "tag-red" : "") + '">' + (r.status === "disputed" ? "En disputa" : "Pendiente") + '</span><h4>' + escapeHtml(r.winnerName) + ' vs ' + escapeHtml(r.loserName) + '</h4><p class="muted">' + escapeHtml(r.score) + '</p><div class="admin-form-actions"><button class="btn btn-primary" onclick="moderateResult(\'' + escapeHtml(r.id) + '\',\'confirm\')">Confirmar</button><button class="btn btn-secondary" onclick="moderateResult(\'' + escapeHtml(r.id) + '\',\'reject\')">Rechazar</button><button class="btn btn-dark" onclick="editAdminResult(\'' + escapeHtml(r.id) + '\')">Editar</button><button class="btn btn-danger" onclick="deleteAdminResult(\'' + escapeHtml(r.id) + '\')">Eliminar</button></div></article>';
-  }).join("") : '<p class="muted">No hay resultados pendientes.</p>') + '</div><details class="admin-history"><summary>Historial de resultados (' + results.length + ')</summary><div class="table-wrap"><table><thead><tr><th>Partido</th><th>Marcador</th><th>Estado</th><th>Fecha</th><th></th></tr></thead><tbody>' + results.map(function(r) { return '<tr><td>' + escapeHtml(r.winnerName) + ' vs ' + escapeHtml(r.loserName) + '</td><td>' + escapeHtml(r.score) + '</td><td>' + r.status + '</td><td>' + (r.playedAt ? formatLocalDate(r.playedAt) : '-') + '</td><td><button class="btn btn-sm btn-dark" onclick="editAdminResult(\'' + escapeHtml(r.id) + '\')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminResult(\'' + escapeHtml(r.id) + '\')">Eliminar</button></td></tr>'; }).join("") + '</tbody></table></div></details>' + '<form id="adminResultForm" class="admin-form admin-result-form" hidden><input type="hidden" name="resultId"><h4 class="full admin-form-title">Editar resultado reportado</h4><p class="full muted">Al guardar, volverá a estado pendiente para que el rival confirme el cambio. Elige el torneo, luego el partido: los 2 jugadores se colocan solos.</p><label>Torneo<select name="tournamentId"><option value="">Seleccionar torneo (opcional)</option>' + (allTournaments || []).map(function(t) { return '<option value="' + escapeHtml(t.id) + '">' + escapeHtml(t.title || t.month || "Torneo") + '</option>'; }).join("") + '</select></label><label>Elige el partido<select name="matchId" size="6"><option value="">Seleccionar partido (opcional)</option></select></label><div class="result-players full"><div class="result-player"><b id="adminPlayerAName">—</b><small>Elige un partido del torneo…</small></div><span class="result-vs">vs</span><div class="result-player"><b id="adminPlayerBName">—</b><small>Los 2 jugadores se colocan solos</small></div></div><div class="full" id="adminManualPlayers" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"><label style="display:flex; flex-direction:column; gap:6px;">Jugador A<select name="winnerA"><option value="">Seleccionar</option>' + allPlayers.map(function(player) { return '<option value="' + escapeHtml(player.id) + '">' + escapeHtml(player.name) + '</option>'; }).join("") + '</select></label><label style="display:flex; flex-direction:column; gap:6px;">Jugador B<select name="loserB"><option value="">Seleccionar</option>' + allPlayers.map(function(player) { return '<option value="' + escapeHtml(player.id) + '">' + escapeHtml(player.name) + '</option>'; }).join("") + '</select></label></div><input type="hidden" name="winnerId" id="adminWinnerHidden"><input type="hidden" name="loserId" id="adminLoserHidden"><input type="hidden" name="score" id="adminScoreHidden"><div class="full" id="adminScoreEditor"></div><label>Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label><label>Fecha<input name="playedAt" type="date" required></label><div class="admin-form-actions full"><button class="btn btn-primary">Guardar y solicitar confirmación</button><button type="button" class="btn btn-secondary" onclick="cancelAdminResultEdit()">Cancelar</button></div></form></section>';
+  }).join("") : '<p class="muted">No hay resultados pendientes.</p>') + '</div><details class="admin-history"><summary>Historial de resultados (' + results.length + ')</summary><div class="table-wrap"><table><thead><tr><th>Partido</th><th>Marcador</th><th>Estado</th><th>Fecha</th><th></th></tr></thead><tbody>' + results.map(function(r) { return '<tr><td>' + escapeHtml(r.winnerName) + ' vs ' + escapeHtml(r.loserName) + '</td><td>' + escapeHtml(r.score) + '</td><td>' + r.status + '</td><td>' + (r.playedAt ? formatLocalDate(r.playedAt) : '-') + '</td><td><button class="btn btn-sm btn-dark" onclick="editAdminResult(\'' + escapeHtml(r.id) + '\')">Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminResult(\'' + escapeHtml(r.id) + '\')">Eliminar</button></td></tr>'; }).join("") + '</tbody></table></div></details>' + '<form id="adminResultForm" class="admin-form admin-result-form" hidden><input type="hidden" name="resultId"><h4 class="full admin-form-title" id="adminResultFormTitle">Editar resultado reportado</h4><p class="full muted" id="adminResultFormDesc">Al guardar, volverá a estado pendiente para que el rival confirme el cambio. Elige el torneo, luego el partido: los 2 jugadores se colocan solos.</p><label>Torneo<select name="tournamentId"><option value="">Seleccionar torneo (opcional)</option>' + (allTournaments || []).map(function(t) { return '<option value="' + escapeHtml(t.id) + '">' + escapeHtml(t.title || t.month || "Torneo") + '</option>'; }).join("") + '</select></label><label>Elige el partido<select name="matchId" size="6"><option value="">Seleccionar partido (opcional)</option></select></label><div class="result-players full"><div class="result-player"><b id="adminPlayerAName">—</b><small>Elige un partido del torneo…</small></div><span class="result-vs">vs</span><div class="result-player"><b id="adminPlayerBName">—</b><small>Los 2 jugadores se colocan solos</small></div></div><div class="full" id="adminManualPlayers" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"><label style="display:flex; flex-direction:column; gap:6px;">Jugador A<select name="winnerA"><option value="">Seleccionar</option>' + allPlayers.map(function(player) { return '<option value="' + escapeHtml(player.id) + '">' + escapeHtml(player.name) + '</option>'; }).join("") + '</select></label><label style="display:flex; flex-direction:column; gap:6px;">Jugador B<select name="loserB"><option value="">Seleccionar</option>' + allPlayers.map(function(player) { return '<option value="' + escapeHtml(player.id) + '">' + escapeHtml(player.name) + '</option>'; }).join("") + '</select></label></div><input type="hidden" name="winnerId" id="adminWinnerHidden"><input type="hidden" name="loserId" id="adminLoserHidden"><input type="hidden" name="score" id="adminScoreHidden"><div class="full" id="adminScoreEditor"></div><label>Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label><label>Fecha<input name="playedAt" type="date" required></label><div class="admin-form-actions full"><button class="btn btn-primary">Guardar y solicitar confirmación</button><button type="button" class="btn btn-secondary" onclick="cancelAdminResultEdit()">Cancelar</button></div></form></section>';
 
   html += '<section class="admin-section admin-module" data-module="players" hidden><h3>Jugadores de la liga</h3><p class="admin-section-help">Administra el nombre, nivel y zona que aparecen en la clasificación. Los perfiles con historial deportivo no se pueden borrar.</p><form id="adminPlayerForm" class="admin-form" hidden><input type="hidden" name="playerId"><label class="full">Cuenta vinculada<select name="accountId" required><option value="">Selecciona una cuenta sin perfil</option>' + playersWithoutProfile.map(function(user) { return '<option value="' + escapeHtml(user.id) + '">' + escapeHtml(user.name) + ' · ' + escapeHtml(user.email) + '</option>'; }).join("") + '</select></label><label>Nombre público<input name="name" maxlength="100" required></label><label>Nivel<select name="level" required>' + levels.map(function(level) { return '<option value="' + level + '">' + level + '</option>'; }).join("") + '</select></label><label>Categoría<select name="category" required><option value="singles">Singles</option><option value="dobles">Dobles</option><option value="dobles_mixtos">Dobles Mixtos</option></select></label><label>Modalidad<select name="gender" required><option value="hombres">Hombres</option><option value="mujeres">Mujeres</option></select></label><label class="full">Zona<select name="zone" required><option>Aventura / Sunny Isles</option><option>North Miami / Miami Gardens</option><option>Downtown / Brickell</option><option>Kendall / Doral</option></select></label><div class="admin-form-actions full"><button class="btn btn-primary">Guardar perfil</button><button type="button" class="btn btn-secondary" onclick="resetAdminPlayerForm()">Cancelar</button></div></form><button class="btn btn-primary" style="margin-bottom:16px" type="button" onclick="openAdminDynamicEditModal(\'adminPlayerForm\', \'Nuevo jugador\')">Nuevo jugador</button><div class="table-wrap"><table><thead><tr><th>Jugador</th><th>Email</th><th>Nivel</th><th>Categoría</th><th>Modalidad</th><th>Zona</th><th>Partidos</th><th>Puntos</th><th>Acciones</th></tr></thead><tbody>' + players.map(function(player) { return '<tr><td>' + escapeHtml(player.name) + '</td><td>' + escapeHtml(player.email || '-') + '</td><td>' + escapeHtml(player.level) + '</td><td>' + escapeHtml(CATEGORY_LABELS[player.category || "singles"] || "Singles") + '</td><td>' + escapeHtml(GENDER_LABELS[player.gender || "hombres"] || "Hombres") + '</td><td>' + escapeHtml(player.zone) + '</td><td>' + Number(player.matches) + '</td><td>' + Number(player.points) + '</td><td><button class="btn btn-sm btn-dark" onclick="editAdminPlayer(\'' + escapeHtml(player.id) + '\')">Editar</button><button class="btn btn-sm btn-danger" onclick="deleteAdminPlayer(\'' + escapeHtml(player.id) + '\')">Eliminar</button></td></tr>'; }).join("") + '</tbody></table></div></section>';
 
@@ -2425,6 +2433,38 @@ async function moderateResult(resultId, action) {
   }
 }
 
+function openAdminResultForm() {
+  const form = document.getElementById("adminResultForm");
+  if (!form) return;
+  form.reset();
+  form.elements.namedItem("resultId").value = "";
+  adminResultPlayers = null;
+  const nameAEl = document.getElementById("adminPlayerAName");
+  const nameBEl = document.getElementById("adminPlayerBName");
+  if (nameAEl) nameAEl.textContent = "—";
+  if (nameBEl) nameBEl.textContent = "—";
+  const hiddenWinner = document.getElementById("adminWinnerHidden");
+  const hiddenLoser = document.getElementById("adminLoserHidden");
+  if (hiddenWinner) hiddenWinner.value = "";
+  if (hiddenLoser) hiddenLoser.value = "";
+  const titleEl = document.getElementById("adminResultFormTitle");
+  const descEl = document.getElementById("adminResultFormDesc");
+  if (titleEl) titleEl.textContent = "Registrar resultado nuevo";
+  if (descEl) descEl.textContent = "Elige el torneo, luego el partido: los 2 jugadores se colocan solos. Al guardar, el resultado queda pendiente hasta que el rival lo confirme (salvo que lo guarde un administrador, que se confirma directo).";
+  if (adminResultCascade) adminResultCascade.selectTournament("");
+  const manualWrap = document.getElementById("adminManualPlayers");
+  if (manualWrap) manualWrap.style.display = "grid";
+  const manualA = form.elements.namedItem("winnerA");
+  const manualB = form.elements.namedItem("loserB");
+  if (manualA) manualA.value = "";
+  if (manualB) manualB.value = "";
+  if (adminResultEditor) {
+    adminResultEditor.setNames("Jugador A", "Jugador B");
+    adminResultEditor.setSets([]);
+  }
+  openAdminDynamicEditModal("adminResultForm", "Registrar resultado nuevo");
+}
+
 function editAdminResult(resultId) {
   const result = matchResults.find(item => item.id === resultId);
   const form = document.getElementById("adminResultForm");
@@ -2437,6 +2477,10 @@ function editAdminResult(resultId) {
   if (hiddenLoser) hiddenLoser.value = result.loserId;
   form.elements.namedItem("category").value = result.category || "singles";
   form.elements.namedItem("playedAt").value = (result.playedAt || result.created || "").slice(0, 10);
+  const titleEl = document.getElementById("adminResultFormTitle");
+  const descEl = document.getElementById("adminResultFormDesc");
+  if (titleEl) titleEl.textContent = "Editar resultado reportado";
+  if (descEl) descEl.textContent = "Elige el torneo, luego el partido: los 2 jugadores se colocan solos. Al guardar, el resultado se confirma directo y actualiza el ranking.";
   // Mismo flujo que el resto: torneo → partido → 2 jugadores automáticos.
   if (adminResultCascade) {
     adminResultCascade.selectTournament(result.tournamentId || "");
@@ -2505,25 +2549,45 @@ async function saveAdminResult(event) {
   const winnerId = check.winnerIndex === 0 ? playerAId : playerBId;
   const loserId = check.winnerIndex === 0 ? playerBId : playerAId;
   const score = adminResultEditor.score();
+  const resultId = form.elements.namedItem("resultId").value;
   try {
-    await api("/api/admin/results", {
-      method: "PATCH",
-      body: JSON.stringify({
-        action: "edit",
-        resultId: form.elements.namedItem("resultId").value,
-        winnerId,
-        loserId,
-        category: form.elements.namedItem("category").value,
-        tournamentId: form.elements.namedItem("tournamentId").value || null,
-        matchId: form.elements.namedItem("matchId").value || null,
-        score,
-        playedAt: form.elements.namedItem("playedAt").value
-      })
-    });
-    await Promise.all([loadPlayers(), loadResults(), showAdminPanel()]);
-    showToast("Resultado corregido; falta confirmación del rival.");
+    if (resultId) {
+      // Editar resultado existente: el administrador confirma directo.
+      await api("/api/admin/results", {
+        method: "PATCH",
+        body: JSON.stringify({
+          action: "edit",
+          resultId,
+          winnerId,
+          loserId,
+          category: form.elements.namedItem("category").value,
+          tournamentId: form.elements.namedItem("tournamentId").value || null,
+          matchId: form.elements.namedItem("matchId").value || null,
+          score,
+          playedAt: form.elements.namedItem("playedAt").value
+        })
+      });
+      await Promise.all([loadPlayers(), loadResults(), showAdminPanel()]);
+      showToast("Resultado corregido y confirmado; ranking actualizado.");
+    } else {
+      // Crear resultado nuevo: queda pendiente hasta que el rival confirme.
+      await api("/api/results", {
+        method: "POST",
+        body: JSON.stringify({
+          winnerId,
+          loserId,
+          category: form.elements.namedItem("category").value,
+          tournamentId: form.elements.namedItem("tournamentId").value || null,
+          matchId: form.elements.namedItem("matchId").value || null,
+          score,
+          playedAt: form.elements.namedItem("playedAt").value
+        })
+      });
+      await Promise.all([loadPlayers(), loadResults(), showAdminPanel()]);
+      showToast("Resultado enviado; el rival debe confirmarlo para actualizar el ranking.");
+    }
   } catch (error) {
-    showToast(`No se pudo corregir el resultado: ${error.message}`);
+    showToast(`No se pudo guardar el resultado: ${error.message}`);
   }
 }
 

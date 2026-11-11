@@ -24,6 +24,11 @@ export async function onRequestPost(context) {
   const userId = await requireAuth(request, env);
   if (!userId) return jsonResponse({ error: "Inicia sesión para registrar un resultado" }, 401);
 
+  // Los administradores pueden registrar resultados de cualquier partido;
+  // los usuarios comunes solo pueden registrar los suyos propios.
+  const users = await gRead(env, "users");
+  const isAdmin = users.some(u => u.id === userId && u.role === "admin");
+
   let body;
   try {
     body = await request.json();
@@ -50,7 +55,7 @@ export async function onRequestPost(context) {
   if (scoreResult.winnerIndex !== 0) {
     return jsonResponse({ error: "El ganador seleccionado debe coincidir con el marcador ingresado." }, 400);
   }
-  if (![winner.userId, loser.userId].includes(userId)) {
+  if (!isAdmin && ![winner.userId, loser.userId].includes(userId)) {
     return jsonResponse({ error: "Solo los participantes pueden registrar este resultado" }, 403);
   }
   if (results.some(result =>
