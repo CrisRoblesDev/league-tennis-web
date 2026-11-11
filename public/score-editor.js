@@ -54,34 +54,31 @@
       }
       parsed.push([a, b]);
     }
-    if (parsed.length < 2 || parsed.length > 3) {
-      return { ok: false, error: "El partido es al mejor de 3 sets: indica 2 o 3 sets.", setsWon: [0, 0], winnerIndex: null, sets: null };
+    if (parsed.length < 2) {
+      return { ok: false, error: "Indica al menos 2 sets.", setsWon: [0, 0], winnerIndex: null, sets: null };
     }
+    const majority = Math.floor(parsed.length / 2) + 1;
     const setWinners = [];
     for (let index = 0; index < parsed.length; index++) {
       const [first, second] = parsed[index];
       if (first === second) {
         return { ok: false, error: `El set ${index + 1} no puede terminar empatado.`, setsWon: [0, 0], winnerIndex: null, sets: null };
       }
-      const firstTwoEachWon = index === 2 && setWinners[0] !== setWinners[1];
-      if (index === 2 && !firstTwoEachWon) {
-        return { ok: false, error: "El tercer set solo se juega si los dos primeros quedaron 1-1.", setsWon: [0, 0], winnerIndex: null, sets: null };
-      }
       const tb = isMatchTieBreak(first, second);
-      if (!isCompleteSet(first, second) && !(index === 2 && tb)) {
-        return { ok: false, error: `El set ${index + 1} no es un set completo válido (6-4, 7-5, 7-6 o súper tie-break 10+ en el tercer set).`, setsWon: [0, 0], winnerIndex: null, sets: null };
+      if (!isCompleteSet(first, second) && !tb) {
+        return { ok: false, error: `El set ${index + 1} no es un set completo válido (6-4, 7-5, 7-6 o súper tie-break 10+).`, setsWon: [0, 0], winnerIndex: null, sets: null };
       }
       setWinners.push(setWinner(first, second));
       const wins = [setWinners.filter(w => w === 0).length, setWinners.filter(w => w === 1).length];
-      if (Math.max(...wins) === 2 && index !== parsed.length - 1) {
-        return { ok: false, error: "El partido ya se definió en 2 sets: quita el tercer set.", setsWon: wins, winnerIndex: null, sets: null };
+      if (Math.max(...wins) === majority && index !== parsed.length - 1) {
+        return { ok: false, error: "El partido ya se definió: no agregues sets extra.", setsWon: wins, winnerIndex: null, sets: null };
       }
     }
     const setsWon = [setWinners.filter(w => w === 0).length, setWinners.filter(w => w === 1).length];
-    if (Math.max(...setsWon) !== 2) {
-      return { ok: false, error: "Falta un set: el ganador debe ganar 2 sets.", setsWon, winnerIndex: null, sets: null };
+    if (Math.max(...setsWon) < majority) {
+      return { ok: false, error: `Faltan sets: el ganador debe ganar ${majority}.`, setsWon, winnerIndex: null, sets: null };
     }
-    return { ok: true, error: "", winnerIndex: setsWon[0] === 2 ? 0 : 1, setsWon, sets: parsed };
+    return { ok: true, error: "", winnerIndex: setsWon[0] >= majority ? 0 : 1, setsWon, sets: parsed };
   }
 
   // Construye el string que espera /api/results: primera columna = ganador.
@@ -133,10 +130,7 @@
     let names = { a: opts.playerAName, b: opts.playerBName };
     let state = opts.initialSets.map(set => ({ a: set[0] ?? "", b: set[1] ?? "" }));
     while (state.length < 2) state.push({ a: "", b: "" });
-    if (state.length > 3) state = state.slice(0, 3);
-    let setCount = 3;
-    if (state.length === 2) setCount = 2;
-    while (state.length < 3) state.push({ a: "", b: "" });
+    let setCount = Math.max(2, state.length);
 
     container.innerHTML = `
       <div class="score-editor">
@@ -144,9 +138,8 @@
           <div class="score-editor-names">
             <span class="se-name" data-role="nameA"></span><span class="se-vs">vs</span><span class="se-name" data-role="nameB"></span>
           </div>
-          <div class="score-editor-count" role="radiogroup" aria-label="Cantidad de sets">
-            <button type="button" data-setcount="2" role="radio" aria-checked="true">2 sets</button>
-            <button type="button" data-setcount="3" role="radio" aria-checked="false">3 sets</button>
+          <div class="score-editor-count" aria-label="Cantidad de sets">
+            <label class="full">Sets<select id="setCountSelect"><option value="2">2 sets</option><option value="3">3 sets</option><option value="4">4 sets</option><option value="5">5 sets</option></select></label>
           </div>
         </div>
         <p class="score-editor-hint">¿Cuántos sets se jugaron? Completa los juegos de cada set; el ganador se detecta solo.</p>
@@ -160,7 +153,7 @@
     const rowsEl = container.querySelector('[data-role="rows"]');
     const previewEl = container.querySelector('[data-role="preview"]');
     const errorEl = container.querySelector('[data-role="error"]');
-    const countBtns = [...container.querySelectorAll("[data-setcount]")];
+    const countSelect = container.querySelector("#setCountSelect");
 
     function readState() {
       return state.slice(0, setCount).map(row => [row.a === "" ? "" : Number(row.a), row.b === "" ? "" : Number(row.b)]);
@@ -173,11 +166,7 @@
     function render() {
       nameAEl.textContent = names.a;
       nameBEl.textContent = names.b;
-      countBtns.forEach(btn => {
-        const active = Number(btn.dataset.setcount) === setCount;
-        btn.classList.toggle("is-active", active);
-        btn.setAttribute("aria-checked", active ? "true" : "false");
-      });
+      countSelect.value = String(setCount);
       const sets = readState();
       const check = validateSets(sets);
       rowsEl.innerHTML = state.slice(0, setCount).map((row, index) => {
@@ -216,20 +205,18 @@
       if (opts.onChange) opts.onChange(api);
     }
 
-    countBtns.forEach(btn => btn.addEventListener("click", () => {
-      setCount = Number(btn.dataset.setcount);
+    countSelect.addEventListener("change", () => {
+      setCount = Number(countSelect.value);
       render();
-    }));
+    });
 
     const api = {
       setNames(a, b) { names = { a, b }; render(); },
       setSets(setsOrString) {
         const sets = typeof setsOrString === "string" ? parseScoreString(setsOrString) : (setsOrString || []);
-        state = [{ a: "", b: "" }, { a: "", b: "" }, { a: "", b: "" }];
-        sets.forEach((set, index) => {
-          if (index < 3) state[index] = { a: set[0] ?? "", b: set[1] ?? "" };
-        });
-        setCount = sets.length >= 3 ? 3 : 2;
+        state = sets.map(set => ({ a: set[0] ?? "", b: set[1] ?? "" }));
+        while (state.length < 2) state.push({ a: "", b: "" });
+        setCount = Math.max(2, state.length);
         render();
       },
       getSets() {
