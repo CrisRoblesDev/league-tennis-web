@@ -892,11 +892,14 @@ function setupResultCascade(config) {
     return (tournament.matches || []).map(match => {
       const resolved = window.TennisScore.resolvePlayers(match, resultPlayerMaps());
       // Nunca filtramos: mostramos todos los partidos aunque no se resuelvan los nombres.
+      // Resolución directa de nombres desde el catálogo de jugadores como fallback robusto.
+      const playerA = players.find(p => p.id === match.playerAId || p.id === match.a || p.userId === match.a || p.userId === match.playerAId);
+      const playerB = players.find(p => p.id === match.playerBId || p.id === match.b || p.userId === match.b || p.userId === match.playerBId);
       return { match, resolved: {
         playerAId: resolved.playerAId || match.playerAId || match.a || null,
         playerBId: resolved.playerBId || match.playerBId || match.b || null,
-        playerAName: resolved.playerAName || match.playerAName || "Jugador A",
-        playerBName: resolved.playerBName || match.playerBName || "Jugador B",
+        playerAName: playerA?.name || resolved.playerAName || match.playerAName || "Jugador A",
+        playerBName: playerB?.name || resolved.playerBName || match.playerBName || "Jugador B",
         match,
         tournament
       } };
@@ -939,7 +942,7 @@ function setupResultCascade(config) {
     const list = tournament ? normalizedMatches(tournament) : [];
     matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>' +
       list.map(({ match, resolved }) => {
-        const etapa = match.round || match.stage || match.etapa || "Partido";
+        const etapa = match.round || match.stage || match.etapa || (match.stageId ? match.stageId : "Partido");
         const label = tournament ? `${escapeHtml(etapa)} · ${escapeHtml(resolved.playerAName)} vs ${escapeHtml(resolved.playerBName)}` : `${escapeHtml(etapa)} · ${escapeHtml(resolved.playerAName)} vs ${escapeHtml(resolved.playerBName)}`;
         return `<option value="${escapeHtml(match.id)}">${label}</option>`;
       }).join("");
