@@ -888,6 +888,23 @@ function setupResultCascade(config) {
   let tournamentsData = [];
   if (!tournamentSelect || !matchSelect) return { setTournaments() {}, applyMatch() {} };
 
+  // Devuelve un nombre legible de etapa/ronda para un partido.
+  // Prioridad: match.round (nombre real de ronda) → match.stage → match.etapa →
+  // nombre de stage desde tournament.stages → etiquetas conocidas de stageId → "Partido".
+  function stageLabel(match, tournament) {
+    if (match.round && String(match.round).trim()) return String(match.round).trim();
+    if (match.stage && String(match.stage).trim()) return String(match.stage).trim();
+    if (match.etapa && String(match.etapa).trim()) return String(match.etapa).trim();
+    if (match.stageId && tournament) {
+      const stage = Array.isArray(tournament.stages) ? tournament.stages.find(s => s.id === match.stageId) : null;
+      if (stage && stage.name) return stage.name;
+      const known = { groups: "Fase de grupos", playoff: "Eliminatorias", knockout: "Cuadro", final: "Final" };
+      if (known[match.stageId]) return known[match.stageId];
+      return match.stageId;
+    }
+    return "Partido";
+  }
+
   function normalizedMatches(tournament) {
     return (tournament.matches || []).map(match => {
       const resolved = window.TennisScore.resolvePlayers(match, resultPlayerMaps());
@@ -942,8 +959,8 @@ function setupResultCascade(config) {
     const list = tournament ? normalizedMatches(tournament) : [];
     matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>' +
       list.map(({ match, resolved }) => {
-        const etapa = match.round || match.stage || match.etapa || (match.stageId ? match.stageId : "Partido");
-        const label = tournament ? `${escapeHtml(etapa)} · ${escapeHtml(resolved.playerAName)} vs ${escapeHtml(resolved.playerBName)}` : `${escapeHtml(etapa)} · ${escapeHtml(resolved.playerAName)} vs ${escapeHtml(resolved.playerBName)}`;
+        const etapa = stageLabel(match, tournament);
+        const label = `${escapeHtml(etapa)} · ${escapeHtml(resolved.playerAName)} vs ${escapeHtml(resolved.playerBName)}`;
         return `<option value="${escapeHtml(match.id)}">${label}</option>`;
       }).join("");
     matchSelect.disabled = !tournamentId;

@@ -207,6 +207,7 @@
 
     countSelect.addEventListener("change", () => {
       setCount = Number(countSelect.value);
+      while (state.length < setCount) state.push({ a: "", b: "" });
       render();
     });
 
