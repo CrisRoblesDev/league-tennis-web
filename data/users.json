@@ -403,18 +403,5 @@
     "zone": "Aventura / Sunny Isles",
     "membershipActive": false,
     "phone": null
-  },
-  {
-    "id": "user-69be214b-54a3-4c4c-8f83-6ed95329cb7c",
-    "name": "Cristian Robles Herrera",
-    "email": "crisroblesherrera99@gmail.com",
-    "password": "pbkdf2$100000$ruguEnlNqqLcqhEn5YIVpw$stx5IbU9e4TsIOa9dhMS3DPVRZ48_jsKv3MaoOEprgI",
-    "phone": "+56933465843",
-    "level": "",
-    "zone": "",
-    "nationality": null,
-    "role": "user",
-    "created": "2026-11-11T20:27:52.021Z",
-    "membershipActive": false
   }
 ]
