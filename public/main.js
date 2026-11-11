@@ -930,8 +930,11 @@ function setupResultCascade(config) {
     const tournament = tournamentsData.find(item => item.id === tournamentId);
     const list = tournament ? normalizedMatches(tournament) : [];
     matchSelect.innerHTML = '<option value="">Seleccionar partido (opcional)</option>' +
-      list.map(({ match, resolved }) =>
-        `<option value="${escapeHtml(match.id)}">${escapeHtml(match.round || "Partido")} · ${escapeHtml(resolved.playerAName)} vs ${escapeHtml(resolved.playerBName)}</option>`).join("");
+      list.map(({ match, resolved }) => {
+        const etapa = match.round || match.stage || match.etapa || "Partido";
+        const label = tournament ? `${escapeHtml(etapa)} · ${escapeHtml(resolved.playerAName)} vs ${escapeHtml(resolved.playerBName)}` : `${escapeHtml(etapa)} · ${escapeHtml(resolved.playerAName)} vs ${escapeHtml(resolved.playerBName)}`;
+        return `<option value="${escapeHtml(match.id)}">${label}</option>`;
+      }).join("");
     matchSelect.disabled = !tournamentId;
   }
 

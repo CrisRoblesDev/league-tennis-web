@@ -1838,7 +1838,21 @@ html, body { overflow-x: hidden; }
 .profile-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .profile-form .full { grid-column: 1 / -1; }
 .profile-form-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
-select.match-scroll, select[size="6"] { overflow-y: auto; max-height: 220px; }
+select.match-scroll, select[size="6"] { overflow-y: auto; max-height: 220px; width: 100%; box-sizing: border-box; }
+@media (max-width: 640px) {
+  select[size="6"] { max-height: 150px; font-size: 14px; }
+  .modal-box { width: min(94vw, 100%); padding: 16px; }
+  #profileManualPlayers, #resultManualPlayers, #adminManualPlayers { grid-template-columns: 1fr !important; gap: 8px !important; }
+  .result-players { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+  .result-vs { display: none; }
+  .score-editor { padding: 12px; }
+  .score-editor-rows { display: flex; flex-direction: column; gap: 8px; }
+  .score-editor-rows .se-set { flex-direction: column; gap: 6px; align-items: stretch; }
+  .score-editor-rows .se-set input.se-games { width: 100%; max-width: none; }
+  .profile-cards .profile-card-actions { flex-direction: column; gap: 6px; }
+  .profile-cards .profile-card-actions button { width: 100%; }
+  .profile-head { flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+}
 .saved-indicator { font-size: 12px; font-weight: 800; color: #3a5a1b; }
 .saved-indicator.is-dirty { color: #8e3028; }
 .profile-photo-row { display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
