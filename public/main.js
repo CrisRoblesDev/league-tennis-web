@@ -33,6 +33,7 @@ const COUNTRIES = [
 let currentUser = null;
 let pendingProfilePhotoFile = null;
 let players = [];
+let resultUsers = [];
 let products = [];
 let matchResults = [];
 let leagueChallenges = [];
@@ -908,12 +909,15 @@ function setupResultCascade(config) {
   function normalizedMatches(tournament) {
     return (tournament.matches || []).map(match => {
       const resolved = window.TennisScore.resolvePlayers(match, resultPlayerMaps());
-      // Resolución directa de nombres desde el catálogo de jugadores como fallback.
+      // Resolver jugador A: players (perfil, tiene playerId y userId) o resultUsers (cuenta, tiene id y name).
       const playerA = players.find(p => p.id === match.playerAId || p.userId === match.a || p.userId === match.playerAId);
+      const userA = resultUsers.find(u => u.id === match.a || u.id === match.playerAId);
+      // Resolver jugador B.
       const playerB = players.find(p => p.id === match.playerBId || p.userId === match.b || p.userId === match.playerBId);
-      // Prioridad de nombres: ya resueltos en el partido (admin API) → catálogo local → resolvePlayers → fallback.
-      const playerAName = match.playerAName || (playerA && playerA.name) || resolved.playerAName || "Jugador A";
-      const playerBName = match.playerBName || (playerB && playerB.name) || resolved.playerBName || "Jugador B";
+      const userB = resultUsers.find(u => u.id === match.b || u.id === match.playerBId);
+      // Prioridad de nombres: admin API ya resueltos → players → resultUsers → resolvePlayers → fallback.
+      const playerAName = match.playerAName || (playerA && playerA.name) || (userA && userA.name) || resolved.playerAName || "Jugador A";
+      const playerBName = match.playerBName || (playerB && playerB.name) || (userB && userB.name) || resolved.playerBName || "Jugador B";
       // playerAId/playerBId siempre del objeto player resuelto (playerId), nunca userId crudo.
       const playerAId = (playerA && playerA.id) || resolved.playerAId || match.playerAId || null;
       const playerBId = (playerB && playerB.id) || resolved.playerBId || match.playerBId || null;
@@ -1044,10 +1048,11 @@ async function openResultModal(presetWinnerId, presetLoserId) {
   const tournamentSelect = document.getElementById("resultTournamentSelect");
   const matchSelect = document.getElementById("resultMatchSelect");
   if (!form || !tournamentSelect || !matchSelect) return;
-  // Asegurar que players esté cargado para resolver nombres reales (igual que main draw)
-  if (!players || players.length === 0) {
-    players = await api("/api/players");
-  }
+  // Cargar jugadores y usuarios para resolver nombres reales (igual que main draw)
+  await Promise.all([
+    players.length ? Promise.resolve() : api("/api/players").then(d => { players = d; }),
+    resultUsers.length ? Promise.resolve() : api("/api/users").then(d => { resultUsers = d; })
+  ]);
   form.reset();
   form.date.value = new Date().toISOString().slice(0, 10);
   principalResultPlayers = null;
@@ -2911,10 +2916,11 @@ async function initProfileResultForm() {
   }
   document.getElementById("profileResultNotice").textContent = "";
   if (!form.elements.namedItem("date").value) form.elements.namedItem("date").value = new Date().toISOString().slice(0, 10);
-  // Asegurar que players esté cargado para resolver nombres reales (igual que main draw)
-  if (!players || players.length === 0) {
-    players = await api("/api/players");
-  }
+  // Cargar jugadores y usuarios para resolver nombres reales (igual que main draw)
+  await Promise.all([
+    players.length ? Promise.resolve() : api("/api/players").then(d => { players = d; }),
+    resultUsers.length ? Promise.resolve() : api("/api/users").then(d => { resultUsers = d; })
+  ]);
   const tournamentSelect = form.elements.namedItem("tournamentId");
   const matchSelect = form.elements.namedItem("matchId");
   profileResultPlayers = null;
