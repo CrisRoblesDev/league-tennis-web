@@ -398,6 +398,47 @@ function isCompleteSet(first, second) {
     (second === 7 && (first === 5 || first === 6));
 }
 
+// Sincroniza el partido del torneo (main draw) cuando un resultado se confirma:
+// marca sa/sb/score para que el cuadro muestre al ganador en verde.
+export async function syncTournamentMatch(env, result) {
+  if (!result || result.status !== "confirmed" || !result.matchId || !result.tournamentId) return;
+  try {
+    const players = await gRead(env, "players");
+    const byUserId = new Map(players.map(p => [p.userId, p]));
+    for (const key of ["tournamentsReference", "tournaments"]) {
+      const list = await gRead(env, key);
+      if (!Array.isArray(list)) continue;
+      const tIndex = list.findIndex(t => t && t.id === result.tournamentId);
+      if (tIndex < 0) continue;
+      const tournament = list[tIndex];
+      const match = (tournament.matches || []).find(m => m && m.id === result.matchId);
+      if (!match) continue;
+      const playerA = byUserId.get(match.a) || players.find(p => p.id === match.playerAId);
+      const playerB = byUserId.get(match.b) || players.find(p => p.id === match.playerBId);
+      if (!playerA || !playerB) continue;
+      const aIsWinner = playerA.id === result.winnerId;
+      const sets = String(result.score || "").split(",").map(s => s.trim()).filter(Boolean);
+      let sa = 0, sb = 0;
+      for (const set of sets) {
+        const m = set.match(/^(\d{1,2})-(\d{1,2})/);
+        if (!m) continue;
+        const x = Number(m[1]), y = Number(m[2]);
+        if (x === y) continue;
+        if (aIsWinner) { if (x > y) sa++; else sb++; }
+        else { if (y > x) sa++; else sb++; }
+      }
+      if (sa + sb > 0) {
+        match.sa = sa;
+        match.sb = sb;
+        match.score = result.score;
+        tournament.updated = new Date().toISOString();
+        await gWrite(env, key, list);
+      }
+      return;
+    }
+  } catch { /* no bloquear */ }
+}
+
 export function validateMatchScore(score) {
   if (typeof score !== "string") return null;
   const sets = score.split(",").map(value => value.trim());

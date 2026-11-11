@@ -920,9 +920,11 @@ function setupResultCascade(config) {
       // Prioridad de nombres: admin API ya resueltos → players → resultUsers → resolvePlayers → fallback.
       const playerAName = match.playerAName || (playerA && playerA.name) || (userA && userA.name) || resolved.playerAName || "Jugador A";
       const playerBName = match.playerBName || (playerB && playerB.name) || (userB && userB.name) || resolved.playerBName || "Jugador B";
-      // playerAId/playerBId siempre del objeto player resuelto (playerId), nunca userId crudo.
-      const playerAId = (playerA && playerA.id) || resolved.playerAId || match.playerAId || null;
-      const playerBId = (playerB && playerB.id) || resolved.playerBId || match.playerBId || null;
+      // playerAId/playerBId: preferir playerId (perfil). Si no existe perfil para el
+      // participante (torneos de referencia), usar el userId como identificador para
+      // que el backend pueda auto-crear el perfil al guardar el resultado.
+      const playerAId = (playerA && playerA.id) || resolved.playerAId || match.playerAId || match.a || null;
+      const playerBId = (playerB && playerB.id) || resolved.playerBId || match.playerBId || match.b || null;
       return { match, resolved: { playerAId, playerBId, playerAName, playerBName, match, tournament } };
     });
   }
@@ -3246,6 +3248,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (phl) phl.value = "";
       if (notice) notice.textContent = "Resultado enviado ✓";
       showToast("Resultado enviado; el rival debe confirmarlo para actualizar el ranking.");
+      try { await loadProfilePendingResults(); } catch { /* ignore */ }
       showProfileTab("datos");
     } catch (error) {
       if (notice) notice.textContent = error.message;

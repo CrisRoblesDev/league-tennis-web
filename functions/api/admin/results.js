@@ -1,4 +1,4 @@
-import { gRead, gWrite, requireAdmin, validateMatchScore, jsonResponse, awardRankingPoint } from "../../_helpers.js";
+import { gRead, gWrite, requireAdmin, validateMatchScore, jsonResponse, awardRankingPoint, syncTournamentMatch } from "../../_helpers.js";
 
 export async function onRequestPatch({ request, env }) {
   const { user, userId } = await requireAdmin(request, env);
@@ -16,19 +16,45 @@ export async function onRequestPatch({ request, env }) {
     return jsonResponse({ error: "Acción de moderación inválida" }, 400);
   }
 
-  const [results, players] = await Promise.all([
+  const [results, players, users] = await Promise.all([
     gRead(env, "challenges"),
-    gRead(env, "players")
+    gRead(env, "players"),
+    gRead(env, "users")
   ]);
   const result = results.find(item => item.id === body.resultId);
   if (!result) return jsonResponse({ error: "Resultado no encontrado" }, 404);
   if (body.action === "edit") {
-    const winner = players.find(player => player.id === body.winnerId);
-    const loser = players.find(player => player.id === body.loserId);
+    const playersBefore = players.length;
+    function findOrCreatePlayer(id) {
+      let player = players.find(p => p.id === id) || players.find(p => p.userId === id);
+      if (player) return player;
+      const user = users.find(u => u.id === id);
+      if (!user) return null;
+      player = {
+        id: `player-${crypto.randomUUID()}`,
+        userId: user.id,
+        name: user.name || user.email || "Jugador",
+        level: user.level || "3.0",
+        zone: user.zone || "",
+        matches: 0,
+        points: 0,
+        manualPoints: 0,
+        category: "singles",
+        gender: "hombres",
+        created: new Date().toISOString()
+      };
+      players.push(player);
+      return player;
+    }
+    const winner = findOrCreatePlayer(body.winnerId);
+    const loser = findOrCreatePlayer(body.loserId);
     const score = typeof body.score === "string" ? body.score.trim() : "";
     const parsedScore = validateMatchScore(score);
     if (!winner || !loser || winner.id === loser.id || !parsedScore || parsedScore.winnerIndex !== 0) {
       return jsonResponse({ error: "Verifica los jugadores y el marcador válido al mejor de 3 sets." }, 400);
+    }
+    if (players.length > playersBefore) {
+      await gWrite(env, "players", players);
     }
     result.winnerId = winner.id;
     result.loserId = loser.id;
@@ -52,6 +78,7 @@ export async function onRequestPatch({ request, env }) {
     await gWrite(env, "challenges", results);
     if (result.status === "confirmed") {
       await awardRankingPoint(env, result);
+      await syncTournamentMatch(env, result);
     }
     return jsonResponse({ ok: true, status: result.status });
   }

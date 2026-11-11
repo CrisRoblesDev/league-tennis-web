@@ -1,4 +1,4 @@
-import { gRead, gWrite, requireAuth, validateMatchScore, jsonResponse, MATCH_CATEGORIES, awardRankingPoint } from "../_helpers.js";
+import { gRead, gWrite, requireAuth, validateMatchScore, jsonResponse, MATCH_CATEGORIES, awardRankingPoint, syncTournamentMatch } from "../_helpers.js";
 
 export async function onRequestGet(context) {
   const { env } = context;
@@ -49,9 +49,38 @@ export async function onRequestPost(context) {
     gRead(env, "players"),
     gRead(env, "challenges")
   ]);
-  const winner = players.find(player => player.id === body.winnerId);
-  const loser = players.find(player => player.id === body.loserId);
+  // Resolver (o auto-crear) el perfil de jugador para cada participante.
+  // Los torneos de referencia usan userId (a/b) que pueden no tener perfil de
+  // jugador; en ese caso se crea uno mínimo a partir de la cuenta de usuario.
+  const playersBefore = players.length;
+  function findOrCreatePlayer(id) {
+    let player = players.find(p => p.id === id) || players.find(p => p.userId === id);
+    if (player) return player;
+    const user = users.find(u => u.id === id);
+    if (!user) return null;
+    player = {
+      id: `player-${crypto.randomUUID()}`,
+      userId: user.id,
+      name: user.name || user.email || "Jugador",
+      level: user.level || "3.0",
+      zone: user.zone || "",
+      matches: 0,
+      points: 0,
+      manualPoints: 0,
+      category: "singles",
+      gender: "hombres",
+      created: new Date().toISOString()
+    };
+    players.push(player);
+    return player;
+  }
+  const winner = findOrCreatePlayer(body.winnerId);
+  const loser = findOrCreatePlayer(body.loserId);
   if (!winner || !loser) return jsonResponse({ error: "Jugador no encontrado" }, 404);
+  // Persistir perfiles recién creados (solo si hubo alguno nuevo).
+  if (players.length > playersBefore) {
+    await gWrite(env, "players", players);
+  }
   if (scoreResult.winnerIndex !== 0) {
     return jsonResponse({ error: "El ganador seleccionado debe coincidir con el marcador ingresado." }, 400);
   }
@@ -124,45 +153,7 @@ export async function onRequestPatch(context) {
   await gWrite(env, "challenges", results);
   if (result.status === "confirmed") {
     await awardRankingPoint(env, result);
-    // Sincronizar el partido del torneo (main draw) si el resultado lo referencia.
-    if (result.matchId && result.tournamentId) {
-      try {
-        const players = await gRead(env, "players");
-        const byUserId = new Map(players.map(p => [p.userId, p]));
-        // Referencia (main draw): tournaments-reference
-        for (const key of ["tournamentsReference", "tournaments"]) {
-          const list = await gRead(env, key);
-          if (!Array.isArray(list)) continue;
-          const tIndex = list.findIndex(t => t && t.id === result.tournamentId);
-          if (tIndex < 0) continue;
-          const tournament = list[tIndex];
-          const match = (tournament.matches || []).find(m => m && m.id === result.matchId);
-          if (!match) continue;
-          const playerA = byUserId.get(match.a) || players.find(p => p.id === match.playerAId);
-          const playerB = byUserId.get(match.b) || players.find(p => p.id === match.playerBId);
-          if (!playerA || !playerB) continue; // sin perfiles no se puede mapear el lado
-          const aIsWinner = playerA.id === result.winnerId;
-          const sets = String(result.score || "").split(",").map(s => s.trim()).filter(Boolean);
-          let sa = 0, sb = 0;
-          for (const set of sets) {
-            const m = set.match(/^(\d{1,2})-(\d{1,2})/);
-            if (!m) continue;
-            const x = Number(m[1]), y = Number(m[2]);
-            if (x === y) continue;
-            if (aIsWinner) { if (x > y) sa++; else sb++; }
-            else { if (y > x) sa++; else sb++; }
-          }
-          if (sa + sb > 0) {
-            match.sa = sa;
-            match.sb = sb;
-            match.score = result.score;
-            tournament.updated = new Date().toISOString();
-            await gWrite(env, key, list);
-          }
-          break;
-        }
-      } catch { /* no bloquear la confirmación */ }
-    }
+    await syncTournamentMatch(env, result);
   }
   return jsonResponse({ ok: true, status: result.status });
 }
