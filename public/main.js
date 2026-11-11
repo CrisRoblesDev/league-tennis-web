@@ -908,18 +908,16 @@ function setupResultCascade(config) {
   function normalizedMatches(tournament) {
     return (tournament.matches || []).map(match => {
       const resolved = window.TennisScore.resolvePlayers(match, resultPlayerMaps());
-      // Nunca filtramos: mostramos todos los partidos aunque no se resuelvan los nombres.
-      // Resolución directa de nombres desde el catálogo de jugadores como fallback robusto.
-      const playerA = players.find(p => p.id === match.playerAId || p.id === match.a || p.userId === match.a || p.userId === match.playerAId);
-      const playerB = players.find(p => p.id === match.playerBId || p.id === match.b || p.userId === match.b || p.userId === match.playerBId);
-      return { match, resolved: {
-        playerAId: resolved.playerAId || match.playerAId || match.a || null,
-        playerBId: resolved.playerBId || match.playerBId || match.b || null,
-        playerAName: playerA?.name || resolved.playerAName || match.playerAName || "Jugador A",
-        playerBName: playerB?.name || resolved.playerBName || match.playerBName || "Jugador B",
-        match,
-        tournament
-      } };
+      // Resolución directa de nombres desde el catálogo de jugadores como fallback.
+      const playerA = players.find(p => p.id === match.playerAId || p.userId === match.a || p.userId === match.playerAId);
+      const playerB = players.find(p => p.id === match.playerBId || p.userId === match.b || p.userId === match.playerBId);
+      // Prioridad de nombres: ya resueltos en el partido (admin API) → catálogo local → resolvePlayers → fallback.
+      const playerAName = match.playerAName || (playerA && playerA.name) || resolved.playerAName || "Jugador A";
+      const playerBName = match.playerBName || (playerB && playerB.name) || resolved.playerBName || "Jugador B";
+      // playerAId/playerBId siempre del objeto player resuelto (playerId), nunca userId crudo.
+      const playerAId = (playerA && playerA.id) || resolved.playerAId || match.playerAId || null;
+      const playerBId = (playerB && playerB.id) || resolved.playerBId || match.playerBId || null;
+      return { match, resolved: { playerAId, playerBId, playerAName, playerBName, match, tournament } };
     });
   }
 
@@ -935,13 +933,11 @@ function setupResultCascade(config) {
     if (config.nameB) config.nameB.textContent = payload ? payload.playerBName : "—";
     if (config.hiddenWinner) config.hiddenWinner.value = payload ? payload.playerAId : "";
     if (config.hiddenLoser) config.hiddenLoser.value = payload ? payload.playerBId : "";
-    const manualActive = !payload && !tournamentSelect.value && !matchSelect.value;
-    if (config.manualWrap) config.manualWrap.style.display = manualActive ? "grid" : "none";
-    if (manualActive && config.manualA && config.manualB && (!config.manualA.options.length || config.manualA.options.length <= 1)) {
-      const options = playerOptions();
-      config.manualA.innerHTML = `<option value="">Seleccionar</option>${options}`;
-      config.manualB.innerHTML = `<option value="">Seleccionar</option>${options}`;
-    }
+    // Los jugadores se colocan automáticamente al elegir el partido.
+    // No hay selección manual de Jugador A / Jugador B.
+    if (config.manualWrap) config.manualWrap.style.display = "none";
+    if (config.manualA) config.manualA.disabled = true;
+    if (config.manualB) config.manualB.disabled = true;
     if (payload && config.onPlayers) config.onPlayers(payload);
   }
 
