@@ -861,8 +861,10 @@ async function respondToResult(resultId, action) {
 // sus 2 jugadores (read-only confirmados); el marcador se completa set por set
 // con los juegos de ambos jugadores y el ganador se detecta por sets ganados.
 let principalResultEditor = null;
+let profileResultCascade = null;
 let profileResultEditor = null;
 let adminResultEditor = null;
+let principalResultCascade = null;
 let principalResultPlayers = null;
 let profileResultPlayers = null;
 let adminResultPlayers = null;
@@ -1076,6 +1078,7 @@ async function openResultModal(presetWinnerId, presetLoserId) {
       if (principalResultEditor) principalResultEditor.setNames(payload.playerAName, payload.playerBName);
     }
   });
+  principalResultCascade = cascade;
   principalResultEditor = mountResultEditor(form, "resultScoreEditor");
   // Manual fallback: si el usuario elige A/B sin partido, sincroniza hiddens.
   const manualA = form.elements.namedItem("winnerA");
@@ -1128,6 +1131,12 @@ async function submitResult(event) {
   event.preventDefault();
   const form = event.target;
   // Jugadores: del partido elegido (automáticos) o del fallback manual.
+  // Re-sincronizar desde el partido seleccionado por si applyMatch no se disparó.
+  const selectedMatchId = form.elements.namedItem("matchId")?.value;
+  const selectedTournamentId = form.elements.namedItem("tournamentId")?.value;
+  if (selectedMatchId && principalResultCascade) {
+    try { principalResultCascade.applyMatch(selectedMatchId, selectedTournamentId || ""); } catch { /* ignore */ }
+  }
   let playerAId = document.getElementById("resultWinnerHidden")?.value || "";
   let playerBId = document.getElementById("resultLoserHidden")?.value || "";
   if (!principalResultPlayers) {
@@ -1168,6 +1177,20 @@ async function submitResult(event) {
     });
     closeModal("resultModal");
     form.reset();
+    const ts = document.getElementById("resultTournamentSelect");
+    const ms = document.getElementById("resultMatchSelect");
+    if (ts) ts.value = "";
+    if (ms) ms.innerHTML = '<option value="">Seleccionar partido (opcional)</option>';
+    if (principalResultEditor) { principalResultEditor.setSets([]); principalResultEditor.setNames("Jugador A", "Jugador B"); }
+    principalResultPlayers = null;
+    const nameAEl = document.getElementById("resultPlayerAName");
+    const nameBEl = document.getElementById("resultPlayerBName");
+    if (nameAEl) nameAEl.textContent = "—";
+    if (nameBEl) nameBEl.textContent = "—";
+    const hw = document.getElementById("resultWinnerHidden");
+    const hl = document.getElementById("resultLoserHidden");
+    if (hw) hw.value = "";
+    if (hl) hl.value = "";
     await loadResults();
     showToast("Resultado enviado; el rival debe confirmarlo para actualizar el ranking.");
   } catch (error) {
@@ -2584,6 +2607,11 @@ function cancelAdminResultEdit() {
 async function saveAdminResult(event) {
   event.preventDefault();
   const form = event.target;
+  const selectedMatchId = form.elements.namedItem("matchId")?.value;
+  const selectedTournamentId = form.elements.namedItem("tournamentId")?.value;
+  if (selectedMatchId && adminResultCascade) {
+    try { adminResultCascade.applyMatch(selectedMatchId, selectedTournamentId || ""); } catch { /* ignore */ }
+  }
   let playerAId = document.getElementById("adminWinnerHidden")?.value || "";
   let playerBId = document.getElementById("adminLoserHidden")?.value || "";
   if (!adminResultPlayers) {
@@ -2623,6 +2651,9 @@ async function saveAdminResult(event) {
         })
       });
       await Promise.all([loadPlayers(), loadResults(), showAdminPanel()]);
+      if (adminResultEditor) { adminResultEditor.setSets([]); adminResultEditor.setNames("Jugador A", "Jugador B"); }
+      adminResultPlayers = null;
+      closeAdminDynamicEditModal();
       showToast("Resultado corregido y confirmado; ranking actualizado.");
     } else {
       // Crear resultado nuevo: queda pendiente hasta que el rival confirme.
@@ -2639,6 +2670,9 @@ async function saveAdminResult(event) {
         })
       });
       await Promise.all([loadPlayers(), loadResults(), showAdminPanel()]);
+      if (adminResultEditor) { adminResultEditor.setSets([]); adminResultEditor.setNames("Jugador A", "Jugador B"); }
+      adminResultPlayers = null;
+      closeAdminDynamicEditModal();
       showToast("Resultado enviado; el rival debe confirmarlo para actualizar el ranking.");
     }
   } catch (error) {
@@ -2969,6 +3003,7 @@ async function initProfileResultForm() {
       if (profileResultEditor) profileResultEditor.setNames(payload.playerAName, payload.playerBName);
     }
   });
+  profileResultCascade = cascade;
   profileResultEditor = mountResultEditor(form, "profileScoreEditor");
   const manualA = form.elements.namedItem("winnerA");
   const manualB = form.elements.namedItem("loserB");
@@ -3161,6 +3196,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     event.preventDefault();
     const form = event.target;
     const notice = document.getElementById("profileResultNotice");
+    const selectedMatchId = form.elements.namedItem("matchId")?.value;
+    const selectedTournamentId = form.elements.namedItem("tournamentId")?.value;
+    if (selectedMatchId && profileResultCascade) {
+      try { profileResultCascade.applyMatch(selectedMatchId, selectedTournamentId || ""); } catch { /* ignore */ }
+    }
     let playerAId = document.getElementById("profileWinnerHidden")?.value || "";
     let playerBId = document.getElementById("profileLoserHidden")?.value || "";
     if (!profileResultPlayers) {
@@ -3194,6 +3234,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         })
       });
       form.reset();
+      if (profileResultEditor) { profileResultEditor.setSets([]); profileResultEditor.setNames("Jugador A", "Jugador B"); }
+      profileResultPlayers = null;
+      const pNameA = document.getElementById("profilePlayerAName");
+      const pNameB = document.getElementById("profilePlayerBName");
+      if (pNameA) pNameA.textContent = "—";
+      if (pNameB) pNameB.textContent = "—";
+      const phw = document.getElementById("profileWinnerHidden");
+      const phl = document.getElementById("profileLoserHidden");
+      if (phw) phw.value = "";
+      if (phl) phl.value = "";
       if (notice) notice.textContent = "Resultado enviado ✓";
       showToast("Resultado enviado; el rival debe confirmarlo para actualizar el ranking.");
       showProfileTab("datos");

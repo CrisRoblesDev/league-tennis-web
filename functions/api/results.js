@@ -124,6 +124,45 @@ export async function onRequestPatch(context) {
   await gWrite(env, "challenges", results);
   if (result.status === "confirmed") {
     await awardRankingPoint(env, result);
+    // Sincronizar el partido del torneo (main draw) si el resultado lo referencia.
+    if (result.matchId && result.tournamentId) {
+      try {
+        const players = await gRead(env, "players");
+        const byUserId = new Map(players.map(p => [p.userId, p]));
+        // Referencia (main draw): tournaments-reference
+        for (const key of ["tournamentsReference", "tournaments"]) {
+          const list = await gRead(env, key);
+          if (!Array.isArray(list)) continue;
+          const tIndex = list.findIndex(t => t && t.id === result.tournamentId);
+          if (tIndex < 0) continue;
+          const tournament = list[tIndex];
+          const match = (tournament.matches || []).find(m => m && m.id === result.matchId);
+          if (!match) continue;
+          const playerA = byUserId.get(match.a) || players.find(p => p.id === match.playerAId);
+          const playerB = byUserId.get(match.b) || players.find(p => p.id === match.playerBId);
+          if (!playerA || !playerB) continue; // sin perfiles no se puede mapear el lado
+          const aIsWinner = playerA.id === result.winnerId;
+          const sets = String(result.score || "").split(",").map(s => s.trim()).filter(Boolean);
+          let sa = 0, sb = 0;
+          for (const set of sets) {
+            const m = set.match(/^(\d{1,2})-(\d{1,2})/);
+            if (!m) continue;
+            const x = Number(m[1]), y = Number(m[2]);
+            if (x === y) continue;
+            if (aIsWinner) { if (x > y) sa++; else sb++; }
+            else { if (y > x) sa++; else sb++; }
+          }
+          if (sa + sb > 0) {
+            match.sa = sa;
+            match.sb = sb;
+            match.score = result.score;
+            tournament.updated = new Date().toISOString();
+            await gWrite(env, key, list);
+          }
+          break;
+        }
+      } catch { /* no bloquear la confirmación */ }
+    }
   }
   return jsonResponse({ ok: true, status: result.status });
 }
