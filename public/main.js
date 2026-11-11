@@ -1024,6 +1024,8 @@ async function loadResultTournaments() {
   try {
     const data = await api("/api/tournaments");
     const list = (data && data.tournaments) || [];
+    // Guardar usuarios para resolver nombres reales (referencia usa a/b = userId).
+    if (Array.isArray(data && data.users)) resultUsers = data.users;
     if (list.length) return list;
   } catch { /* fallback abajo */ }
   const fallback = (adminTournaments || []).filter(item => !isMonthlyTournament(item));
@@ -1037,6 +1039,12 @@ async function openResultModal(presetWinnerId, presetLoserId) {
     showToast("Inicia sesión para registrar un resultado.");
     return;
   }
+  // Cargar jugadores primero para resolver perfil del usuario actual.
+  try {
+    if (!players || players.length === 0) {
+      players = await api("/api/players");
+    }
+  } catch { /* no bloquear */ }
   const player = players.find(item => item.userId === currentUser.id);
   const isMember = currentUser.role === "member" || currentUser.membershipActive === true;
   if (!player && !isMember) {
@@ -1048,11 +1056,7 @@ async function openResultModal(presetWinnerId, presetLoserId) {
   const tournamentSelect = document.getElementById("resultTournamentSelect");
   const matchSelect = document.getElementById("resultMatchSelect");
   if (!form || !tournamentSelect || !matchSelect) return;
-  // Cargar jugadores y usuarios para resolver nombres reales (igual que main draw)
-  await Promise.all([
-    players.length ? Promise.resolve() : api("/api/players").then(d => { players = d; }),
-    resultUsers.length ? Promise.resolve() : api("/api/users").then(d => { resultUsers = d; })
-  ]);
+  // (players ya cargados arriba)
   form.reset();
   form.date.value = new Date().toISOString().slice(0, 10);
   principalResultPlayers = null;
@@ -2204,7 +2208,7 @@ html += '<button type="button" data-module-btn="members" onclick="setAdminModule
         if (adminResultEditor) adminResultEditor.setNames(payload.playerAName, payload.playerBName);
       }
     });
-    adminResultCascade.setTournaments(allTournaments || []);
+    adminResultCascade.setTournaments(adminTournaments || []);
     adminResultEditor = mountResultEditor(adminResultFormEl, "adminScoreEditor");
     const syncAdminManual = () => {
       adminResultPlayers = null;
@@ -2458,9 +2462,18 @@ async function moderateResult(resultId, action) {
   }
 }
 
-function openAdminResultForm() {
+async function openAdminResultForm() {
   const form = document.getElementById("adminResultForm");
   if (!form) return;
+  // Asegurar que los datos estén cargados (torneos admin + jugadores)
+  try {
+    if (!adminTournaments || adminTournaments.length === 0) {
+      adminTournaments = await api("/api/admin/tournaments");
+    }
+    if (!players || players.length === 0) {
+      players = await api("/api/admin/players");
+    }
+  } catch { /* no bloquear, se usará lo que haya */ }
   form.reset();
   form.elements.namedItem("resultId").value = "";
   adminResultPlayers = null;
@@ -2476,9 +2489,13 @@ function openAdminResultForm() {
   const descEl = document.getElementById("adminResultFormDesc");
   if (titleEl) titleEl.textContent = "Registrar resultado nuevo";
   if (descEl) descEl.textContent = "Elige el torneo, luego el partido: los 2 jugadores se colocan solos. Al guardar, el resultado queda pendiente hasta que el rival lo confirme (salvo que lo guarde un administrador, que se confirma directo).";
-  if (adminResultCascade) adminResultCascade.selectTournament("");
+  if (adminResultCascade) {
+    adminResultCascade.setTournaments(adminTournaments || []);
+    adminResultCascade.selectTournament("");
+  }
   const manualWrap = document.getElementById("adminManualPlayers");
-  if (manualWrap) manualWrap.style.display = "grid";
+  // Jugadores se colocan automáticamente al elegir el partido: sin selección manual.
+  if (manualWrap) manualWrap.style.display = "none";
   const manualA = form.elements.namedItem("winnerA");
   const manualB = form.elements.namedItem("loserB");
   if (manualA) manualA.value = "";
@@ -2490,7 +2507,19 @@ function openAdminResultForm() {
   openAdminDynamicEditModal("adminResultForm", "Registrar resultado nuevo");
 }
 
-function editAdminResult(resultId) {
+async function editAdminResult(resultId) {
+  // Asegurar que los datos estén cargados
+  try {
+    if (!adminTournaments || adminTournaments.length === 0) {
+      adminTournaments = await api("/api/admin/tournaments");
+    }
+    if (!players || players.length === 0) {
+      players = await api("/api/admin/players");
+    }
+    if (!matchResults || matchResults.length === 0) {
+      matchResults = await api("/api/results");
+    }
+  } catch { /* no bloquear */ }
   const result = matchResults.find(item => item.id === resultId);
   const form = document.getElementById("adminResultForm");
   if (!result || !form) return;
@@ -2508,6 +2537,7 @@ function editAdminResult(resultId) {
   if (descEl) descEl.textContent = "Elige el torneo, luego el partido: los 2 jugadores se colocan solos. Al guardar, el resultado se confirma directo y actualiza el ranking.";
   // Mismo flujo que el resto: torneo → partido → 2 jugadores automáticos.
   if (adminResultCascade) {
+    adminResultCascade.setTournaments(adminTournaments || []);
     adminResultCascade.selectTournament(result.tournamentId || "");
     const matchSelect = form.elements.namedItem("matchId");
     if (result.matchId) {
@@ -2908,6 +2938,11 @@ async function deleteOwnResult(resultId) {
 async function initProfileResultForm() {
   const form = document.getElementById("profileResultForm");
   if (!form) return;
+  try {
+    if (!players || players.length === 0) {
+      players = await api("/api/players");
+    }
+  } catch { /* no bloquear */ }
   const player = players.find(p => p && p.userId === currentUser.id);
   const isMember = currentUser.role === "member" || currentUser.membershipActive === true;
   if (!player && !isMember) {
@@ -2916,11 +2951,6 @@ async function initProfileResultForm() {
   }
   document.getElementById("profileResultNotice").textContent = "";
   if (!form.elements.namedItem("date").value) form.elements.namedItem("date").value = new Date().toISOString().slice(0, 10);
-  // Cargar jugadores y usuarios para resolver nombres reales (igual que main draw)
-  await Promise.all([
-    players.length ? Promise.resolve() : api("/api/players").then(d => { players = d; }),
-    resultUsers.length ? Promise.resolve() : api("/api/users").then(d => { resultUsers = d; })
-  ]);
   const tournamentSelect = form.elements.namedItem("tournamentId");
   const matchSelect = form.elements.namedItem("matchId");
   profileResultPlayers = null;
