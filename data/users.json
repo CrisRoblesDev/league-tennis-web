@@ -10,7 +10,9 @@
     "created": "2026-11-01T23:50:42.382Z",
     "membershipActive": false,
     "phone": "+56933465843",
-    "nationality": "Chile"
+    "nationality": "Chile",
+    "photo": "/api/uploads/1794412623519-profile-user-7cfcae98-6a75-48d8-ae41-7846da06ca38.jpg",
+    "country": "Chile"
   },
   {
     "id": "user-18574db8-0b20-451f-9693-ed7eb24e8a97",
