@@ -93,6 +93,7 @@ export async function onRequestPatch({ request, env }) {
   await gWrite(env, "challenges", results);
   if (result.status === "confirmed") {
     await awardRankingPoint(env, result);
+    await syncTournamentMatch(env, result);
   }
   return jsonResponse({ ok: true, status: result.status });
 }

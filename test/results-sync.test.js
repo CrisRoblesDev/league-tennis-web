@@ -259,6 +259,48 @@ test("PATCH /api/admin/results edit triggers syncTournamentMatch (admin confirmi
   }
 });
 
+test("PATCH /api/admin/results confirm triggers syncTournamentMatch (admin accepting pending result)", async () => {
+  const originalFetch = globalThis.fetch;
+  const github = githubMock(seedData());
+  globalThis.fetch = github.fetch;
+  try {
+    const { cookie } = await setAdminSession(env, "admin-1");
+
+    const results = JSON.parse(github.files.get("results.json") || "[]");
+    results.push({
+      id: "result-confirm",
+      status: "pending",
+      matchId: "m1",
+      tournamentId: "ref-t1",
+      winnerId: "p1",
+      loserId: "p2",
+      score: "6-4, 6-2",
+      reportedBy: "u1",
+      created: new Date().toISOString()
+    });
+    github.files.set("results.json", JSON.stringify(results));
+
+    const response = await patchAdminResults({
+      request: new Request("https://league.example/api/admin/results", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Cookie: cookie },
+        body: JSON.stringify({ action: "confirm", resultId: "result-confirm" })
+      }),
+      env
+    });
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).status, "confirmed");
+
+    const ref = JSON.parse(github.files.get("tournaments-reference.json"));
+    const refMatch = ref[0].matches.find(m => m.id === "m1");
+    assert.equal(refMatch.sa, 2);
+    assert.equal(refMatch.sb, 0);
+    assert.equal(refMatch.score, "6-4, 6-2");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("validateMatchScore accepts 2 to 5 sets with majority winner", () => {
   assert.deepEqual(validateMatchScore("6-4, 4-6, 10-7"), { setWinners: [0, 1, 0], winnerIndex: 0 });
   assert.deepEqual(validateMatchScore("6-4, 4-6, 6-4, 4-6, 7-5"), { setWinners: [0, 1, 0, 1, 0], winnerIndex: 0 });
