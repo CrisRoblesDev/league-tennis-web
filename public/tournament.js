@@ -1392,8 +1392,43 @@
     shell.dataset.mode = view;
     window.addEventListener("resize", () => { if (tab === "draw") drawConnections(); });
     load();
-    return { reload: load, root, shell };
+    const result = { reload: load, root, shell };
+    return result;
   }
 
-  window.TournamentApp = { mount };
+  // Store separate instances for public and admin views
+  let publicInstance = null;
+  let adminInstance = null;
+
+  window.TournamentApp = {
+    mount(rootOrSelector, options = {}) {
+      const view = options.mode === "admin" ? "admin" : "public";
+      const result = mount(rootOrSelector, options);
+      if (result) {
+        if (view === "admin") {
+          adminInstance = result;
+        } else {
+          publicInstance = result;
+        }
+      }
+      return result;
+    },
+    reloadPublic() {
+      if (publicInstance && publicInstance.reload) {
+        return publicInstance.reload();
+      }
+    },
+    reloadAdmin() {
+      if (adminInstance && adminInstance.reload) {
+        return adminInstance.reload();
+      }
+    },
+    reload() {
+      // Reload the most recent instance
+      const instance = publicInstance || adminInstance;
+      if (instance && instance.reload) {
+        return instance.reload();
+      }
+    }
+  };
 })();
