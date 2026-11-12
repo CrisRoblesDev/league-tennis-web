@@ -351,5 +351,20 @@
     "category": "singles",
     "gender": "hombres",
     "created": "2026-11-11T20:51:22.744Z"
+  },
+  {
+    "id": "player-59a3a389-c10c-4157-9d35-71d507974212",
+    "userId": "user-f08feace-5626-4a93-bc35-3c49498090e9",
+    "name": "Lada Kiseleva",
+    "level": "3.5",
+    "zone": "Aventura / Sunny Isles",
+    "category": "singles",
+    "gender": "mujeres",
+    "country": "",
+    "bio": "",
+    "photo": null,
+    "matches": 0,
+    "points": 0,
+    "created": "2026-11-12T20:07:42.345Z"
   }
 ]
