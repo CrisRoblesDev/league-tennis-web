@@ -411,6 +411,10 @@
     "password": "pbkdf2$100000$H4SDPev-Y-suUamv7bY-hA$hryHI6MM3p8rfiQNjTIUXoa2x8Adir3BZBMkksPsfPM",
     "role": "user",
     "nationality": "Russia",
-    "created": "2026-11-12T19:58:04.229Z"
+    "created": "2026-11-12T19:58:04.229Z",
+    "membershipActive": false,
+    "level": "3.5",
+    "zone": "Aventura / Sunny Isles",
+    "phone": null
   }
 ]
