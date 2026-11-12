@@ -2493,10 +2493,11 @@ async function moderateResult(resultId, action) {
 async function openAdminResultForm() {
   const form = document.getElementById("adminResultForm");
   if (!form) return;
-  // Asegurar que los datos estén cargados (torneos admin + jugadores)
+  // Asegurar que los datos estén cargados (torneos reference + jugadores)
   try {
     if (!adminTournaments || adminTournaments.length === 0) {
-      adminTournaments = await api("/api/tournaments");
+      const data = await api("/api/tournaments");
+      adminTournaments = Array.isArray(data.tournaments) ? data.tournaments : (Array.isArray(data) ? data : []);
     }
     if (!players || players.length === 0) {
       players = await api("/api/admin/players");
@@ -2539,7 +2540,8 @@ async function editAdminResult(resultId) {
   // Asegurar que los datos estén cargados
   try {
     if (!adminTournaments || adminTournaments.length === 0) {
-      adminTournaments = await api("/api/tournaments");
+      const data = await api("/api/tournaments");
+      adminTournaments = Array.isArray(data.tournaments) ? data.tournaments : (Array.isArray(data) ? data : []);
     }
     if (!players || players.length === 0) {
       players = await api("/api/admin/players");

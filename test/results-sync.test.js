@@ -60,8 +60,7 @@ function seedData() {
         round: "Jornada 1",
         a: "u1",
         b: "u2",
-        playerAId: "p1",
-        playerBId: "p2",
+        // playerAId/playerBId not present - uses a/b (userId) format like real tournaments-reference.json
         status: "scheduled",
         sa: null,
         sb: null,
