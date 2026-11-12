@@ -72,8 +72,10 @@
     "category": "libros",
     "active": true,
     "description": "Libro digital de tenis",
-    "link": "/api/books/11-volley-tennis-en.pdf",
-    "url": "/api/books/11-volley-tennis-en.pdf"
+    "link": "https://buy.stripe.com/cNiaEZ2YrcW79t4gEJbMQ06",
+    "url": "https://buy.stripe.com/cNiaEZ2YrcW79t4gEJbMQ06",
+    "interval": "month",
+    "image": "/api/uploads/1794515609259-9324.jpg"
   },
   {
     "id": "book-the-art-of-modern-tennis",
