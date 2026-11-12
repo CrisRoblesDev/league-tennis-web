@@ -1195,6 +1195,7 @@ async function submitResult(event) {
     if (hw) hw.value = "";
     if (hl) hl.value = "";
     await loadResults();
+    await loadTournaments();
     showToast("Resultado enviado; el rival debe confirmarlo para actualizar el ranking.");
   } catch (error) {
     showNotice("resultNotice", error.message, true);
@@ -2495,7 +2496,7 @@ async function openAdminResultForm() {
   // Asegurar que los datos estén cargados (torneos admin + jugadores)
   try {
     if (!adminTournaments || adminTournaments.length === 0) {
-      adminTournaments = await api("/api/admin/tournaments");
+      adminTournaments = await api("/api/tournaments");
     }
     if (!players || players.length === 0) {
       players = await api("/api/admin/players");
@@ -2538,7 +2539,7 @@ async function editAdminResult(resultId) {
   // Asegurar que los datos estén cargados
   try {
     if (!adminTournaments || adminTournaments.length === 0) {
-      adminTournaments = await api("/api/admin/tournaments");
+      adminTournaments = await api("/api/tournaments");
     }
     if (!players || players.length === 0) {
       players = await api("/api/admin/players");
@@ -3255,6 +3256,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (notice) notice.textContent = "Resultado enviado ✓";
       showToast("Resultado enviado; el rival debe confirmarlo para actualizar el ranking.");
       try { await loadProfilePendingResults(); } catch { /* ignore */ }
+      await loadTournaments();
       showProfileTab("datos");
     } catch (error) {
       if (notice) notice.textContent = error.message;
