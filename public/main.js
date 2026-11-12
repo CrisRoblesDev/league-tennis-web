@@ -2568,6 +2568,7 @@ async function editAdminResult(resultId) {
   form.elements.namedItem("playedAt").value = (result.playedAt || result.created || "").slice(0, 10);
   const titleEl = document.getElementById("adminResultFormTitle");
   const descEl = document.getElementById("adminResultFormDesc");
+  if (titleEl) titleEl.textContent = "Editar resultado";
   if (descEl) descEl.textContent = "Elige el torneo, luego el partido: los 2 jugadores se colocan solos. Al guardar, el resultado se confirma directo y actualiza el ranking.";
   // Mismo flujo que el resto: torneo → partido → 2 jugadores automáticos.
   if (adminResultCascade) {
