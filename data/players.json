@@ -325,5 +325,31 @@
     "matches": 0,
     "points": 0,
     "created": "2026-11-08T04:52:57.286Z"
+  },
+  {
+    "id": "player-5c2f42df-d427-482f-9921-b05016c77af9",
+    "userId": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
+    "name": "Andres melnick",
+    "level": "3.0",
+    "zone": "",
+    "matches": 0,
+    "points": 0,
+    "manualPoints": 0,
+    "category": "singles",
+    "gender": "hombres",
+    "created": "2026-11-11T20:51:22.744Z"
+  },
+  {
+    "id": "player-4361b4ac-9912-4ad7-a404-c80839d29d20",
+    "userId": "user-c214871c-3e87-483c-864c-d7042443fbbc",
+    "name": "Artemmi",
+    "level": "3.0",
+    "zone": "",
+    "matches": 0,
+    "points": 0,
+    "manualPoints": 0,
+    "category": "singles",
+    "gender": "hombres",
+    "created": "2026-11-11T20:51:22.744Z"
   }
 ]
