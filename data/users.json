@@ -403,5 +403,14 @@
     "zone": "Aventura / Sunny Isles",
     "membershipActive": false,
     "phone": null
+  },
+  {
+    "id": "user-f08feace-5626-4a93-bc35-3c49498090e9",
+    "name": "Lada kiseleva",
+    "email": "plus1481@gmail.com",
+    "password": "pbkdf2$100000$H4SDPev-Y-suUamv7bY-hA$hryHI6MM3p8rfiQNjTIUXoa2x8Adir3BZBMkksPsfPM",
+    "role": "user",
+    "nationality": "Russia",
+    "created": "2026-11-12T19:58:04.229Z"
   }
 ]
