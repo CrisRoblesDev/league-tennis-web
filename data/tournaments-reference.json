@@ -96,8 +96,7 @@
         "sa": 2,
         "sb": 0,
         "slot": 0,
-        "cardNo": 1,
-        "score": "6-3, 6-3"
+        "cardNo": 1
       },
       {
         "id": "xmw5c6g1ng",
@@ -310,9 +309,9 @@
         "a": "user-7929e9a9-e4df-4ed9-8a47-189bcb2d3daf",
         "b": "user-0243ad0c-dc30-48de-8c76-366be2d7192a",
         "date": "2026-11-08T06:31",
-        "sa": 1,
-        "sb": 2,
-        "slot": 9,
+        "sa": null,
+        "sb": null,
+        "slot": 10,
         "cardNo": 19
       },
       {
@@ -656,8 +655,7 @@
         "from": "xmw5fxcnvf",
         "to": "xmw5fxk8rg"
       }
-    ],
-    "updated": "2026-11-12T04:40:59.193Z"
+    ]
   },
   {
     "id": "tournament-womens-35-2026",
