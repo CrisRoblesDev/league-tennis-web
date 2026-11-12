@@ -1,15 +1,1 @@
-[
-  {
-    "id": "result-473bfb0c-ac1f-4de3-b1b3-7a8afae39de7",
-    "winnerId": "player-5c2f42df-d427-482f-9921-b05016c77af9",
-    "loserId": "player-4361b4ac-9912-4ad7-a404-c80839d29d20",
-    "category": "singles",
-    "tournamentId": "tournament-roundrobin-2026",
-    "matchId": "xmw5c5x6tf",
-    "score": "6-2, 6-4",
-    "playedAt": "2026-11-12",
-    "reportedBy": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
-    "status": "pending",
-    "created": "2026-11-12T03:26:27.671Z"
-  }
-]
+[]
