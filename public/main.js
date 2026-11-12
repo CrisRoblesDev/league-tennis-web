@@ -848,6 +848,7 @@ async function respondToResult(resultId, action) {
       body: JSON.stringify({ resultId, action })
     });
     await Promise.all([loadPlayers(), loadResults()]);
+    await loadTournaments();
     showToast(action === "confirm" ? "Resultado confirmado; se actualizó el ranking." : "Resultado marcado para revisión.");
   } catch (error) {
     showToast(error.message);
@@ -2480,6 +2481,7 @@ async function moderateResult(resultId, action) {
       body: JSON.stringify({ resultId, action })
     });
     await Promise.all([loadPlayers(), loadResults()]);
+    await loadTournaments();
     await showAdminPanel();
     showToast(action === "confirm" ? "Resultado confirmado y ranking actualizado." : "Resultado rechazado.");
   } catch (error) {
@@ -2652,7 +2654,9 @@ async function saveAdminResult(event) {
           playedAt: form.elements.namedItem("playedAt").value
         })
       });
-      await Promise.all([loadPlayers(), loadResults(), showAdminPanel()]);
+      await Promise.all([loadPlayers(), loadResults()]);
+      await loadTournaments();
+      await showAdminPanel();
       if (adminResultEditor) { adminResultEditor.setSets([]); adminResultEditor.setNames("Jugador A", "Jugador B"); }
       adminResultPlayers = null;
       closeAdminDynamicEditModal();
@@ -2671,7 +2675,9 @@ async function saveAdminResult(event) {
           playedAt: form.elements.namedItem("playedAt").value
         })
       });
-      await Promise.all([loadPlayers(), loadResults(), showAdminPanel()]);
+      await Promise.all([loadPlayers(), loadResults()]);
+      await loadTournaments();
+      await showAdminPanel();
       if (adminResultEditor) { adminResultEditor.setSets([]); adminResultEditor.setNames("Jugador A", "Jugador B"); }
       adminResultPlayers = null;
       closeAdminDynamicEditModal();
