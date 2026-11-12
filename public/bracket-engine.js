@@ -46,7 +46,7 @@ const BracketEngine = {
     this.el.innerHTML = `
       <div class="bracket-engine__toolbar">
         <div class="bracket-engine__left">
-          <span class="bracket-engine__title">${escapeHtml(t.title || "Main draw")}</span>
+          <span class="bracket-engine__title">${escapeHtml(t.title || "Main Draw")}</span>
           <span class="bracket-engine__subtitle">${escapeHtml(t.month || "")} · ${escapeHtml(CATEGORY_LABELS[t.category || "singles"] || "Singles")}</span>
         </div>
         <div class="bracket-engine__right">

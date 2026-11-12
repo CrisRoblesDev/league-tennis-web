@@ -138,7 +138,7 @@
       const tournament = tNow();
       const admin = adminView();
       app.innerHTML = `<div class="fade"><button type="button" class="text-sm font-bold text-[#30634b] mb-5" data-action="back">← Todos los torneos</button><div class="card p-5 md:p-7 mb-5"><div class="flex justify-between flex-wrap gap-4"><div><p class="eyebrow text-[#668957] mb-2">${admin ? "ADMINISTRACIÓN" : "VISTA PÚBLICA"} · ${esc(tournament.category)}</p><h2 class="display text-3xl md:text-4xl font-bold">${esc(tournament.name)}</h2><p class="muted mt-2">${esc(tournament.description)}</p></div>${pill(tournament.status)}</div></div>${admin ? "" : `<p class="muted text-xs mb-5">Solo los miembros pueden inscribirse y jugar.</p>`}<nav class="tabs mb-5" aria-label="Secciones del torneo">${
-        [["summary", "Resumen"], ["players", admin ? "Participantes e inscripciones" : "Participantes"], ["matches", "Partidos"], ["draw", "Main draw"]].map(([key, label]) =>
+        [["summary", "Resumen"], ["players", admin ? "Participantes e inscripciones" : "Participantes"], ["matches", "Partidos"], ["draw", "Main Draw"]].map(([key, label]) =>
           `<button type="button" class="tab ${tab === key ? "active" : ""}" data-action="tab" data-id="${key}" aria-current="${tab === key ? "page" : "false"}">${label}</button>`
         ).join("")
       }</nav><section id="detail-content" aria-label="Contenido del torneo"></section></div>`;
@@ -167,7 +167,7 @@
           admin
             ? `<label class="label" for="t-status">Estado del torneo</label><select id="t-status" class="field mb-4">${STATUSES.map(status => `<option ${status === tournament.status ? "selected" : ""}>${status}</option>`).join("")}</select>${btn("Editar ficha y fechas", "edit-tournament")}`
             : '<p class="muted text-sm mb-4">Sigue los participantes, partidos y resultados actualizados.</p>'
-        }<div class="flex flex-wrap gap-2 mt-4">${btn("Participantes", "tab", "players")}${btn("Partidos", "tab", "matches")}${btn("Main draw", "tab", "draw")}</div></div></div>`;
+        }<div class="flex flex-wrap gap-2 mt-4">${btn("Participantes", "tab", "players")}${btn("Partidos", "tab", "matches")}${btn("Main Draw", "tab", "draw")}</div></div></div>`;
       }
 
       if (tab === "players") {

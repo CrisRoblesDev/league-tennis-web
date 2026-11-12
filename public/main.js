@@ -856,7 +856,7 @@ async function respondToResult(resultId, action) {
 }
 
 // ============ RESULTADOS: flujo canónico (torneo → partido → marcador) ============
-// Un solo flujo idéntico en página principal, main draw, admin y perfil, con el
+// Un solo flujo idéntico en página principal, Main Draw, admin y perfil, con el
 // editor compartido window.TennisScore (score-editor.js). La cascada carga los
 // torneos, al elegir uno despliega "Elige el partido" y el partido coloca solo
 // sus 2 jugadores (read-only confirmados); el marcador se completa set por set
@@ -1926,7 +1926,8 @@ async function loadTournaments() {
   }
   // Refresh the tournament app if already mounted, otherwise mount it
   if (window.TournamentApp && window.TournamentApp.reloadPublic) {
-    window.TournamentApp.reloadPublic();
+    const reloaded = window.TournamentApp.reloadPublic();
+    if (!reloaded) mountPublicTournament();
   } else {
     mountPublicTournament();
   }
