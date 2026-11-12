@@ -6,7 +6,11 @@
     "type": "digital",
     "active": true,
     "description": "Guía digital\nBook on applied psychology in tennis",
-    "interval": "month"
+    "interval": "month",
+    "category": "",
+    "image": "/api/uploads/1794513955605-850.jpg",
+    "link": "https://buy.stripe.com/14AfZj8iL9JVbBc9chbMQ05",
+    "url": "https://buy.stripe.com/14AfZj8iL9JVbBc9chbMQ05"
   },
   {
     "id": "book-2",
