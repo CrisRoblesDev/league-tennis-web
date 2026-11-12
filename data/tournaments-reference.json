@@ -93,9 +93,9 @@
         "a": "user-e9b6d508-100b-4a74-810a-ed08b966b83c",
         "b": "user-c214871c-3e87-483c-864c-d7042443fbbc",
         "date": "",
-        "sa": 2,
-        "sb": 0,
-        "slot": 0,
+        "sa": null,
+        "sb": null,
+        "slot": 11,
         "cardNo": 1
       },
       {
