@@ -66,7 +66,7 @@
   },
   {
     "id": "book-11-volley-tennis",
-    "name": "11 Volley Tennis",
+    "name": "Volley Tennis",
     "price": 1000,
     "type": "digital",
     "category": "libros",
@@ -75,7 +75,7 @@
     "link": "https://buy.stripe.com/cNiaEZ2YrcW79t4gEJbMQ06",
     "url": "https://buy.stripe.com/cNiaEZ2YrcW79t4gEJbMQ06",
     "interval": "month",
-    "image": "/api/uploads/1794515614669-9324.jpg"
+    "image": "/api/uploads/1794567835340-9898.jpg"
   },
   {
     "id": "book-the-art-of-modern-tennis",
