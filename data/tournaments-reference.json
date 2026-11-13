@@ -715,10 +715,11 @@
         "a": "user-a8a4122b-dc85-46aa-bfe8-831c61b62b4d",
         "b": "user-f3607eec-25f4-4775-a46e-bcdc45be58f0",
         "date": "2026-11-07T05:26",
-        "sa": null,
-        "sb": null,
+        "sa": 0,
+        "sb": 2,
         "slot": 4,
-        "cardNo": 2
+        "cardNo": 2,
+        "score": "6-0, 6-1"
       },
       {
         "id": "xmw5ihmqq5",
@@ -741,6 +742,7 @@
       "user-d09c35f2-579a-4fac-bdb4-18fb5369ff53": "xmw5ibchb1",
       "user-f3607eec-25f4-4775-a46e-bcdc45be58f0": "xmw5ibchb1"
     },
-    "connections": []
+    "connections": [],
+    "updated": "2026-11-13T19:25:05.522Z"
   }
 ]
