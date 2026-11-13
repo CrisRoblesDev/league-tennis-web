@@ -150,8 +150,10 @@
     "category": "libros",
     "active": true,
     "description": "Libro digital de tenis",
-    "link": "",
-    "url": ""
+    "link": "https://buy.stripe.com/cNiaEZ2YrcW79t4gEJbMQ06",
+    "url": "https://buy.stripe.com/cNiaEZ2YrcW79t4gEJbMQ06",
+    "interval": "year",
+    "image": "/api/uploads/1794569496676-9911.jpg"
   },
   {
     "id": "book-jimmy-connors-how-to-play-tougher-tennis",
