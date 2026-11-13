@@ -415,6 +415,8 @@
     "membershipActive": false,
     "level": "3.5",
     "zone": "Aventura / Sunny Isles",
-    "phone": "(786) 532-3163"
+    "phone": "(786) 532-3163",
+    "photo": "/api/uploads/1794540561901-profile-user-f08feace-5626-4a93-bc35-3c49498090e9.jpg",
+    "country": "Otro"
   }
 ]
