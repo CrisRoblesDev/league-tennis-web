@@ -54,9 +54,7 @@
     "active": true,
     "description": "Libro digital de tenis",
     "interval": "year",
-    "image": "/api/uploads/1794567983503-9900.jpg",
-    "link": "https://buy.stripe.com/cNiaEZ2YrcW79t4gEJbMQ06",
-    "url": "https://buy.stripe.com/cNiaEZ2YrcW79t4gEJbMQ06"
+    "image": "/api/uploads/1794567983503-9900.jpg"
   },
   {
     "id": "book-mastering-the-art-of-winning-tennis",
