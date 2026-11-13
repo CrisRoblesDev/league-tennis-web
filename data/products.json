@@ -1,18 +1,5 @@
 [
   {
-    "id": "book-1",
-    "name": "Estrategia para competir",
-    "price": 1000,
-    "type": "digital",
-    "active": true,
-    "description": "Guía digital\nBook on applied psychology in tennis",
-    "interval": "month",
-    "category": "",
-    "image": "/api/uploads/1794513955605-850.jpg",
-    "link": "https://buy.stripe.com/cNiaEZ2YrcW79t4gEJbMQ06",
-    "url": "https://buy.stripe.com/cNiaEZ2YrcW79t4gEJbMQ06"
-  },
-  {
     "id": "book-2",
     "name": "Entrenamiento inteligente",
     "price": 1000,
