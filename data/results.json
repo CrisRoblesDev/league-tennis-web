@@ -24,7 +24,9 @@
     "score": "0-6, 6-3, 6-2",
     "playedAt": "2026-11-08",
     "reportedBy": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
-    "status": "pending",
-    "created": "2026-11-13T19:30:03.007Z"
+    "status": "confirmed",
+    "created": "2026-11-13T19:30:03.007Z",
+    "moderatedBy": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
+    "moderatedAt": "2026-11-13T19:30:14.966Z"
   }
 ]
