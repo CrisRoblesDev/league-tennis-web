@@ -124,8 +124,10 @@
     "category": "libros",
     "active": true,
     "description": "Libro digital de tenis",
-    "link": "",
-    "url": ""
+    "link": "https://buy.stripe.com/cNiaEZ2YrcW79t4gEJbMQ06",
+    "url": "https://buy.stripe.com/cNiaEZ2YrcW79t4gEJbMQ06",
+    "interval": "year",
+    "image": "/api/uploads/1794569126842-9907.jpg"
   },
   {
     "id": "book-if-i-m-the-better-player-why-can-t-i-win",
