@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "id": "challenge-0263136e-8f41-4dcc-a0c2-b5a46b2c3261",
+    "playerId": "player-59a3a389-c10c-4157-9d35-71d507974212",
+    "creatorUserId": "user-f08feace-5626-4a93-bc35-3c49498090e9",
+    "availability": "Tarde 7 pm",
+    "status": "open",
+    "created": "2026-11-13T12:00:43.611Z"
+  }
+]
