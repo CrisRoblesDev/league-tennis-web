@@ -83,7 +83,7 @@
     "price": 1000,
     "type": "digital",
     "category": "libros",
-    "active": true,
+    "active": false,
     "description": "Libro digital de tenis",
     "link": "/api/books/1-the-art-of-modern-tennis-en.pdf",
     "url": "/api/books/1-the-art-of-modern-tennis-en.pdf"
