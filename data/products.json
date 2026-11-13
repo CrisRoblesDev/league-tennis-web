@@ -52,19 +52,6 @@
     "url": "https://buy.stripe.com/cNiaEZ2YrcW79t4gEJbMQ06"
   },
   {
-    "id": "prod-cc840f03-2adf-4020-ae34-13d5166a8792",
-    "name": "Real tennis the Doubles Game",
-    "price": 1000,
-    "type": "digital",
-    "description": "Learn to play doubles",
-    "active": true,
-    "category": "",
-    "interval": "month",
-    "image": "/api/uploads/1794514616444-6dce2efb-6e58-4c5a-910a-13fef19cad48-1_a.jpg",
-    "link": "https://buy.stripe.com/14AfZj8iL9JVbBc9chbMQ05",
-    "url": "https://buy.stripe.com/14AfZj8iL9JVbBc9chbMQ05"
-  },
-  {
     "id": "book-11-volley-tennis",
     "name": "Volley Tennis",
     "price": 1000,
