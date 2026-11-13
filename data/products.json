@@ -106,13 +106,15 @@
   {
     "id": "book-mastering-the-art-of-winning-tennis",
     "name": "Mastering the Art of Winning Tennis",
-    "price": 1000,
+    "price": 2400,
     "type": "digital",
     "category": "libros",
     "active": true,
     "description": "Libro digital de tenis",
-    "link": "",
-    "url": ""
+    "link": "https://buy.stripe.com/14AfZj8iL9JVbBc9chbMQ05",
+    "url": "https://buy.stripe.com/14AfZj8iL9JVbBc9chbMQ05",
+    "interval": "year",
+    "image": "/api/uploads/1794568713020-9905.jpg"
   },
   {
     "id": "book-game-set-match",
