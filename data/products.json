@@ -182,17 +182,6 @@
     "image": "/api/uploads/1794568483397-9903.jpg"
   },
   {
-    "id": "book-real-tennis-the-doubles-game",
-    "name": "Real Tennis: The Doubles Game",
-    "price": 1000,
-    "type": "digital",
-    "category": "libros",
-    "active": true,
-    "description": "Libro digital de tenis",
-    "link": "/api/books/real-tennis-the-doubles-game.pdf",
-    "url": "/api/books/real-tennis-the-doubles-game.pdf"
-  },
-  {
     "id": "book-the-inner-game-of-tennis",
     "name": "The Inner Game of Tennis",
     "price": 2200,
