@@ -392,5 +392,31 @@
     "category": "singles",
     "gender": "hombres",
     "created": "2026-11-13T03:31:39.678Z"
+  },
+  {
+    "id": "player-ce03213f-4c11-44ad-bf02-d13ccac959d0",
+    "userId": "user-a8a4122b-dc85-46aa-bfe8-831c61b62b4d",
+    "name": "Simome matamalla",
+    "level": "3.0",
+    "zone": "",
+    "matches": 0,
+    "points": 0,
+    "manualPoints": 0,
+    "category": "singles",
+    "gender": "hombres",
+    "created": "2026-11-13T19:22:58.469Z"
+  },
+  {
+    "id": "player-a223eaf3-c486-4b42-a07d-126e387352b9",
+    "userId": "user-f3607eec-25f4-4775-a46e-bcdc45be58f0",
+    "name": "Allison f",
+    "level": "3.0",
+    "zone": "",
+    "matches": 0,
+    "points": 0,
+    "manualPoints": 0,
+    "category": "singles",
+    "gender": "hombres",
+    "created": "2026-11-13T19:22:58.469Z"
   }
 ]
