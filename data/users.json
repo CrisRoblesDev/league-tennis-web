@@ -412,7 +412,7 @@
     "role": "member",
     "nationality": "Otro",
     "created": "2026-11-12T19:58:04.229Z",
-    "membershipActive": false,
+    "membershipActive": true,
     "level": "3.5",
     "zone": "Aventura / Sunny Isles",
     "phone": "(786) 532-3163",
