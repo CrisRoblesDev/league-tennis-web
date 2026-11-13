@@ -366,5 +366,31 @@
     "matches": 0,
     "points": 0,
     "created": "2026-11-12T20:07:42.345Z"
+  },
+  {
+    "id": "player-c5754a9b-a317-4369-af64-ee5b44757471",
+    "userId": "user-069497f2-7431-41c5-ae25-01121d8dfa17",
+    "name": "Kelly ruller",
+    "level": "3.0",
+    "zone": "",
+    "matches": 0,
+    "points": 0,
+    "manualPoints": 0,
+    "category": "singles",
+    "gender": "hombres",
+    "created": "2026-11-13T03:31:39.678Z"
+  },
+  {
+    "id": "player-5d93e54e-fb9a-4f43-814a-858dc6583afd",
+    "userId": "user-d09c35f2-579a-4fac-bdb4-18fb5369ff53",
+    "name": "Anastasia filipova",
+    "level": "3.0",
+    "zone": "",
+    "matches": 0,
+    "points": 0,
+    "manualPoints": 0,
+    "category": "singles",
+    "gender": "hombres",
+    "created": "2026-11-13T03:31:39.678Z"
   }
 ]
