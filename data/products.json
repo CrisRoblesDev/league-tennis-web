@@ -137,8 +137,10 @@
     "category": "libros",
     "active": true,
     "description": "Libro digital de tenis",
-    "link": "",
-    "url": ""
+    "link": "https://buy.stripe.com/cNiaEZ2YrcW79t4gEJbMQ06",
+    "url": "https://buy.stripe.com/cNiaEZ2YrcW79t4gEJbMQ06",
+    "interval": "year",
+    "image": "/api/uploads/1794569288911-9908.jpg"
   },
   {
     "id": "book-maximum-tennis-10-keys",
