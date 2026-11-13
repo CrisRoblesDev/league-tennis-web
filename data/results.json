@@ -39,7 +39,9 @@
     "score": "6-2, 7-6",
     "playedAt": "2026-11-13",
     "reportedBy": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
-    "status": "pending",
-    "created": "2026-11-13T19:32:41.533Z"
+    "status": "confirmed",
+    "created": "2026-11-13T19:32:41.533Z",
+    "moderatedBy": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
+    "moderatedAt": "2026-11-13T19:35:55.868Z"
   }
 ]
