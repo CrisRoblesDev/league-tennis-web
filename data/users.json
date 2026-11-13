@@ -267,11 +267,11 @@
     "email": "am160284@gmail.com",
     "password": "pbkdf2$100000$G3nFj9CdYDTfw5J9ZAoqyA$hi1-T6bjBC28YYGi90uohSNf-xDEa2QOsYZpQOJiFtY",
     "level": null,
-    "zone": null,
-    "role": "user",
+    "zone": "Aventura / Sunny Isles",
+    "role": "member",
     "created": "2026-11-04T16:28:24.345Z",
-    "membershipActive": false,
-    "nationality": null,
+    "membershipActive": true,
+    "nationality": "Russia",
     "phone": null
   },
   {
