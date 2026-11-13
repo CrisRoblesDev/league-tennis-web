@@ -161,13 +161,15 @@
   {
     "id": "book-25-winning-doubles-tactics",
     "name": "25 Winning Doubles Tactics",
-    "price": 1000,
+    "price": 1200,
     "type": "digital",
     "category": "libros",
     "active": true,
     "description": "Libro digital de tenis",
-    "link": "/api/books/ebook-25-winning-doubles-tactics.pdf",
-    "url": "/api/books/ebook-25-winning-doubles-tactics.pdf"
+    "link": "https://buy.stripe.com/14AfZj8iL9JVbBc9chbMQ05",
+    "url": "https://buy.stripe.com/14AfZj8iL9JVbBc9chbMQ05",
+    "interval": "year",
+    "image": "/api/uploads/1794568477069-9903.jpg"
   },
   {
     "id": "book-real-tennis-the-doubles-game",
