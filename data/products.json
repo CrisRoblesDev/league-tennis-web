@@ -160,7 +160,7 @@
     "price": 1000,
     "type": "digital",
     "category": "libros",
-    "active": false,
+    "active": true,
     "description": "Libro digital de tenis",
     "link": "/api/books/ebook-25-winning-doubles-tactics.pdf",
     "url": "/api/books/ebook-25-winning-doubles-tactics.pdf"
