@@ -171,7 +171,7 @@
     "price": 1000,
     "type": "digital",
     "category": "libros",
-    "active": true,
+    "active": false,
     "description": "Libro digital de tenis",
     "link": "/api/books/real-tennis-the-doubles-game.pdf",
     "url": "/api/books/real-tennis-the-doubles-game.pdf"
