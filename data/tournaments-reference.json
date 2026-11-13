@@ -237,10 +237,11 @@
         "a": "user-29bb2990-ee1e-46a0-a498-f4ae67549d3d",
         "b": "user-b6fa3c18-dff4-458b-947d-a86cc9dba534",
         "date": "",
-        "sa": null,
-        "sb": null,
+        "sa": 2,
+        "sb": 0,
         "slot": 4,
-        "cardNo": 13
+        "cardNo": 13,
+        "score": "6-2, 7-6"
       },
       {
         "id": "xmw5d3a2xa",
@@ -657,7 +658,7 @@
         "to": "xmw5fxk8rg"
       }
     ],
-    "updated": "2026-11-13T19:30:18.649Z"
+    "updated": "2026-11-13T19:36:00.316Z"
   },
   {
     "id": "tournament-womens-35-2026",
