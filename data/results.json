@@ -28,5 +28,18 @@
     "created": "2026-11-13T19:30:03.007Z",
     "moderatedBy": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
     "moderatedAt": "2026-11-13T19:30:14.966Z"
+  },
+  {
+    "id": "result-4e2360db-ed6d-4dec-a296-d469cf36ff50",
+    "winnerId": "player-17abe526-2ec4-4bf1-ae85-54b13e682911",
+    "loserId": "player-99183ac7-a450-456a-a359-6f32efb90402",
+    "category": "singles",
+    "tournamentId": "tournament-roundrobin-2026",
+    "matchId": "xmw5d2s9k9",
+    "score": "6-2, 7-6",
+    "playedAt": "2026-11-13",
+    "reportedBy": "user-7cfcae98-6a75-48d8-ae41-7846da06ca38",
+    "status": "pending",
+    "created": "2026-11-13T19:32:41.533Z"
   }
 ]
