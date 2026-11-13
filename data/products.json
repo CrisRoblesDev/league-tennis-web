@@ -206,13 +206,15 @@
   {
     "id": "book-el-juego-interior-del-tenis",
     "name": "El Juego Interior del Tenis",
-    "price": 1000,
+    "price": 2200,
     "type": "digital",
     "category": "libros",
     "active": true,
     "description": "Libro digital de tenis",
-    "link": "/api/books/el-juego-interior-del-tenis.pdf",
-    "url": "/api/books/el-juego-interior-del-tenis.pdf"
+    "link": "https://buy.stripe.com/cNiaEZ2YrcW79t4gEJbMQ06",
+    "url": "https://buy.stripe.com/cNiaEZ2YrcW79t4gEJbMQ06",
+    "interval": "month",
+    "image": "/api/uploads/1794570007654-9917.jpg"
   },
   {
     "id": "prod-97327c02-9ad8-4dcd-b80d-1451984e93cd",
